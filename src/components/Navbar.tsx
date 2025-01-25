@@ -1,4 +1,4 @@
-import { Home, Building, Users, MessageSquare } from "lucide-react";
+import { Home, Building, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const Navbar = () => {
@@ -8,8 +8,12 @@ export const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <Building className="h-8 w-8 text-primary" />
-              <span className="ml-2 text-xl font-bold text-primary">RCBridge</span>
+              <img 
+                src="/lovable-uploads/5fd561ff-5bbd-449c-94a3-d39d0a8b4f03.png" 
+                alt="RC Bridge Logo" 
+                className="h-10 w-auto"
+              />
+              <span className="ml-2 text-xl font-bold text-[#403E43]">RCBridge</span>
             </Link>
           </div>
           <div className="flex items-center space-x-4">
