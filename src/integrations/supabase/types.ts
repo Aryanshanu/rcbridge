@@ -9,7 +9,121 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          preferences: Json | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          preferences?: Json | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          preferences?: Json | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          area: number | null
+          bathrooms: number | null
+          bedrooms: number | null
+          created_at: string
+          description: string | null
+          id: string
+          location: string
+          owner_id: string | null
+          price: number
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          area?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location: string
+          owner_id?: string | null
+          price: number
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          area?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string
+          owner_id?: string | null
+          price?: number
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_images: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          property_id: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          property_id?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          property_id?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_images_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -20,7 +20,7 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#1E3A8A",
+          DEFAULT: "#1E3A8A", // Deep Blue
           foreground: "#FFFFFF",
         },
         secondary: {

@@ -9,10 +9,10 @@ export const Hero = () => {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-white sm:text-5xl md:text-6xl">
-            Find Your Perfect Space in Hyderabad
+            Connecting Property Owners with the Right Community
           </h1>
           <p className="mt-3 max-w-md mx-auto text-lg text-gray-200 sm:text-xl md:mt-5 md:max-w-3xl">
-            Connect with property owners and join a thriving startup community
+            Find your perfect space in Hyderabad while being part of a thriving startup ecosystem. Direct connections, transparent transactions.
           </p>
           <div className="mt-10 max-w-xl mx-auto">
             <div className="flex items-center bg-white rounded-lg shadow-lg p-2">
@@ -26,6 +26,14 @@ export const Hero = () => {
                 Search
               </button>
             </div>
+          </div>
+          <div className="mt-8 flex justify-center space-x-4">
+            <button className="bg-white text-primary px-6 py-3 rounded-md font-medium hover:bg-gray-50">
+              List Your Property
+            </button>
+            <button className="bg-transparent border-2 border-white text-white px-6 py-3 rounded-md font-medium hover:bg-white/10">
+              Join Startup Community
+            </button>
           </div>
         </div>
       </div>
