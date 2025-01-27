@@ -2,6 +2,7 @@ import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { PropertyCard } from "@/components/PropertyCard";
 import { Building2, Users, Handshake, Trophy } from "lucide-react";
+import { PropertyForm } from "@/components/PropertyForm";
 
 const Index = () => {
   const featuredProperties = [
@@ -40,6 +41,14 @@ const Index = () => {
       <Hero />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Property Form Section */}
+        <section className="mb-16">
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">List Your Property</h2>
+          <div className="bg-white/80 backdrop-blur-lg rounded-lg shadow-lg p-8">
+            <PropertyForm />
+          </div>
+        </section>
+
         {/* Featured Properties */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Featured Properties</h2>
@@ -50,7 +59,7 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Why Choose Us */}
+        {/* Why Choose Us Section */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Why Choose RCBridge</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -87,7 +96,7 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Startup Community */}
+        {/* Startup Community Section */}
         <div className="bg-secondary rounded-lg p-8 mt-12">
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-2xl font-bold text-primary mb-4">Join Our Startup Community</h2>
