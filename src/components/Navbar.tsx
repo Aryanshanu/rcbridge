@@ -6,14 +6,14 @@ export const Navbar = () => {
     <nav className="bg-primary shadow-sm border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center h-auto py-4">
-          <div className="flex items-center">
+          <div className="flex items-center bg-white px-4 py-2 rounded">
             <Link to="/" className="flex items-center">
               <img 
                 src="/lovable-uploads/5fd561ff-5bbd-449c-94a3-d39d0a8b4f03.png" 
                 alt="RC Bridge Logo" 
                 className="h-10 w-auto"
               />
-              <span className="ml-2 text-xl font-bold text-white">RCBridge</span>
+              <span className="ml-2 text-xl font-bold text-primary">RCBridge</span>
             </Link>
           </div>
           <div className="flex items-center space-x-4 mt-4">
