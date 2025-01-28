@@ -23,32 +23,32 @@ export const Navbar = () => {
               <span className="ml-2 text-xl font-bold text-primary">RCBridge</span>
             </Link>
           </div>
-          <div className="flex items-center space-x-4 mt-4">
-            <button onClick={scrollToPropertyForm} className="text-[#1EAEDB] hover:text-[#1EAEDB]/90 px-3 py-2 rounded-md text-sm font-medium">
+          <div className="flex items-center space-x-4 mt-4 bg-white rounded-lg px-6 py-3">
+            <button onClick={scrollToPropertyForm} className="text-primary hover:text-primary/90 px-3 py-2 rounded-md text-sm font-medium">
               <Home className="h-5 w-5 inline-block mr-1" />
               Home
             </button>
-            <button onClick={scrollToPropertyForm} className="text-[#1EAEDB] hover:text-[#1EAEDB]/90 px-3 py-2 rounded-md text-sm font-medium">
+            <button onClick={scrollToPropertyForm} className="text-primary hover:text-primary/90 px-3 py-2 rounded-md text-sm font-medium">
               <Building className="h-5 w-5 inline-block mr-1" />
               Properties
             </button>
-            <button onClick={scrollToPropertyForm} className="text-[#1EAEDB] hover:text-[#1EAEDB]/90 px-3 py-2 rounded-md text-sm font-medium">
+            <button onClick={scrollToPropertyForm} className="text-primary hover:text-primary/90 px-3 py-2 rounded-md text-sm font-medium">
               <Key className="h-5 w-5 inline-block mr-1" />
               Rental Services
             </button>
-            <button onClick={scrollToPropertyForm} className="text-[#1EAEDB] hover:text-[#1EAEDB]/90 px-3 py-2 rounded-md text-sm font-medium">
+            <button onClick={scrollToPropertyForm} className="text-primary hover:text-primary/90 px-3 py-2 rounded-md text-sm font-medium">
               <HandshakeIcon className="h-5 w-5 inline-block mr-1" />
               Partnerships
             </button>
-            <button onClick={scrollToPropertyForm} className="text-[#1EAEDB] hover:text-[#1EAEDB]/90 px-3 py-2 rounded-md text-sm font-medium">
+            <button onClick={scrollToPropertyForm} className="text-primary hover:text-primary/90 px-3 py-2 rounded-md text-sm font-medium">
               <Users className="h-5 w-5 inline-block mr-1" />
               Community
             </button>
-            <button onClick={scrollToPropertyForm} className="text-[#1EAEDB] hover:text-[#1EAEDB]/90 px-3 py-2 rounded-md text-sm font-medium">
+            <button onClick={scrollToPropertyForm} className="text-primary hover:text-primary/90 px-3 py-2 rounded-md text-sm font-medium">
               <Phone className="h-5 w-5 inline-block mr-1" />
               Contact
             </button>
-            <button onClick={scrollToPropertyForm} className="bg-[#1EAEDB] hover:bg-[#1EAEDB]/90 text-white px-4 py-2 rounded-md text-sm font-medium">
+            <button onClick={scrollToPropertyForm} className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md text-sm font-medium">
               List Property
             </button>
           </div>
