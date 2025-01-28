@@ -81,42 +81,42 @@ const Index = () => {
       <Hero />
       
       {/* Stats Section */}
-      <section className="py-12 bg-white">
+      <section className="py-8 sm:py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
             {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-3xl font-bold text-primary mb-2">{stat.value}</div>
-                <div className="text-gray-600">{stat.label}</div>
+              <div key={index} className="text-center p-4">
+                <div className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">{stat.value}</div>
+                <div className="text-sm sm:text-base text-gray-600">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Property Form Section */}
-        <section className="mb-16">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Tell Us Your Requirements</h2>
-            <p className="mt-2 text-lg text-gray-600">
+        <section className="mb-12 sm:mb-16">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Tell Us Your Requirements</h2>
+            <p className="mt-2 text-base sm:text-lg text-gray-600">
               Whether you're looking to buy, sell, or rent, we'll help you find the perfect match.
             </p>
           </div>
-          <div className="bg-gray-100 backdrop-blur-lg rounded-lg shadow-lg p-8">
+          <div className="bg-gray-100 backdrop-blur-lg rounded-lg shadow-lg p-4 sm:p-8">
             <PropertyForm />
           </div>
         </section>
 
         {/* Featured Properties */}
-        <section className="mb-16">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Featured Properties</h2>
-            <p className="mt-2 text-lg text-gray-600">
+        <section className="mb-12 sm:mb-16">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Featured Properties</h2>
+            <p className="mt-2 text-base sm:text-lg text-gray-600">
               Discover our hand-picked premium listings
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {featuredProperties.map((property, index) => (
               <PropertyCard key={index} {...property} />
             ))}
@@ -129,33 +129,33 @@ const Index = () => {
         </section>
 
         {/* Why Choose RCBridge */}
-        <section className="mb-16">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900">Why Choose RCBridge?</h2>
-            <p className="mt-2 text-lg text-gray-600">
+        <section className="mb-12 sm:mb-16">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Why Choose RCBridge?</h2>
+            <p className="mt-2 text-base sm:text-lg text-gray-600">
               We're revolutionizing property transactions with cutting-edge technology and a commitment to transparency.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="bg-white p-6 rounded-lg shadow-md">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
+              <div key={index} className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
+                <div className="inline-flex items-center justify-center w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-primary/10 text-primary mb-4">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-sm sm:text-base text-gray-600">{feature.description}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* Call to Action */}
-        <section className="bg-primary rounded-lg p-12 text-center text-white">
-          <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
-          <p className="text-xl mb-8">
+        <section className="bg-primary rounded-lg p-6 sm:p-12 text-center text-white">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Ready to Get Started?</h2>
+          <p className="text-lg sm:text-xl mb-6 sm:mb-8">
             Join RCBridge today and become part of Hyderabad's most innovative property marketplace.
           </p>
-          <div className="flex justify-center space-x-4">
+          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <button className="bg-white text-primary hover:bg-gray-100 px-6 py-3 rounded-md font-medium">
               Create Your Account
             </button>
@@ -167,9 +167,9 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 py-12">
+      <footer className="bg-gray-900 text-gray-300 py-8 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-white text-lg font-semibold mb-4">RCBridge</h3>
               <p className="text-sm">
