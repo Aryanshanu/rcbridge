@@ -103,7 +103,7 @@ const Index = () => {
               Whether you're looking to buy, sell, or rent, we'll help you find the perfect match.
             </p>
           </div>
-          <div className="bg-white/80 backdrop-blur-lg rounded-lg shadow-lg p-8">
+          <div className="bg-gray-100 backdrop-blur-lg rounded-lg shadow-lg p-8">
             <PropertyForm />
           </div>
         </section>
