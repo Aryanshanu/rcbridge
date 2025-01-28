@@ -27,6 +27,7 @@ type PropertyFormData = {
   expectedRoi: number;
   propertyType: "residential" | "commercial";
   propertyStatus: "sale" | "rent";
+  userIntent: "buy" | "sell";
 };
 
 export const PropertyForm = () => {
@@ -37,9 +38,11 @@ export const PropertyForm = () => {
     defaultValues: {
       propertyType: "residential",
       propertyStatus: "sale",
+      userIntent: "buy",
     },
   });
 
+  const userIntent = form.watch("userIntent");
   const propertyType = form.watch("propertyType");
   const propertyStatus = form.watch("propertyStatus");
 
@@ -80,67 +83,98 @@ export const PropertyForm = () => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        {/* Property Type & Status */}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8" id="property-form">
+        {/* User Intent */}
         <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-gray-900">Property Type & Status</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="propertyType"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Property Type</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex flex-col space-y-1"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="residential" id="residential" />
-                        <label htmlFor="residential">Residential</label>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="commercial" id="commercial" />
-                        <label htmlFor="commercial">Commercial</label>
-                      </div>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="propertyStatus"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Property Status</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex flex-col space-y-1"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="sale" id="sale" />
-                        <label htmlFor="sale">For Sale</label>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="rent" id="rent" />
-                        <label htmlFor="rent">For Rent</label>
-                      </div>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <h3 className="text-lg font-semibold text-gray-900">What are you looking for?</h3>
+          <FormField
+            control={form.control}
+            name="userIntent"
+            render={({ field }) => (
+              <FormItem className="space-y-3">
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    className="flex space-x-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="buy" id="buy" />
+                      <label htmlFor="buy">I want to Buy/Rent</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="sell" id="sell" />
+                      <label htmlFor="sell">I want to Sell/List</label>
+                    </div>
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
-        {/* Conditional Form Fields */}
+        {userIntent && (
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-gray-900">Property Type & Status</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="propertyType"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Property Type</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <RadioGroupItem value="residential" id="residential" />
+                          <label htmlFor="residential">Residential</label>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <RadioGroupItem value="commercial" id="commercial" />
+                          <label htmlFor="commercial">Commercial</label>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="propertyStatus"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Property Status</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <RadioGroupItem value="sale" id="sale" />
+                          <label htmlFor="sale">For Sale</label>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <RadioGroupItem value="rent" id="rent" />
+                          <label htmlFor="rent">For Rent</label>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Rest of the form fields */}
         {(propertyType && propertyStatus) && (
           <>
             {/* Basic Information */}
