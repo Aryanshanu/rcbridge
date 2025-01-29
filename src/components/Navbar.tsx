@@ -12,6 +12,10 @@ export const Navbar = () => {
     }
   };
 
+  const handleContactClick = () => {
+    window.location.href = "mailto:aryan@rcbridge.co";
+  };
+
   return (
     <nav className="bg-primary shadow-sm border-b sticky top-0 z-50" role="navigation" aria-label="Main navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -64,7 +68,7 @@ export const Navbar = () => {
               <Users className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
               <span>Community</span>
             </button>
-            <button onClick={scrollToPropertyForm} className="w-full md:w-auto text-left md:text-center text-primary hover:text-primary/90 px-3 py-2 rounded-md text-sm font-medium" role="menuitem">
+            <button onClick={handleContactClick} className="w-full md:w-auto text-left md:text-center text-primary hover:text-primary/90 px-3 py-2 rounded-md text-sm font-medium" role="menuitem">
               <Phone className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
               <span>Contact</span>
             </button>
