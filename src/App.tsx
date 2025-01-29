@@ -12,7 +12,6 @@ const queryClient = new QueryClient({
       staleTime: 60 * 1000, // 1 minute
       retry: 1,
       refetchOnWindowFocus: false,
-      suspense: true, // Enable Suspense mode
     },
   },
 });
