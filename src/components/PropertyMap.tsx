@@ -45,8 +45,6 @@ export const PropertyMap = () => {
     ? "fixed inset-4 z-50"
     : "h-[400px] w-full rounded-lg shadow-lg";
 
-  const center: L.LatLngExpression = [17.3850, 78.4867];
-
   return (
     <div className={`relative ${mapClassName} transition-all duration-300`}>
       <button
@@ -59,19 +57,19 @@ export const PropertyMap = () => {
       
       <div className="h-full w-full rounded-lg overflow-hidden">
         <MapContainer
-          center={center}
+          className="h-full w-full"
+          center={[17.3850, 78.4867] as [number, number]}
           zoom={12}
-          style={{ height: "100%", width: "100%" }}
           scrollWheelZoom={false}
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           {properties.map((property) => (
             <Marker 
               key={property.id} 
-              position={property.coordinates as L.LatLngExpression}
+              position={property.coordinates}
             >
               <Popup>
                 <div className="p-2">
