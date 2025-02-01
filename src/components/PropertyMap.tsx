@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { Maximize2, Minimize2 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -16,12 +17,11 @@ interface Property {
   title: string;
   location: string;
   price: number;
-  coordinates: [number, number]; // [latitude, longitude]
+  coordinates: [number, number];
 }
 
 export const PropertyMap = () => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
   // Example properties - replace with actual data from your Supabase database
   const properties: Property[] = [
@@ -30,36 +30,20 @@ export const PropertyMap = () => {
       title: "Luxury Villa in Banjara Hills",
       location: "Banjara Hills, Hyderabad",
       price: 2500000,
-      coordinates: [17.4156, 78.4347], // Banjara Hills coordinates
+      coordinates: [17.4156, 78.4347],
     },
     {
       id: "2",
       title: "Modern Office Space in HITEC City",
       location: "HITEC City, Hyderabad",
       price: 1800000,
-      coordinates: [17.4435, 78.3772], // HITEC City coordinates
+      coordinates: [17.4435, 78.3772],
     },
   ];
 
   const mapClassName = isExpanded
     ? "fixed inset-4 z-50"
     : "h-[400px] w-full rounded-lg shadow-lg";
-
-  // Use dynamic import for react-leaflet components
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return (
-      <div className={`relative ${mapClassName} bg-gray-100 flex items-center justify-center`}>
-        <div className="animate-pulse">Loading map...</div>
-      </div>
-    );
-  }
-
-  // Dynamically import react-leaflet components
-  const { MapContainer, TileLayer, Marker, Popup } = require('react-leaflet');
 
   return (
     <div className={`relative ${mapClassName} transition-all duration-300`}>
@@ -72,15 +56,15 @@ export const PropertyMap = () => {
       </button>
       
       <MapContainer
-        center={[17.3850, 78.4867] as [number, number]}
+        center={[17.3850, 78.4867]}
         zoom={12}
         style={{ height: "100%", width: "100%" }}
         className="rounded-lg"
-        scrollWheelZoom={true}
+        scrollWheelZoom={false}
       >
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {properties.map((property) => (
           <Marker 
