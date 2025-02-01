@@ -45,7 +45,7 @@ export const PropertyMap = () => {
     ? "fixed inset-4 z-50"
     : "h-[400px] w-full rounded-lg shadow-lg";
 
-  const center: L.LatLngExpression = [17.3850, 78.4867];
+  const center: [number, number] = [17.3850, 78.4867];
 
   return (
     <div className={`relative ${mapClassName} transition-all duration-300`}>
@@ -71,7 +71,7 @@ export const PropertyMap = () => {
         {properties.map((property) => (
           <Marker 
             key={property.id} 
-            position={property.coordinates as L.LatLngExpression}
+            position={property.coordinates}
           >
             <Popup>
               <div className="p-2">
