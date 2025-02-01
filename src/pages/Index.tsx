@@ -6,6 +6,7 @@ import { Features } from "@/components/sections/Features";
 import { CallToAction } from "@/components/sections/CallToAction";
 import { Footer } from "@/components/sections/Footer";
 import { PropertyForm } from "@/components/PropertyForm";
+import { PropertyMap } from "@/components/PropertyMap";
 import { SEO } from "@/components/SEO";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -27,6 +28,17 @@ const Index = () => {
         <Suspense fallback={<LoadingSpinner />}>
           <Statistics />
         </Suspense>
+
+        {/* Property Map Section */}
+        <section className="mb-12 sm:mb-16">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Explore Properties</h2>
+            <p className="mt-2 text-base sm:text-lg text-gray-600">
+              Find properties in your desired location
+            </p>
+          </div>
+          <PropertyMap />
+        </section>
         
         {/* Property Form Section */}
         <section className="mb-12 sm:mb-16">
