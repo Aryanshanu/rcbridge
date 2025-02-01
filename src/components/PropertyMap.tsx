@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useState, useEffect } from "react";
 import { Maximize2, Minimize2 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -22,6 +21,7 @@ interface Property {
 
 export const PropertyMap = () => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Example properties - replace with actual data from your Supabase database
   const properties: Property[] = [
@@ -45,7 +45,21 @@ export const PropertyMap = () => {
     ? "fixed inset-4 z-50"
     : "h-[400px] w-full rounded-lg shadow-lg";
 
-  const center: [number, number] = [17.3850, 78.4867];
+  // Use dynamic import for react-leaflet components
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return (
+      <div className={`relative ${mapClassName} bg-gray-100 flex items-center justify-center`}>
+        <div className="animate-pulse">Loading map...</div>
+      </div>
+    );
+  }
+
+  // Dynamically import react-leaflet components
+  const { MapContainer, TileLayer, Marker, Popup } = require('react-leaflet');
 
   return (
     <div className={`relative ${mapClassName} transition-all duration-300`}>
@@ -58,7 +72,7 @@ export const PropertyMap = () => {
       </button>
       
       <MapContainer
-        center={center}
+        center={[17.3850, 78.4867] as [number, number]}
         zoom={12}
         style={{ height: "100%", width: "100%" }}
         className="rounded-lg"
