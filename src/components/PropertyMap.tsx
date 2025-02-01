@@ -23,7 +23,7 @@ interface Property {
 export const PropertyMap = () => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Example properties - replace with actual data from your Supabase database
+  // Example properties
   const properties: Property[] = [
     {
       id: "1",
@@ -45,8 +45,6 @@ export const PropertyMap = () => {
     ? "fixed inset-4 z-50"
     : "h-[400px] w-full rounded-lg shadow-lg";
 
-  const defaultCenter: L.LatLngExpression = [17.3850, 78.4867];
-
   return (
     <div className={`relative ${mapClassName} transition-all duration-300`}>
       <button
@@ -57,32 +55,33 @@ export const PropertyMap = () => {
         {isExpanded ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
       </button>
       
-      <MapContainer
-        center={defaultCenter}
-        zoom={12}
-        style={{ height: "100%", width: "100%" }}
-        className="rounded-lg"
-        scrollWheelZoom={false}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        {properties.map((property) => (
-          <Marker 
-            key={property.id} 
-            position={property.coordinates as L.LatLngExpression}
-          >
-            <Popup>
-              <div className="p-2">
-                <h3 className="font-semibold">{property.title}</h3>
-                <p className="text-sm text-gray-600">{property.location}</p>
-                <p className="text-sm font-medium">₹{property.price.toLocaleString()}</p>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+      <div className="h-full w-full rounded-lg overflow-hidden">
+        <MapContainer
+          center={[17.3850, 78.4867]}
+          zoom={12}
+          style={{ height: "100%", width: "100%" }}
+          scrollWheelZoom={false}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+          {properties.map((property) => (
+            <Marker 
+              key={property.id} 
+              position={property.coordinates}
+            >
+              <Popup>
+                <div className="p-2">
+                  <h3 className="font-semibold">{property.title}</h3>
+                  <p className="text-sm text-gray-600">{property.location}</p>
+                  <p className="text-sm font-medium">₹{property.price.toLocaleString()}</p>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
     </div>
   );
 };
