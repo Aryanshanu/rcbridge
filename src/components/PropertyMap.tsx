@@ -56,7 +56,7 @@ export const PropertyMap = () => {
       </button>
       
       <MapContainer
-        center={[17.3850, 78.4867]} // Hyderabad center coordinates
+        center={[17.3850, 78.4867] as L.LatLngExpression} // Hyderabad center coordinates
         zoom={12}
         style={{ height: "100%", width: "100%" }}
         className="rounded-lg"
@@ -66,7 +66,10 @@ export const PropertyMap = () => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {properties.map((property) => (
-          <Marker key={property.id} position={property.coordinates}>
+          <Marker 
+            key={property.id} 
+            position={property.coordinates as L.LatLngExpression}
+          >
             <Popup>
               <div className="p-2">
                 <h3 className="font-semibold">{property.title}</h3>

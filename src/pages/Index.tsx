@@ -6,10 +6,13 @@ import { Features } from "@/components/sections/Features";
 import { CallToAction } from "@/components/sections/CallToAction";
 import { Footer } from "@/components/sections/Footer";
 import { PropertyForm } from "@/components/PropertyForm";
-import { PropertyMap } from "@/components/PropertyMap";
 import { SEO } from "@/components/SEO";
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
+
+const PropertyMap = lazy(() => import("@/components/PropertyMap").then(mod => ({
+  default: mod.PropertyMap
+})));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center p-8">
@@ -37,7 +40,9 @@ const Index = () => {
               Find properties in your desired location
             </p>
           </div>
-          <PropertyMap />
+          <Suspense fallback={<LoadingSpinner />}>
+            <PropertyMap />
+          </Suspense>
         </section>
         
         {/* Property Form Section */}
