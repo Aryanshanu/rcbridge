@@ -57,14 +57,14 @@ export const PropertyMap = () => {
       
       <div className="h-full w-full rounded-lg overflow-hidden">
         <MapContainer
-          className="h-full w-full"
-          center={[17.3850, 78.4867] as [number, number]}
+          center={[17.3850, 78.4867]}
           zoom={12}
+          className="h-full w-full"
           scrollWheelZoom={false}
         >
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           {properties.map((property) => (
             <Marker 
