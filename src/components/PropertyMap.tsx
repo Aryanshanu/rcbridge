@@ -45,8 +45,6 @@ export const PropertyMap = () => {
     ? "fixed inset-4 z-50"
     : "h-[400px] w-full rounded-lg shadow-lg";
 
-  const defaultCenter: [number, number] = [17.3850, 78.4867];
-
   return (
     <div className={`relative ${mapClassName} transition-all duration-300`}>
       <button
@@ -59,15 +57,14 @@ export const PropertyMap = () => {
       
       <div className="h-full w-full rounded-lg overflow-hidden">
         <MapContainer
-          center={defaultCenter}
+          style={{ height: "100%", width: "100%" }}
+          center={[17.3850, 78.4867]}
           zoom={12}
-          className="h-full w-full"
           scrollWheelZoom={false}
-          key="map"
         >
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           {properties.map((property) => (
             <Marker 
