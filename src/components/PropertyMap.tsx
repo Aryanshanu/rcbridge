@@ -58,18 +58,17 @@ export const PropertyMap = () => {
       <div className="h-full w-full rounded-lg overflow-hidden">
         <MapContainer
           style={{ height: "100%", width: "100%" }}
-          center={[17.3850, 78.4867]}
+          center={[17.3850, 78.4867] as L.LatLngExpression}
           zoom={12}
           scrollWheelZoom={false}
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           {properties.map((property) => (
             <Marker 
               key={property.id} 
-              position={property.coordinates}
+              position={property.coordinates as L.LatLngExpression}
             >
               <Popup>
                 <div className="p-2">
