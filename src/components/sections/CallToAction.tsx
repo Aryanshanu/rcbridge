@@ -16,12 +16,14 @@ export const CallToAction = () => {
   const handleDemoRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Store demo request in Supabase
+      // Store demo request in Supabase with proper typing
       const { error } = await supabase
         .from('demo_requests')
-        .insert([
-          { name: demoName, email: demoEmail, status: 'pending' }
-        ]);
+        .insert({
+          name: demoName,
+          email: demoEmail,
+          status: 'pending'
+        });
 
       if (error) throw error;
 
