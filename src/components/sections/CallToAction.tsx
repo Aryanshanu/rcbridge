@@ -3,29 +3,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export const CallToAction = () => {
   const [isSchedulingDemo, setIsSchedulingDemo] = useState(false);
   const [demoEmail, setDemoEmail] = useState("");
   const [demoName, setDemoName] = useState("");
-  const { signUpWithEmail } = useAuth();
   const { toast } = useToast();
 
   const handleDemoRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Here you would typically send this to your backend
-      console.log("Demo requested for:", { demoName, demoEmail });
+      // Store demo request in Supabase
+      const { error } = await supabase
+        .from('demo_requests')
+        .insert([
+          { name: demoName, email: demoEmail, status: 'pending' }
+        ]);
+
+      if (error) throw error;
+
       toast({
         title: "Demo Request Received",
         description: "We'll contact you shortly to schedule your demo.",
       });
+      
       setIsSchedulingDemo(false);
       setDemoEmail("");
       setDemoName("");
-    } catch (error) {
+      
+      // Send notification email (this would typically be handled by a backend service)
+      console.log("Demo requested for:", { demoName, demoEmail });
+      
+    } catch (error: any) {
+      console.error("Error scheduling demo:", error);
       toast({
         title: "Error",
         description: "Failed to schedule demo. Please try again.",
@@ -35,7 +48,6 @@ export const CallToAction = () => {
   };
 
   const handleCreateAccount = () => {
-    // Use the existing auth dialog from Navbar
     const signInButton = document.querySelector('[data-testid="sign-in-button"]') as HTMLButtonElement;
     if (signInButton) {
       signInButton.click();
@@ -58,6 +70,7 @@ export const CallToAction = () => {
         <Button
           onClick={handleCreateAccount}
           className="bg-white text-primary hover:bg-gray-100"
+          data-testid="create-account-button"
         >
           Create Your Account
         </Button>
@@ -67,6 +80,7 @@ export const CallToAction = () => {
             <Button
               variant="outline"
               className="bg-transparent border-2 border-white hover:bg-white/10 text-white"
+              data-testid="schedule-demo-button"
             >
               Schedule a Demo
             </Button>
@@ -87,6 +101,7 @@ export const CallToAction = () => {
                   onChange={(e) => setDemoName(e.target.value)}
                   placeholder="Your name"
                   required
+                  data-testid="demo-name-input"
                 />
               </div>
               <div className="space-y-2">
@@ -98,9 +113,10 @@ export const CallToAction = () => {
                   onChange={(e) => setDemoEmail(e.target.value)}
                   placeholder="your@email.com"
                   required
+                  data-testid="demo-email-input"
                 />
               </div>
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" data-testid="submit-demo-request">
                 Request Demo
               </Button>
             </form>
