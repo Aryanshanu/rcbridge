@@ -19,23 +19,61 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { user, signInWithEmail, signUpWithEmail, signOut } = useAuth();
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const { user, signInWithEmail, signUpWithEmail, signOut, resendVerificationEmail } = useAuth();
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const { toast } = useToast();
+
+  const validatePassword = (pass: string) => {
+    const hasMinLength = pass.length >= 8;
+    const hasNumber = /\d/.test(pass);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(pass);
+    return hasMinLength && hasNumber && hasSpecialChar;
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    setIsPasswordValid(validatePassword(newPassword));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (isSignUp) {
+      if (!isPasswordValid) {
+        toast({
+          title: "Invalid password",
+          description: "Password must be at least 8 characters long and contain numbers and special characters.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        toast({
+          title: "Passwords don't match",
+          description: "Please ensure both passwords match.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       await signUpWithEmail(email, password);
     } else {
       await signInWithEmail(email, password);
     }
+    
     setEmail("");
     setPassword("");
+    setConfirmPassword("");
   };
 
   const scrollToPropertyForm = () => {
@@ -134,10 +172,27 @@ export const Navbar = () => {
                         id="password"
                         type="password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={handlePasswordChange}
                         required
                       />
+                      {isSignUp && (
+                        <p className="text-sm text-gray-500">
+                          Password must be at least 8 characters long and contain numbers and special characters.
+                        </p>
+                      )}
                     </div>
+                    {isSignUp && (
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                        />
+                      </div>
+                    )}
                     <div className="flex flex-col space-y-2">
                       <Button type="submit">
                         {isSignUp ? 'Sign Up' : 'Sign In'}
@@ -145,10 +200,23 @@ export const Navbar = () => {
                       <Button
                         type="button"
                         variant="ghost"
-                        onClick={() => setIsSignUp(!isSignUp)}
+                        onClick={() => {
+                          setIsSignUp(!isSignUp);
+                          setPassword("");
+                          setConfirmPassword("");
+                        }}
                       >
                         {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
                       </Button>
+                      {!isSignUp && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => resendVerificationEmail(email)}
+                        >
+                          Resend verification email
+                        </Button>
+                      )}
                     </div>
                   </form>
                 </DialogContent>
@@ -237,10 +305,22 @@ export const Navbar = () => {
                         id="password-mobile"
                         type="password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={handlePasswordChange}
                         required
                       />
                     </div>
+                    {isSignUp && (
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword-mobile">Confirm Password</Label>
+                        <Input
+                          id="confirmPassword-mobile"
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                        />
+                      </div>
+                    )}
                     <div className="flex flex-col space-y-2">
                       <Button type="submit">
                         {isSignUp ? 'Sign Up' : 'Sign In'}
@@ -248,10 +328,23 @@ export const Navbar = () => {
                       <Button
                         type="button"
                         variant="ghost"
-                        onClick={() => setIsSignUp(!isSignUp)}
+                        onClick={() => {
+                          setIsSignUp(!isSignUp);
+                          setPassword("");
+                          setConfirmPassword("");
+                        }}
                       >
                         {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
                       </Button>
+                      {!isSignUp && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => resendVerificationEmail(email)}
+                        >
+                          Resend verification email
+                        </Button>
+                      )}
                     </div>
                   </form>
                 </DialogContent>
