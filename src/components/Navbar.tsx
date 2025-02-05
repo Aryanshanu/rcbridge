@@ -143,7 +143,7 @@ export const Navbar = () => {
             ) : (
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
+                  <Button data-testid="sign-in-button" variant="outline" size="sm">
                     <LogIn className="h-4 w-4 mr-2" />
                     Sign In
                   </Button>
@@ -276,7 +276,7 @@ export const Navbar = () => {
             ) : (
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full">
+                  <Button data-testid="sign-in-button" variant="outline" size="sm" className="w-full">
                     <LogIn className="h-4 w-4 mr-2" />
                     Sign In
                   </Button>
