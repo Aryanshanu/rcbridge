@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      community_posts: {
+        Row: {
+          author_id: string | null
+          category: string
+          content: string
+          created_at: string
+          id: string
+          likes: number | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          views: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          category: string
+          content: string
+          created_at?: string
+          id?: string
+          likes?: number | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          views?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          likes?: number | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          views?: number | null
+        }
+        Relationships: []
+      }
       demo_requests: {
         Row: {
           created_at: string
@@ -68,43 +107,67 @@ export type Database = {
       }
       properties: {
         Row: {
+          amenities: Json | null
           area: number | null
           bathrooms: number | null
           bedrooms: number | null
           created_at: string
           description: string | null
+          features: string[] | null
           id: string
+          land_size: number | null
+          listing_type: Database["public"]["Enums"]["listing_type"] | null
           location: string
           owner_id: string | null
           price: number
+          property_type: Database["public"]["Enums"]["property_type"] | null
+          rental_duration: unknown | null
+          rental_terms: string | null
+          roi_potential: number | null
           status: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          amenities?: Json | null
           area?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
           created_at?: string
           description?: string | null
+          features?: string[] | null
           id?: string
+          land_size?: number | null
+          listing_type?: Database["public"]["Enums"]["listing_type"] | null
           location: string
           owner_id?: string | null
           price: number
+          property_type?: Database["public"]["Enums"]["property_type"] | null
+          rental_duration?: unknown | null
+          rental_terms?: string | null
+          roi_potential?: number | null
           status?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          amenities?: Json | null
           area?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
           created_at?: string
           description?: string | null
+          features?: string[] | null
           id?: string
+          land_size?: number | null
+          listing_type?: Database["public"]["Enums"]["listing_type"] | null
           location?: string
           owner_id?: string | null
           price?: number
+          property_type?: Database["public"]["Enums"]["property_type"] | null
+          rental_duration?: unknown | null
+          rental_terms?: string | null
+          roi_potential?: number | null
           status?: string | null
           title?: string
           updated_at?: string
@@ -118,6 +181,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      property_alerts: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          listing_type: Database["public"]["Enums"]["listing_type"] | null
+          location: string
+          max_price: number | null
+          max_size: number | null
+          min_price: number | null
+          min_size: number | null
+          property_type: Database["public"]["Enums"]["property_type"] | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          listing_type?: Database["public"]["Enums"]["listing_type"] | null
+          location: string
+          max_price?: number | null
+          max_size?: number | null
+          min_price?: number | null
+          min_size?: number | null
+          property_type?: Database["public"]["Enums"]["property_type"] | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          listing_type?: Database["public"]["Enums"]["listing_type"] | null
+          location?: string
+          max_price?: number | null
+          max_size?: number | null
+          min_price?: number | null
+          min_size?: number | null
+          property_type?: Database["public"]["Enums"]["property_type"] | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       property_images: {
         Row: {
@@ -151,6 +256,33 @@ export type Database = {
           },
         ]
       }
+      user_rewards: {
+        Row: {
+          created_at: string
+          id: string
+          points: number | null
+          referral_count: number | null
+          total_earned: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points?: number | null
+          referral_count?: number | null
+          total_earned?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points?: number | null
+          referral_count?: number | null
+          total_earned?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -159,7 +291,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      listing_type: "sale" | "rent" | "development_partnership"
+      property_type:
+        | "residential"
+        | "commercial"
+        | "agricultural"
+        | "undeveloped"
     }
     CompositeTypes: {
       [_ in never]: never

@@ -21,13 +21,19 @@ type PropertyFormData = {
   location: string;
   price: number;
   size: number;
+  landSize: number;
   bedrooms: number;
   bathrooms: number;
   possession: string;
   expectedRoi: number;
-  propertyType: "residential" | "commercial";
-  propertyStatus: "sale" | "rent";
+  propertyType: "residential" | "commercial" | "agricultural" | "undeveloped";
+  listingType: "sale" | "rent" | "development_partnership";
+  propertyStatus: "available" | "sold" | "rented";
   userIntent: "buy" | "sell";
+  rentalDuration?: string;
+  rentalTerms?: string;
+  features: string[];
+  amenities: Record<string, boolean>;
 };
 
 export const PropertyForm = () => {
@@ -37,14 +43,17 @@ export const PropertyForm = () => {
   const form = useForm<PropertyFormData>({
     defaultValues: {
       propertyType: "residential",
-      propertyStatus: "sale",
+      listingType: "sale",
+      propertyStatus: "available",
       userIntent: "buy",
+      features: [],
+      amenities: {},
     },
   });
 
-  const userIntent = form.watch("userIntent");
+  const listingType = form.watch("listingType");
   const propertyType = form.watch("propertyType");
-  const propertyStatus = form.watch("propertyStatus");
+  const userIntent = form.watch("userIntent");
 
   const onSubmit = async (data: PropertyFormData) => {
     try {
@@ -57,8 +66,16 @@ export const PropertyForm = () => {
         location: data.location,
         price: data.price,
         area: data.size,
+        land_size: data.landSize,
         bedrooms: data.bedrooms,
         bathrooms: data.bathrooms,
+        property_type: data.propertyType,
+        listing_type: data.listingType,
+        rental_duration: data.rentalDuration,
+        rental_terms: data.rentalTerms,
+        roi_potential: data.expectedRoi,
+        features: data.features,
+        amenities: data.amenities,
       });
 
       if (error) throw error;
@@ -138,6 +155,14 @@ export const PropertyForm = () => {
                           <RadioGroupItem value="commercial" id="commercial" />
                           <label htmlFor="commercial">Commercial</label>
                         </div>
+                        <div className="flex items-center space-x-3">
+                          <RadioGroupItem value="agricultural" id="agricultural" />
+                          <label htmlFor="agricultural">Agricultural</label>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <RadioGroupItem value="undeveloped" id="undeveloped" />
+                          <label htmlFor="undeveloped">Undeveloped Land</label>
+                        </div>
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
@@ -146,10 +171,10 @@ export const PropertyForm = () => {
               />
               <FormField
                 control={form.control}
-                name="propertyStatus"
+                name="listingType"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <FormLabel>Property Status</FormLabel>
+                    <FormLabel>Listing Type</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
@@ -164,6 +189,10 @@ export const PropertyForm = () => {
                           <RadioGroupItem value="rent" id="rent" />
                           <label htmlFor="rent">For Rent</label>
                         </div>
+                        <div className="flex items-center space-x-3">
+                          <RadioGroupItem value="development_partnership" id="partnership" />
+                          <label htmlFor="partnership">Development Partnership</label>
+                        </div>
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
@@ -175,7 +204,7 @@ export const PropertyForm = () => {
         )}
 
         {/* Rest of the form fields */}
-        {(propertyType && propertyStatus) && (
+        {(propertyType && listingType) && (
           <>
             {/* Basic Information */}
             <div className="space-y-6">
@@ -219,11 +248,11 @@ export const PropertyForm = () => {
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{propertyStatus === 'rent' ? 'Monthly Rent (₹)' : 'Price (₹)'}</FormLabel>
+                      <FormLabel>{listingType === 'rent' ? 'Monthly Rent (₹)' : 'Price (₹)'}</FormLabel>
                       <FormControl>
                         <Input 
                           type="number" 
-                          placeholder={propertyStatus === 'rent' ? "Enter monthly rent" : "Enter price"} 
+                          placeholder={listingType === 'rent' ? "Enter monthly rent" : "Enter price"} 
                           {...field} 
                         />
                       </FormControl>
@@ -236,29 +265,27 @@ export const PropertyForm = () => {
                   name="size"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Size (sq.ft)</FormLabel>
+                      <FormLabel>Built-up Area (sq.ft)</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="Enter size" {...field} />
+                        <Input type="number" placeholder="Enter built-up area" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                {propertyStatus === 'sale' && (
-                  <FormField
-                    control={form.control}
-                    name="expectedRoi"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Expected ROI (%)</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="Enter expected ROI" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
+                <FormField
+                  control={form.control}
+                  name="landSize"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Land Size (sq.ft)</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Enter land size" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               {propertyType === 'residential' && (
@@ -289,7 +316,7 @@ export const PropertyForm = () => {
                       </FormItem>
                     )}
                   />
-                  {propertyStatus === 'sale' && (
+                  {listingType === 'sale' && (
                     <FormField
                       control={form.control}
                       name="possession"
@@ -304,6 +331,41 @@ export const PropertyForm = () => {
                       )}
                     />
                   )}
+                </div>
+              )}
+
+              {listingType === 'rent' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="rentalDuration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Rental Duration</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., 11 months, 1 year" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="rentalTerms"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Rental Terms</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter rental terms and conditions"
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               )}
             </div>
