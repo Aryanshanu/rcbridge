@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +36,7 @@ type SellerPropertyFormData = {
 
 export const SellerPropertyForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [propertyId, setPropertyId] = useState<string | null>(null);
   const { toast } = useToast();
   
   const form = useForm<SellerPropertyFormData>({
@@ -56,32 +56,37 @@ export const SellerPropertyForm = () => {
       setIsSubmitting(true);
       console.log("Submitting property data:", data);
 
-      const { error } = await supabase.from("properties").insert({
-        title: data.title,
-        description: data.description,
-        location: data.location,
-        price: data.price,
-        area: data.size,
-        land_size: data.landSize,
-        bedrooms: data.bedrooms,
-        bathrooms: data.bathrooms,
-        property_type: data.propertyType,
-        listing_type: data.listingType,
-        rental_duration: data.rentalDuration,
-        rental_terms: data.rentalTerms,
-        roi_potential: data.expectedRoi,
-        features: data.features,
-        amenities: data.amenities,
-      });
+      const { data: newProperty, error } = await supabase
+        .from("properties")
+        .insert({
+          title: data.title,
+          description: data.description,
+          location: data.location,
+          price: data.price,
+          area: data.size,
+          land_size: data.landSize,
+          bedrooms: data.bedrooms,
+          bathrooms: data.bathrooms,
+          property_type: data.propertyType,
+          listing_type: data.listingType,
+          rental_duration: data.rentalDuration,
+          rental_terms: data.rentalTerms,
+          roi_potential: data.expectedRoi,
+          features: data.features,
+          amenities: data.amenities,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
+      setPropertyId(newProperty.id);
+
       toast({
         title: "Success!",
-        description: "Your property has been listed successfully.",
+        description: "Your property has been listed successfully. You can now add images.",
       });
       
-      form.reset();
     } catch (error) {
       console.error("Error submitting property:", error);
       toast({
@@ -92,6 +97,11 @@ export const SellerPropertyForm = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleImageUpload = (imageUrl: string) => {
+    // You can add additional logic here if needed when an image is uploaded
+    console.log('Image uploaded:', imageUrl);
   };
 
   return (
@@ -347,6 +357,17 @@ export const SellerPropertyForm = () => {
             )}
           />
         </div>
+
+        {propertyId && (
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-gray-900">Property Images</h3>
+            <PropertyImageUpload
+              propertyId={propertyId}
+              onUploadComplete={handleImageUpload}
+            />
+            <PropertyImageGallery propertyId={propertyId} />
+          </div>
+        )}
 
         <Button
           type="submit"
