@@ -12,6 +12,7 @@ import { PropertyTypeSection } from "./PropertyTypeSection";
 import { ListingTypeSection } from "./ListingTypeSection";
 import { BasicInformationSection } from "./BasicInformationSection";
 import { PropertyDetailsSection } from "./PropertyDetailsSection";
+import { FeaturesAmenitiesSection } from "./FeaturesAmenitiesSection";
 import { SellerPropertyFormData } from "./types";
 
 export const SellerPropertyForm = () => {
@@ -95,6 +96,7 @@ export const SellerPropertyForm = () => {
 
         <BasicInformationSection form={form} />
         <PropertyDetailsSection form={form} propertyType={propertyType} listingType={listingType} />
+        <FeaturesAmenitiesSection form={form} />
 
         <div className="space-y-6">
           <h3 className="text-lg font-semibold text-gray-900">Additional Information</h3>
