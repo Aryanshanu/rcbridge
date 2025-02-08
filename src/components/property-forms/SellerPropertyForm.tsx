@@ -14,6 +14,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { PropertyImageUpload } from "@/components/PropertyImageUpload";
+import { PropertyImageGallery } from "@/components/PropertyImageGallery";
 
 type SellerPropertyFormData = {
   title: string;
