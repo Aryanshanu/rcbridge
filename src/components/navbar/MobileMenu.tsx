@@ -1,4 +1,3 @@
-
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Home, LogIn, Phone, Users } from "lucide-react";
@@ -63,4 +62,4 @@ export const MobileMenu = ({ isOpen, scrollToPropertyForm, handleContactClick }:
       </div>
     </div>
   );
-};
+}
