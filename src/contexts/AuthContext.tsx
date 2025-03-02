@@ -1,6 +1,7 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import type { User, Provider } from "@supabase/supabase-js";
 import { useToast } from "@/components/ui/use-toast";
 
 interface AuthContextType {
@@ -8,6 +9,7 @@ interface AuthContextType {
   loading: boolean;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   resendVerificationEmail: (email: string) => Promise<void>;
 }
@@ -90,6 +92,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+        }
+      });
+      
+      if (error) throw error;
+      
+      // We don't need to show a toast here since the page will redirect to Google
+    } catch (error: any) {
+      console.error('Error signing in with Google:', error);
+      toast({
+        title: "Error signing in with Google",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const resendVerificationEmail = async (email: string) => {
     try {
       const { error } = await supabase.auth.resend({
@@ -136,6 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     signInWithEmail,
     signUpWithEmail,
+    signInWithGoogle,
     signOut,
     resendVerificationEmail,
   };
