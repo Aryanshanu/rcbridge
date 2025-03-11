@@ -4,10 +4,12 @@ import { PropertyRecommendations } from "@/components/PropertyRecommendations";
 import { AdvancedSearch } from "@/components/AdvancedSearch";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Calculator } from "lucide-react";
+import { InvestmentCalculator } from "@/components/InvestmentCalculator";
 
 export const FeaturedProperties = () => {
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  const [showInvestmentCalculator, setShowInvestmentCalculator] = useState(false);
   
   const featuredProperties = [
     {
@@ -50,17 +52,34 @@ export const FeaturedProperties = () => {
           Discover our hand-picked premium listings
         </p>
         
-        <Button 
-          variant="outline" 
-          className="mt-4 flex items-center gap-2"
-          onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
-        >
-          {showAdvancedSearch ? 'Hide' : 'Show'} Advanced Search
-          {showAdvancedSearch ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </Button>
+        <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+          >
+            {showAdvancedSearch ? 'Hide' : 'Show'} Advanced Search
+            {showAdvancedSearch ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={() => setShowInvestmentCalculator(!showInvestmentCalculator)}
+          >
+            {showInvestmentCalculator ? 'Hide' : 'Show'} Investment Calculator
+            <Calculator className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       
       {showAdvancedSearch && <AdvancedSearch />}
+      
+      {showInvestmentCalculator && (
+        <div className="mb-8">
+          <InvestmentCalculator />
+        </div>
+      )}
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
         {featuredProperties.map((property) => (
