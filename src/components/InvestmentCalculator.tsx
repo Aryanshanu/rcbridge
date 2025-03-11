@@ -28,11 +28,86 @@ type CalculationResult = {
   investmentStatus: 'good' | 'moderate' | 'poor';
 };
 
+// Function to convert number to words
+const convertNumberToWords = (num: number): string => {
+  if (!num) return '';
+  
+  const units = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+  const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+  
+  const convertLessThanOneThousand = (n: number): string => {
+    if (n === 0) return '';
+    
+    if (n < 20) return units[n];
+    
+    const digit = n % 10;
+    if (n < 100) return tens[Math.floor(n / 10)] + (digit ? '-' + units[digit] : '');
+    
+    return units[Math.floor(n / 100)] + ' hundred' + (n % 100 ? ' and ' + convertLessThanOneThousand(n % 100) : '');
+  };
+  
+  // Handle negative numbers
+  if (num < 0) return 'negative ' + convertNumberToWords(Math.abs(num));
+  
+  // Handle 0
+  if (num === 0) return 'zero';
+  
+  // Convert to string to handle commas and decimal
+  let numStr = num.toString();
+  
+  // Handle decimal part
+  let words = '';
+  if (numStr.includes('.')) {
+    const parts = numStr.split('.');
+    words = convertLessThanOneThousand(parseInt(parts[0]));
+    
+    if (parseInt(parts[1]) > 0) {
+      words += ' point ';
+      for (let i = 0; i < parts[1].length; i++) {
+        words += units[parseInt(parts[1][i])] + ' ';
+      }
+    }
+    return words.trim();
+  }
+  
+  // Handle large numbers
+  let result = '';
+  if (num < 1000) {
+    return convertLessThanOneThousand(num);
+  }
+  
+  if (num < 100000) { // Less than one lakh
+    return convertLessThanOneThousand(Math.floor(num / 1000)) + ' thousand' + 
+           (num % 1000 !== 0 ? ' ' + convertLessThanOneThousand(num % 1000) : '');
+  }
+  
+  if (num < 10000000) { // Less than one crore
+    return convertLessThanOneThousand(Math.floor(num / 100000)) + ' lakh' + 
+           (num % 100000 !== 0 ? ' ' + convertNumberToWords(num % 100000) : '');
+  }
+  
+  return convertLessThanOneThousand(Math.floor(num / 10000000)) + ' crore' + 
+         (num % 10000000 !== 0 ? ' ' + convertNumberToWords(num % 10000000) : '');
+};
+
+// Format price in Indian style (with lakhs and crores)
+const formatIndianPrice = (price: number): string => {
+  if (price >= 10000000) { // 1 crore or more
+    return `₹${(price / 10000000).toFixed(2)} Cr`;
+  } else if (price >= 100000) { // 1 lakh or more
+    return `₹${(price / 100000).toFixed(2)} L`;
+  } else {
+    return `₹${price.toLocaleString('en-IN')}`;
+  }
+};
+
 export function InvestmentCalculator() {
   const { toast } = useToast();
   const [isCalculating, setIsCalculating] = useState(false);
   const [calculationResult, setCalculationResult] = useState<CalculationResult | null>(null);
   const [appreciationRate, setAppreciationRate] = useState<number>(5);
+  const [propertyPriceInWords, setPropertyPriceInWords] = useState<string>('');
+  const [rentalIncomeInWords, setRentalIncomeInWords] = useState<string>('');
 
   const form = useForm<CalculatorFormData>({
     defaultValues: {
@@ -43,6 +118,14 @@ export function InvestmentCalculator() {
       timeframe: "5years"
     }
   });
+
+  useEffect(() => {
+    const propertyPrice = form.watch("propertyPrice");
+    const rentalIncome = form.watch("rentalIncome");
+    
+    setPropertyPriceInWords(convertNumberToWords(propertyPrice));
+    setRentalIncomeInWords(convertNumberToWords(rentalIncome));
+  }, [form.watch("propertyPrice"), form.watch("rentalIncome")]);
 
   const calculateInvestment = async (data: CalculatorFormData) => {
     try {
@@ -134,9 +217,17 @@ export function InvestmentCalculator() {
             <Input
               id="propertyPrice"
               type="number"
-              {...form.register("propertyPrice", { valueAsNumber: true })}
+              {...form.register("propertyPrice", { 
+                valueAsNumber: true,
+                onChange: (e) => setPropertyPriceInWords(convertNumberToWords(Number(e.target.value)))
+              })}
               required
             />
+            {propertyPriceInWords && (
+              <p className="text-sm text-muted-foreground italic mt-1">
+                {formatIndianPrice(form.watch("propertyPrice"))} ({propertyPriceInWords})
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -144,9 +235,17 @@ export function InvestmentCalculator() {
             <Input
               id="rentalIncome"
               type="number"
-              {...form.register("rentalIncome", { valueAsNumber: true })}
+              {...form.register("rentalIncome", { 
+                valueAsNumber: true,
+                onChange: (e) => setRentalIncomeInWords(convertNumberToWords(Number(e.target.value)))
+              })}
               required
             />
+            {rentalIncomeInWords && (
+              <p className="text-sm text-muted-foreground italic mt-1">
+                ₹{form.watch("rentalIncome").toLocaleString('en-IN')} ({rentalIncomeInWords})
+              </p>
+            )}
           </div>
         </div>
 
@@ -160,6 +259,9 @@ export function InvestmentCalculator() {
             onValueChange={(value) => setAppreciationRate(value[0])}
             className="mt-2"
           />
+          <p className="text-sm text-muted-foreground italic mt-1">
+            {appreciationRate}% ({convertNumberToWords(appreciationRate)} percent)
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -236,6 +338,9 @@ export function InvestmentCalculator() {
             <div className="flex justify-center mb-6">
               <div className={`${getStatusColor(calculationResult.investmentStatus)} w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-xl`}>
                 {calculationResult.totalReturn.toFixed(1)}%
+                <span className="text-xs block mt-1">
+                  ({convertNumberToWords(parseFloat(calculationResult.totalReturn.toFixed(1)))} percent)
+                </span>
               </div>
             </div>
             
@@ -245,6 +350,9 @@ export function InvestmentCalculator() {
                 <div className="flex items-center">
                   <span className="text-lg font-semibold">{calculationResult.rentalYield.toFixed(2)}%</span>
                   <ArrowUp className="h-4 w-4 ml-1 text-green-500" />
+                  <span className="text-xs ml-1">
+                    ({convertNumberToWords(parseFloat(calculationResult.rentalYield.toFixed(2)))})
+                  </span>
                 </div>
               </div>
               
@@ -253,6 +361,9 @@ export function InvestmentCalculator() {
                 <div className="flex items-center">
                   <span className="text-lg font-semibold">{calculationResult.priceAppreciation.toFixed(2)}%</span>
                   <TrendingUp className="h-4 w-4 ml-1 text-blue-500" />
+                  <span className="text-xs ml-1">
+                    ({convertNumberToWords(parseFloat(calculationResult.priceAppreciation.toFixed(2)))})
+                  </span>
                 </div>
               </div>
               
@@ -260,6 +371,9 @@ export function InvestmentCalculator() {
                 <p className="text-sm font-medium">RSI Indicator</p>
                 <div className="flex items-center">
                   <span className="text-lg font-semibold">{calculationResult.rsi.toFixed(0)}</span>
+                  <span className="text-xs ml-1">
+                    ({convertNumberToWords(parseFloat(calculationResult.rsi.toFixed(0)))})
+                  </span>
                   <span className={`ml-2 text-xs ${getRSIStatus(calculationResult.rsi).color}`}>
                     {getRSIStatus(calculationResult.rsi).text}
                   </span>
