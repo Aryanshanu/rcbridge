@@ -1,8 +1,17 @@
+
 import { PropertyCard } from "@/components/PropertyCard";
+import { PropertyRecommendations } from "@/components/PropertyRecommendations";
+import { AdvancedSearch } from "@/components/AdvancedSearch";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export const FeaturedProperties = () => {
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  
   const featuredProperties = [
     {
+      id: "prop-1",
       title: "Luxury Villa in Banjara Hills",
       location: "Banjara Hills, Hyderabad",
       price: "₹2.5Cr",
@@ -12,6 +21,7 @@ export const FeaturedProperties = () => {
       image: "/placeholder.svg",
     },
     {
+      id: "prop-2",
       title: "Modern Office Space in HITEC City",
       location: "HITEC City, Hyderabad",
       price: "₹1.8Cr",
@@ -21,6 +31,7 @@ export const FeaturedProperties = () => {
       image: "/placeholder.svg",
     },
     {
+      id: "prop-3",
       title: "Premium Apartment in Jubilee Hills",
       location: "Jubilee Hills, Hyderabad",
       price: "₹95L",
@@ -38,16 +49,31 @@ export const FeaturedProperties = () => {
         <p className="mt-2 text-base sm:text-lg text-gray-600">
           Discover our hand-picked premium listings
         </p>
+        
+        <Button 
+          variant="outline" 
+          className="mt-4 flex items-center gap-2"
+          onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+        >
+          {showAdvancedSearch ? 'Hide' : 'Show'} Advanced Search
+          {showAdvancedSearch ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
       </div>
+      
+      {showAdvancedSearch && <AdvancedSearch />}
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-        {featuredProperties.map((property, index) => (
-          <PropertyCard key={index} {...property} />
+        {featuredProperties.map((property) => (
+          <PropertyCard key={property.id} {...property} />
         ))}
       </div>
+      
+      <PropertyRecommendations />
+      
       <div className="text-center mt-8">
-        <button className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-md font-medium">
+        <Button className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-md font-medium">
           View All Properties
-        </button>
+        </Button>
       </div>
     </section>
   );
