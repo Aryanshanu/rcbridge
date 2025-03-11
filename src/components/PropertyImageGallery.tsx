@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Image as ImageIcon, Loader2 } from "lucide-react";
+import { LazyImage } from "@/components/ui/LazyImage";
 
 interface PropertyImage {
   id: string;
@@ -16,6 +17,7 @@ interface PropertyImageGalleryProps {
 export const PropertyImageGallery = ({ propertyId }: PropertyImageGalleryProps) => {
   const [images, setImages] = useState<PropertyImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -80,27 +82,47 @@ export const PropertyImageGallery = ({ propertyId }: PropertyImageGalleryProps) 
     );
   }
 
+  // Find the primary image first
+  const primaryImage = images.find(img => img.is_primary);
+  const otherImages = images.filter(img => !img.is_primary);
+  const orderedImages = primaryImage ? [primaryImage, ...otherImages] : images;
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-      {images.map((image) => (
-        <div
-          key={image.id}
-          className={`relative aspect-square rounded-lg overflow-hidden ${
-            image.is_primary ? 'col-span-1 sm:col-span-2 md:col-span-3' : ''
-          }`}
-        >
-          <img
-            src={image.url}
-            alt="Property"
-            className="w-full h-full object-cover"
-          />
-          {image.is_primary && (
-            <div className="absolute top-2 left-2 bg-accent text-white px-2 py-1 rounded-full text-xs">
-              Primary Image
-            </div>
-          )}
-        </div>
-      ))}
+    <div className="space-y-4">
+      {/* Main image */}
+      <div className="relative rounded-lg overflow-hidden aspect-[16/9]">
+        <LazyImage
+          src={orderedImages[activeIndex].url}
+          alt={`Property image ${activeIndex + 1}`}
+          aspectRatio="auto"
+          className="w-full h-full"
+        />
+        {orderedImages[activeIndex].is_primary && (
+          <div className="absolute top-2 left-2 bg-accent text-white px-2 py-1 rounded-full text-xs">
+            Primary Image
+          </div>
+        )}
+      </div>
+
+      {/* Thumbnails */}
+      <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+        {orderedImages.map((image, index) => (
+          <div 
+            key={image.id}
+            className={`relative cursor-pointer rounded-md overflow-hidden aspect-square border-2 transition-all ${
+              index === activeIndex ? 'border-primary' : 'border-transparent hover:border-gray-300'
+            }`}
+            onClick={() => setActiveIndex(index)}
+          >
+            <LazyImage
+              src={image.url}
+              alt={`Property thumbnail ${index + 1}`}
+              aspectRatio="square"
+              className="w-full h-full"
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
