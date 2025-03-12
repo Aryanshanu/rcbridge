@@ -1,3 +1,4 @@
+
 import { Suspense, useEffect, useState, lazy } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
@@ -10,6 +11,7 @@ import { PropertyForm } from "@/components/PropertyForm";
 import { SEO } from "@/components/SEO";
 import { Loader2 } from "lucide-react";
 import { NotificationButton } from "@/components/ui/NotificationButton";
+import { ChatBot } from "@/components/ChatBot";
 
 const Testimonials = lazy(() => import("@/components/sections/Testimonials").then(module => ({ default: module.Testimonials })));
 
@@ -104,6 +106,7 @@ const Index = () => {
       </main>
 
       <NotificationButton />
+      <ChatBot />
       <Footer />
     </div>
   );
