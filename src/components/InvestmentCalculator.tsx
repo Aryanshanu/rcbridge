@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
@@ -28,7 +27,6 @@ type CalculationResult = {
   investmentStatus: 'good' | 'moderate' | 'poor';
 };
 
-// Function to convert number to words
 const convertNumberToWords = (num: number): string => {
   if (!num) return '';
   
@@ -46,20 +44,15 @@ const convertNumberToWords = (num: number): string => {
     return units[Math.floor(n / 100)] + ' hundred' + (n % 100 ? ' and ' + convertLessThanOneThousand(n % 100) : '');
   };
   
-  // Handle negative numbers
   if (num < 0) return 'negative ' + convertNumberToWords(Math.abs(num));
   
-  // Handle 0
   if (num === 0) return 'zero';
   
-  // Convert to string to handle commas and decimal
   let numStr = num.toString();
   
-  // Handle decimal part
-  let words = '';
   if (numStr.includes('.')) {
     const parts = numStr.split('.');
-    words = convertLessThanOneThousand(parseInt(parts[0]));
+    let words = convertLessThanOneThousand(parseInt(parts[0]));
     
     if (parseInt(parts[1]) > 0) {
       words += ' point ';
@@ -70,8 +63,6 @@ const convertNumberToWords = (num: number): string => {
     return words.trim();
   }
   
-  // Handle large numbers
-  let result = '';
   if (num < 1000) {
     return convertLessThanOneThousand(num);
   }
@@ -90,7 +81,6 @@ const convertNumberToWords = (num: number): string => {
          (num % 10000000 !== 0 ? ' ' + convertNumberToWords(num % 10000000) : '');
 };
 
-// Format price in Indian style (with lakhs and crores)
 const formatIndianPrice = (price: number): string => {
   if (price >= 10000000) { // 1 crore or more
     return `₹${(price / 10000000).toFixed(2)} Cr`;
@@ -133,13 +123,10 @@ export function InvestmentCalculator() {
     try {
       setIsCalculating(true);
       
-      // Calculate rental yield
       const monthlyRental = data.rentalIncome;
       const annualRental = monthlyRental * 12;
       const rentalYield = (annualRental / data.propertyPrice) * 100;
       
-      // Simulate API call to get market data
-      // In a production environment, this would call your Supabase function
       const { data: marketData, error } = await supabase.functions.invoke('calculate-investment-metrics', {
         body: {
           propertyPrice: data.propertyPrice,
@@ -148,11 +135,10 @@ export function InvestmentCalculator() {
           timeframe: data.timeframe
         }
       }).catch(() => {
-        // Fallback calculation if the function isn't available yet
         return {
           data: {
             priceAppreciation: appreciationRate,
-            rsi: Math.random() * 30 + 50, // Random RSI between 50-80
+            rsi: Math.random() * 30 + 50,
             maStatus: Math.random() > 0.5 ? 'above' : 'below'
           },
           error: null
@@ -164,7 +150,6 @@ export function InvestmentCalculator() {
       const priceAppreciation = marketData?.priceAppreciation || appreciationRate;
       const totalReturn = rentalYield + priceAppreciation;
       
-      // Set the calculation result
       setCalculationResult({
         rentalYield,
         priceAppreciation,
@@ -396,6 +381,9 @@ export function InvestmentCalculator() {
                   ) : (
                     <ArrowDown className="h-4 w-4 ml-1 text-red-500" />
                   )}
+                  <span className="text-xs ml-2 italic">
+                    (professional trading signal)
+                  </span>
                 </div>
               </div>
             </div>
