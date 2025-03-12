@@ -11,34 +11,34 @@ const corsHeaders = {
 // Market data approximations (would ideally come from a real database)
 const MARKET_DATA = {
   hyderabad: {
-    residential: { appreciation: 8.5, rsi: 62, ma: 'above' },
-    commercial: { appreciation: 7.2, rsi: 55, ma: 'below' },
-    agricultural: { appreciation: 4.5, rsi: 48, ma: 'below' },
-    undeveloped: { appreciation: 6.8, rsi: 72, ma: 'above' },
+    residential: { appreciation: 8.5, rsi: 62 },
+    commercial: { appreciation: 7.2, rsi: 55 },
+    agricultural: { appreciation: 4.5, rsi: 48 },
+    undeveloped: { appreciation: 6.8, rsi: 72 },
   },
   bangalore: {
-    residential: { appreciation: 9.8, rsi: 78, ma: 'above' },
-    commercial: { appreciation: 8.5, rsi: 65, ma: 'above' },
-    agricultural: { appreciation: 5.2, rsi: 45, ma: 'below' },
-    undeveloped: { appreciation: 7.5, rsi: 68, ma: 'above' },
+    residential: { appreciation: 9.8, rsi: 78 },
+    commercial: { appreciation: 8.5, rsi: 65 },
+    agricultural: { appreciation: 5.2, rsi: 45 },
+    undeveloped: { appreciation: 7.5, rsi: 68 },
   },
   mumbai: {
-    residential: { appreciation: 10.2, rsi: 75, ma: 'above' },
-    commercial: { appreciation: 9.8, rsi: 80, ma: 'above' },
-    agricultural: { appreciation: 4.0, rsi: 42, ma: 'below' },
-    undeveloped: { appreciation: 8.5, rsi: 70, ma: 'above' },
+    residential: { appreciation: 10.2, rsi: 75 },
+    commercial: { appreciation: 9.8, rsi: 80 },
+    agricultural: { appreciation: 4.0, rsi: 42 },
+    undeveloped: { appreciation: 8.5, rsi: 70 },
   },
   delhi: {
-    residential: { appreciation: 7.5, rsi: 60, ma: 'above' },
-    commercial: { appreciation: 8.0, rsi: 68, ma: 'above' },
-    agricultural: { appreciation: 5.5, rsi: 50, ma: 'neutral' },
-    undeveloped: { appreciation: 6.0, rsi: 58, ma: 'below' },
+    residential: { appreciation: 7.5, rsi: 60 },
+    commercial: { appreciation: 8.0, rsi: 68 },
+    agricultural: { appreciation: 5.5, rsi: 50 },
+    undeveloped: { appreciation: 6.0, rsi: 58 },
   },
   chennai: {
-    residential: { appreciation: 7.2, rsi: 65, ma: 'above' },
-    commercial: { appreciation: 6.8, rsi: 62, ma: 'above' },
-    agricultural: { appreciation: 4.8, rsi: 45, ma: 'below' },
-    undeveloped: { appreciation: 5.5, rsi: 52, ma: 'below' },
+    residential: { appreciation: 7.2, rsi: 65 },
+    commercial: { appreciation: 6.8, rsi: 62 },
+    agricultural: { appreciation: 4.8, rsi: 45 },
+    undeveloped: { appreciation: 5.5, rsi: 52 },
   },
 };
 
@@ -94,8 +94,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         priceAppreciation,
-        rsi: marketData.rsi,
-        maStatus: marketData.ma
+        rsi: marketData.rsi
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

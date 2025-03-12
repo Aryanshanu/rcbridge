@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowUp, ArrowDown, TrendingUp, TrendingDown, Gauge } from "lucide-react";
+import { ArrowUp, TrendingUp, Gauge } from "lucide-react";
 
 type CalculatorFormData = {
   propertyPrice: number;
@@ -23,7 +23,6 @@ type CalculationResult = {
   priceAppreciation: number;
   totalReturn: number;
   rsi: number;
-  maStatus: 'above' | 'below';
   investmentStatus: 'good' | 'moderate' | 'poor';
 };
 
@@ -155,7 +154,6 @@ export function InvestmentCalculator() {
         priceAppreciation,
         totalReturn,
         rsi: marketData?.rsi || 65,
-        maStatus: marketData?.maStatus || 'above',
         investmentStatus: totalReturn >= 12 ? 'good' : totalReturn >= 8 ? 'moderate' : 'poor'
       });
       
@@ -334,7 +332,7 @@ export function InvestmentCalculator() {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <p className="text-sm font-medium">Rental Yield</p>
                 <div className="flex items-center">
@@ -361,28 +359,8 @@ export function InvestmentCalculator() {
                 <p className="text-sm font-medium">RSI Indicator</p>
                 <div className="flex items-center">
                   <span className="text-lg font-semibold">{calculationResult.rsi.toFixed(0)}</span>
-                  <span className="text-xs ml-1">
-                    ({convertNumberToWords(parseFloat(calculationResult.rsi.toFixed(0)))})
-                  </span>
                   <span className={`ml-2 text-xs ${getRSIStatus(calculationResult.rsi).color}`}>
                     {getRSIStatus(calculationResult.rsi).text}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <p className="text-sm font-medium">Moving Average</p>
-                <div className="flex items-center">
-                  <span className="text-lg font-semibold">
-                    {calculationResult.maStatus === 'above' ? 'Above MA' : 'Below MA'}
-                  </span>
-                  {calculationResult.maStatus === 'above' ? (
-                    <ArrowUp className="h-4 w-4 ml-1 text-green-500" />
-                  ) : (
-                    <ArrowDown className="h-4 w-4 ml-1 text-red-500" />
-                  )}
-                  <span className="text-xs ml-2 italic">
-                    (professional trading signal)
                   </span>
                 </div>
               </div>
