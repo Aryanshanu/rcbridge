@@ -108,6 +108,7 @@ export function InvestmentCalculator() {
   const [appreciationRate, setAppreciationRate] = useState<number>(5);
   const [propertyPriceInWords, setPropertyPriceInWords] = useState<string>('');
   const [rentalIncomeInWords, setRentalIncomeInWords] = useState<string>('');
+  const [appreciationRateInWords, setAppreciationRateInWords] = useState<string>('');
 
   const form = useForm<CalculatorFormData>({
     defaultValues: {
@@ -125,7 +126,8 @@ export function InvestmentCalculator() {
     
     setPropertyPriceInWords(convertNumberToWords(propertyPrice));
     setRentalIncomeInWords(convertNumberToWords(rentalIncome));
-  }, [form.watch("propertyPrice"), form.watch("rentalIncome")]);
+    setAppreciationRateInWords(convertNumberToWords(appreciationRate));
+  }, [form.watch("propertyPrice"), form.watch("rentalIncome"), appreciationRate]);
 
   const calculateInvestment = async (data: CalculatorFormData) => {
     try {
@@ -256,11 +258,14 @@ export function InvestmentCalculator() {
             min={0}
             max={15}
             step={0.5}
-            onValueChange={(value) => setAppreciationRate(value[0])}
+            onValueChange={(value) => {
+              setAppreciationRate(value[0]);
+              setAppreciationRateInWords(convertNumberToWords(value[0]));
+            }}
             className="mt-2"
           />
           <p className="text-sm text-muted-foreground italic mt-1">
-            {appreciationRate}% ({convertNumberToWords(appreciationRate)} percent)
+            {appreciationRate}% ({appreciationRateInWords} percent)
           </p>
         </div>
 
