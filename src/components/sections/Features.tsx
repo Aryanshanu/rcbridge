@@ -1,5 +1,5 @@
 
-import { Building2, Users, Brain, Shield, Users2, ChartBar, Calculator, Home, Building, Map, Landmark, LineChart } from "lucide-react";
+import { Building2, Users, Brain, Shield, Users2, ChartBar, Calculator, Home, Building, Map, Landmark, LineChart, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InvestmentCalculator } from "@/components/InvestmentCalculator";
@@ -38,22 +38,160 @@ export const Features = () => {
     },
   ];
 
-  // Competitive comparison data
+  // Enhanced competitive comparison data with 10-point ratings
   const competitors = [
     { name: "RC Bridge", color: "bg-primary/80" },
     { name: "MagicBricks", color: "bg-red-500/80" },
     { name: "99acres", color: "bg-blue-500/80" },
     { name: "Housing.com", color: "bg-green-500/80" },
-    { name: "NoBroker", color: "bg-yellow-500/80" },
+    { name: "CommonFloor", color: "bg-yellow-500/80" },
+    { name: "NoBroker", color: "bg-purple-500/80" },
   ];
 
+  // Enhanced comparative matrix with ratings and indicators
   const competitiveMatrix = [
-    { feature: "Exclusivity & Off-Market Deals", scores: [10, 2, 2, 2, 3] },
-    { feature: "Personalized Property Matching", scores: [10, 4, 4, 4, 5] },
-    { feature: "Broker-Free Transactions", scores: [9, 3, 3, 3, 10] },
-    { feature: "Value Preservation", scores: [10, 3, 3, 3, 4] },
-    { feature: "Startup & Business Support", scores: [9, 4, 4, 4, 4] },
-    { feature: "Investment Opportunities (12%+ ROI)", scores: [10, 5, 5, 5, 6] },
+    { 
+      feature: "Public Listings", 
+      scores: [0, 10, 10, 10, 10, 10],
+      icons: [false, true, true, true, true, true]
+    },
+    { 
+      feature: "Exclusivity & Off-Market Deals", 
+      scores: [10, 2, 2, 2, 2, 3],
+      icons: [true, false, false, false, false, false]
+    },
+    { 
+      feature: "Personalized Property Matching", 
+      scores: [10, 4, 4, 4, 4, 5],
+      icons: [true, false, false, false, false, false]
+    },
+    { 
+      feature: "Broker-Free Transactions", 
+      scores: [9, 3, 3, 3, 3, 10],
+      icons: [true, false, false, false, false, true]
+    },
+    { 
+      feature: "Value Preservation", 
+      scores: [10, 3, 3, 3, 3, 4],
+      icons: [true, false, false, false, false, false]
+    },
+    { 
+      feature: "Rental Solutions", 
+      scores: [9, 8, 8, 8, 8, 9],
+      icons: [true, true, true, true, true, true]
+    },
+    { 
+      feature: "Advertising", 
+      scores: [7, 10, 10, 10, 10, 7],
+      icons: [true, true, true, true, true, true]
+    },
+    { 
+      feature: "Startup & Business Support", 
+      scores: [9, 4, 4, 4, 4, 4],
+      icons: [true, false, false, false, false, false]
+    },
+    { 
+      feature: "Development & Commercial Deals", 
+      scores: [9, 7, 7, 7, 7, 5],
+      icons: [true, true, true, true, true, false]
+    },
+    { 
+      feature: "Investment Opportunities (12%+ ROI)", 
+      scores: [10, 5, 5, 5, 5, 6],
+      icons: [true, false, false, false, false, false]
+    },
+    { 
+      feature: "User Experience & Trust", 
+      scores: [9, 7, 7, 8, 7, 8],
+      icons: [true, true, true, true, true, true]
+    }
+  ];
+
+  // Detailed feature breakdown
+  const detailedFeatures = [
+    {
+      id: "property-matching",
+      title: "🏡 Personalized Property Matching",
+      subtitle: "How It Works?",
+      description: [
+        "No Public Listings → We do not list properties on our platform to prevent value dilution.",
+        "Buyers submit detailed preferences (location, budget, property type, size, amenities).",
+        "Our system matches them with undisclosed, off-market properties that fit their criteria.",
+        "After verifying buyer interest, we share property details privately (images, documents, etc.).",
+        "Buyer and seller connect directly after mutual agreement → No middlemen."
+      ],
+      benefits: [
+        "Preserves real estate value by avoiding overexposure.",
+        "Ensures serious inquiries only – No unnecessary bargaining or market speculation.",
+        "Provides exclusive, high-quality property options instead of overwhelming choices."
+      ],
+      icon: <Map className="h-10 w-10 text-primary" />
+    },
+    {
+      id: "rental",
+      title: "🏠 Rental Solutions",
+      subtitle: "How It Works?",
+      description: [
+        "Curated rental options for residential & commercial spaces.",
+        "No public rental database – Only quality listings are privately recommended.",
+        "Direct negotiations between landlords & tenants → No brokerage fees.",
+        "Tenant screening & verification to ensure reliability."
+      ],
+      benefits: [
+        "Eliminates fake or duplicate listings found on traditional platforms.",
+        "Saves time – Tenants get options tailored to their needs, reducing search effort.",
+        "Fair pricing – Landlords offer reasonable prices without excessive agent commissions."
+      ],
+      icon: <Home className="h-10 w-10 text-primary" />
+    },
+    {
+      id: "startup",
+      title: "🚀 Startup & Business Support",
+      subtitle: "How It Works?",
+      description: [
+        "Specialized commercial spaces for startups, co-working hubs, and new businesses.",
+        "Flexible leasing options tailored for entrepreneurs and growing companies.",
+        "Networking & Investor Connect – Real estate investors looking for commercial opportunities."
+      ],
+      benefits: [
+        "Affordable & flexible leasing for startups with limited budgets.",
+        "Better workspace options – High-quality offices, co-working spaces, and business hubs.",
+        "Access to investors & mentors – Supports business growth beyond just real estate."
+      ],
+      icon: <Landmark className="h-10 w-10 text-primary" />
+    },
+    {
+      id: "development",
+      title: "🏗️ Development & Commercial Projects",
+      subtitle: "How It Works?",
+      description: [
+        "Private land deals for real estate developers & builders.",
+        "Exclusive large-scale projects – Hotels, malls, office buildings, etc.",
+        "Undisclosed property acquisitions for future development."
+      ],
+      benefits: [
+        "Access to hidden investment gems that are not publicly listed.",
+        "Direct developer-owner deals for efficient project execution.",
+        "Long-term strategic investments for businesses expanding their real estate footprint."
+      ],
+      icon: <Building className="h-10 w-10 text-primary" />
+    },
+    {
+      id: "investment",
+      title: "💰 Investment Opportunities",
+      subtitle: "How It Works?",
+      description: [
+        "Curated high-return real estate investments (12%+ annual ROI).",
+        "Risk-based property recommendations tailored to investor profiles.",
+        "Market intelligence & predictive analysis for smarter investments."
+      ],
+      benefits: [
+        "Guaranteed high ROI – Carefully vetted properties for stable profits.",
+        "Data-driven insights – Helps investors make informed decisions.",
+        "Exclusive opportunities – Off-market investment deals with strong growth potential."
+      ],
+      icon: <LineChart className="h-10 w-10 text-primary" />
+    }
   ];
 
   return (
@@ -66,8 +204,9 @@ export const Features = () => {
       </div>
 
       <Tabs defaultValue="features" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8">
+        <TabsList className="grid w-full grid-cols-4 mb-8">
           <TabsTrigger value="features">Core Features</TabsTrigger>
+          <TabsTrigger value="detailed">Detailed Breakdown</TabsTrigger>
           <TabsTrigger value="comparison">Competitive Analysis</TabsTrigger>
           <TabsTrigger value="calculator">Investment Calculator</TabsTrigger>
         </TabsList>
@@ -107,15 +246,55 @@ export const Features = () => {
           </div>
         </TabsContent>
         
+        <TabsContent value="detailed" className="space-y-8">
+          {detailedFeatures.map((feature, index) => (
+            <div key={index} id={feature.id} className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+              <div className="flex items-start gap-4">
+                <div className="hidden sm:block">
+                  {feature.icon}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900">{feature.title}</h3>
+                  
+                  <div className="mt-4">
+                    <h4 className="font-semibold text-primary">{feature.subtitle}</h4>
+                    <ul className="mt-2 space-y-2">
+                      {feature.description.map((item, i) => (
+                        <li key={i} className="flex items-start">
+                          <span className="text-primary mr-2 mt-1">➤</span>
+                          <span className="text-gray-700">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <h4 className="font-semibold text-green-600">✅ Benefits</h4>
+                    <ul className="mt-2 space-y-2">
+                      {feature.benefits.map((benefit, i) => (
+                        <li key={i} className="flex items-start">
+                          <span className="text-green-600 mr-2 mt-1">✓</span>
+                          <span className="text-gray-700">{benefit}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </TabsContent>
+        
         <TabsContent value="comparison">
           <div className="overflow-x-auto">
             <div className="bg-white p-4 rounded-lg shadow-md min-w-[768px]">
               <h3 className="text-xl font-bold mb-4 text-center">RC Bridge vs. Market Competitors</h3>
+              
               <div className="mb-4">
                 <div className="grid grid-cols-7 gap-2">
-                  <div className="col-span-3 font-semibold text-gray-700">Feature</div>
+                  <div className="col-span-1 font-semibold text-gray-700 pl-2">Feature</div>
                   {competitors.map((competitor, index) => (
-                    <div key={index} className="col-span-4/5 font-semibold text-center text-sm">
+                    <div key={index} className="col-span-1 font-semibold text-center text-sm">
                       {competitor.name}
                     </div>
                   ))}
@@ -123,10 +302,15 @@ export const Features = () => {
               </div>
               
               {competitiveMatrix.map((row, rowIndex) => (
-                <div key={rowIndex} className="grid grid-cols-7 gap-2 mb-3 items-center">
-                  <div className="col-span-3 text-gray-700">{row.feature}</div>
+                <div key={rowIndex} className="grid grid-cols-7 gap-2 mb-3 items-center hover:bg-gray-50">
+                  <div className="col-span-1 text-gray-700 pl-2 font-medium">{row.feature}</div>
                   {row.scores.map((score, scoreIndex) => (
-                    <div key={`${rowIndex}-${scoreIndex}`} className="col-span-4/5 text-center">
+                    <div key={`${rowIndex}-${scoreIndex}`} className="col-span-1 flex flex-col items-center justify-center">
+                      {row.icons[scoreIndex] ? (
+                        <Check className="text-green-500 w-5 h-5 mb-1" />
+                      ) : (
+                        <X className="text-red-500 w-5 h-5 mb-1" />
+                      )}
                       <div className="mx-auto w-8 h-8 rounded-full flex items-center justify-center text-white font-medium text-sm" 
                         style={{ backgroundColor: `var(--${competitors[scoreIndex].color.split('-')[1]})` }}>
                         {score}
@@ -136,28 +320,28 @@ export const Features = () => {
                 </div>
               ))}
               
-              <div className="mt-4 text-sm text-gray-600">
-                <p className="italic text-center">Ratings are out of 10, based on comprehensive market analysis and user feedback.</p>
+              <div className="mt-6 bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold mb-2">Key Takeaways:</h4>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start">
+                    <span className="text-primary mr-2">•</span>
+                    <span>RC Bridge scores highest in Exclusivity, Personalized Matching, Value Preservation, and Investment Opportunities.</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-primary mr-2">•</span>
+                    <span>Traditional platforms focus on public listings, which expose properties to mass audiences but reduce exclusivity and value.</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-primary mr-2">•</span>
+                    <span>NoBroker is closest to RC Bridge in broker-free transactions, but it still follows a public listing model.</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-primary mr-2">•</span>
+                    <span>RC Bridge outperforms others in startup and business support, development opportunities, and high ROI investments.</span>
+                  </li>
+                </ul>
               </div>
             </div>
-          </div>
-          
-          <div className="mt-8 bg-primary/5 p-6 rounded-lg">
-            <h3 className="text-lg font-semibold mb-3">Our Competitive Edge</h3>
-            <ul className="space-y-2">
-              <li className="flex items-start">
-                <span className="text-primary mr-2">✓</span>
-                <span>RC Bridge excels in providing exclusive, off-market deals that preserve property value.</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">✓</span>
-                <span>Traditional platforms rely on public listings, diluting property exclusivity and value.</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">✓</span>
-                <span>Our focus on high-return investment opportunities consistently outperforms market competitors.</span>
-              </li>
-            </ul>
           </div>
         </TabsContent>
         

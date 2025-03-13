@@ -104,9 +104,11 @@ const Index = () => {
         </Suspense>
       </main>
 
-      {/* Fixed position components with adjusted positioning */}
+      {/* Fixed position components with separate positioning */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-4">
         <NotificationButton />
+      </div>
+      <div className="fixed bottom-6 right-20 z-50">
         <ChatBot />
       </div>
       <Footer />
