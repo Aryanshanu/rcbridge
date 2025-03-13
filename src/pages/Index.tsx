@@ -80,7 +80,7 @@ const Index = () => {
               Whether you're looking to buy, sell, or rent, we'll help you find the perfect match.
             </p>
           </div>
-          <div className="bg-gray-100 backdrop-blur-lg rounded-lg shadow-lg p-4 sm:p-8">
+          <div id="property-form" className="bg-gray-100 backdrop-blur-lg rounded-lg shadow-lg p-4 sm:p-8">
             <Suspense fallback={<LoadingSpinner />}>
               <PropertyForm />
             </Suspense>
@@ -105,8 +105,10 @@ const Index = () => {
       </main>
 
       {/* Fixed position components with adjusted positioning */}
-      <NotificationButton />
-      <ChatBot />
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-4">
+        <NotificationButton />
+        <ChatBot />
+      </div>
       <Footer />
     </div>
   );
