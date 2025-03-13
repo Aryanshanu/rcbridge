@@ -95,10 +95,10 @@ export function ChatBot() {
 
   return (
     <>
-      {/* Chat button */}
+      {/* Chat button - positioned to not overlap with notification button */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-4 right-4 rounded-full p-3 h-12 w-12 shadow-lg z-50"
+        className="fixed bottom-20 right-4 rounded-full p-3 h-12 w-12 shadow-lg z-50 bg-accent hover:bg-accent/90"
         aria-label="Chat with us"
       >
         {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
@@ -107,13 +107,13 @@ export function ChatBot() {
       {/* Chat window */}
       <div
         className={cn(
-          "fixed bottom-20 right-4 w-80 md:w-96 z-50 transition-all duration-300 ease-in-out transform",
+          "fixed bottom-36 right-4 w-80 md:w-96 z-50 transition-all duration-300 ease-in-out transform",
           isOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0 pointer-events-none"
         )}
       >
-        <Card className="flex flex-col h-[500px] max-h-[70vh] overflow-hidden shadow-xl">
+        <Card className="flex flex-col h-[500px] max-h-[70vh] overflow-hidden shadow-xl border-accent/20">
           {/* Chat header */}
-          <div className="bg-primary text-primary-foreground p-3 flex justify-between items-center">
+          <div className="bg-accent text-accent-foreground p-3 flex justify-between items-center">
             <div className="flex items-center gap-2">
               <MessageCircle size={20} />
               <h3 className="font-medium">RC Bridge Assistant</h3>
@@ -121,7 +121,7 @@ export function ChatBot() {
             <Button 
               variant="ghost" 
               size="icon"
-              className="h-8 w-8 text-primary-foreground hover:text-primary-foreground/80"
+              className="h-8 w-8 text-accent-foreground hover:text-accent-foreground/80"
               onClick={() => setIsOpen(false)}
             >
               <X size={18} />
@@ -133,7 +133,7 @@ export function ChatBot() {
             {!modelReady && (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-accent" />
                   <p className="text-sm text-muted-foreground">Loading assistant...</p>
                 </div>
               </div>
@@ -145,7 +145,7 @@ export function ChatBot() {
                 className={cn(
                   "mb-3 max-w-[80%] rounded-lg p-3",
                   message.sender === 'user'
-                    ? "ml-auto bg-primary text-primary-foreground"
+                    ? "ml-auto bg-accent text-accent-foreground"
                     : "mr-auto bg-muted"
                 )}
               >
@@ -174,6 +174,7 @@ export function ChatBot() {
                 type="submit" 
                 size="icon" 
                 disabled={isLoading || !modelReady || !input.trim()}
+                className="bg-accent hover:bg-accent/90"
               >
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>

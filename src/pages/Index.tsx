@@ -1,4 +1,3 @@
-
 import { Suspense, useEffect, useState, lazy } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
@@ -105,6 +104,7 @@ const Index = () => {
         </Suspense>
       </main>
 
+      {/* Fixed position components with adjusted positioning */}
       <NotificationButton />
       <ChatBot />
       <Footer />
