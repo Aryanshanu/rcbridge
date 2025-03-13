@@ -1,7 +1,9 @@
+
 import { Suspense, useEffect, useState, lazy } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { Statistics } from "@/components/sections/Statistics";
+import { WhyChooseUs } from "@/components/sections/WhyChooseUs";
 import { FeaturedProperties } from "@/components/sections/FeaturedProperties";
 import { Features } from "@/components/sections/Features";
 import { CallToAction } from "@/components/sections/CallToAction";
@@ -69,6 +71,9 @@ const Index = () => {
       <Hero />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Why Choose Us Section */}
+        <WhyChooseUs />
+        
         <Suspense fallback={<LoadingSpinner />}>
           <Statistics />
         </Suspense>

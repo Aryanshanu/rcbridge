@@ -34,6 +34,9 @@ export const Hero = () => {
       {/* Hero Content */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
+          <span className="inline-block bg-accent/90 text-white text-sm font-medium px-3 py-1 rounded-full mb-4 animate-fade-in">
+            A Decade of Excellence in Real Estate 🏡
+          </span>
           <h1 className="text-4xl font-bold text-white sm:text-5xl md:text-6xl animate-fade-in" tabIndex={0}>
             Revolutionizing Real Estate & Community Building in India
           </h1>
@@ -84,16 +87,16 @@ export const Hero = () => {
           {/* Trust Indicators */}
           <div className="mt-12 flex flex-wrap justify-center gap-8 animate-fade-in">
             <div className="flex items-center text-white">
-              <span className="font-bold text-2xl mr-2">250+</span>
-              <span className="text-gray-200">Properties Listed</span>
+              <span className="font-bold text-2xl mr-2">10+</span>
+              <span className="text-gray-200">Years of Excellence</span>
             </div>
             <div className="flex items-center text-white">
-              <span className="font-bold text-2xl mr-2">100+</span>
-              <span className="text-gray-200">Gen Z Ambassadors</span>
+              <span className="font-bold text-2xl mr-2">₹750Cr+</span>
+              <span className="text-gray-200">Transactions</span>
             </div>
             <div className="flex items-center text-white">
               <span className="font-bold text-2xl mr-2">500+</span>
-              <span className="text-gray-200">Community Members</span>
+              <span className="text-gray-200">Successful Deals</span>
             </div>
           </div>
         </div>
