@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { motion } from 'framer-motion';
-import { Building, MapPin, Home, IndianRupee, SlidersHorizontal } from 'lucide-react';
+import { Building, MapPin, Home, IndianRupee, SlidersHorizontal, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PropertyType {
@@ -118,6 +118,11 @@ export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCa
       window.removeEventListener('resize', handleResize);
     };
   }, [propertyColor, propertyType]);
+
+  const handleWhatsAppInquiry = () => {
+    const message = encodeURIComponent(`Hi, I'm interested in the property: ${property.title} in ${property.location}. Could you provide more information?`);
+    window.open(`https://wa.me/917893871223?text=${message}`, '_blank');
+  };
   
   return (
     <motion.div
@@ -128,6 +133,7 @@ export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCa
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
+      whileHover={{ y: -5, transition: { duration: 0.2 } }}
     >
       {/* Abstract Geometric Visualization */}
       <div className="relative w-full h-48 bg-gray-50">
@@ -150,7 +156,7 @@ export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCa
       
       {/* Property Details */}
       <div className="p-4">
-        <h3 className="text-xl font-bold text-gray-900 mb-2">{property.title}</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-2 transition-colors duration-200 hover:text-primary">{property.title}</h3>
         
         <div className="flex items-start mb-3">
           <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
@@ -169,7 +175,7 @@ export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCa
         
         {/* Property Specs */}
         {property.bedrooms !== undefined && (
-          <div className="flex justify-between pt-3 border-t border-gray-100">
+          <div className="flex justify-between pt-3 border-t border-gray-100 mb-4">
             {property.bedrooms > 0 && (
               <div className="text-center">
                 <span className="block text-lg font-semibold">{property.bedrooms}</span>
@@ -190,6 +196,14 @@ export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCa
             </div>
           </div>
         )}
+        
+        <button 
+          onClick={handleWhatsAppInquiry}
+          className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-2 rounded-md transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
+        >
+          <MessageCircle className="h-4 w-4" />
+          Inquire via WhatsApp
+        </button>
       </div>
     </motion.div>
   );
