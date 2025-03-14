@@ -56,10 +56,6 @@ export const ValueComparisonTool = ({ className }: ValueComparisonToolProps) => 
     plane.receiveShadow = true;
     scene.add(plane);
     
-    // Text loader for labels
-    const fontLoader = new THREE.FontLoader();
-    let font: THREE.Font;
-    
     // Materials
     const traditionalMaterial = new THREE.MeshStandardMaterial({
       color: 0x94A3B8,
