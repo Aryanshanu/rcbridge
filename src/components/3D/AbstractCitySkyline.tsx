@@ -1,14 +1,14 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+// Update the import path to the correct location
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { AbstractCitySkylineProps } from './types/SkylineTypes';
-import { setupLighting } from './utils/SkylineLighting';
-import { createBuildings, createBasePlane } from './utils/SkylineBuildings';
-import { createWindowTexture } from './utils/SkylineMaterials';
-import { addNightSkyEffects } from './utils/NightSkyEffects';
 
-export const AbstractCitySkyline = ({ className, nightMode = false }: AbstractCitySkylineProps) => {
+interface AbstractCitySkylineProps {
+  className?: string;
+}
+
+export const AbstractCitySkyline = ({ className }: AbstractCitySkylineProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export const AbstractCitySkyline = ({ className, nightMode = false }: AbstractCi
 
     // Scene setup
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(nightMode ? '#0a1529' : '#1E3A8A');
+    scene.background = new THREE.Color('#1E3A8A');
     
     // Camera setup
     const camera = new THREE.PerspectiveCamera(
@@ -44,23 +44,91 @@ export const AbstractCitySkyline = ({ className, nightMode = false }: AbstractCi
     controls.autoRotate = true;
     controls.autoRotateSpeed = 0.5;
     
-    // Add lighting
-    setupLighting({ scene, nightMode });
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
     
-    // Create base plane
-    createBasePlane(scene, nightMode);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 10, 7.5);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
     
-    // Create window texture for night mode
-    const windowTexture = nightMode ? createWindowTexture() : null;
+    // Building materials
+    const residentialMaterial = new THREE.MeshStandardMaterial({
+      color: 0x10B981, // accent color
+      metalness: 0.3,
+      roughness: 0.7,
+    });
     
-    // Create buildings
-    const buildings = createBuildings({ scene, nightMode, windowTexture });
+    const commercialMaterial = new THREE.MeshStandardMaterial({
+      color: 0x3B82F6, // blue
+      metalness: 0.5,
+      roughness: 0.5,
+    });
     
-    // Add night sky effects if in night mode
-    let updateDronesFunction: (() => void) | null = null;
-    if (nightMode) {
-      const { updateDrones } = addNightSkyEffects(scene);
-      updateDronesFunction = updateDrones;
+    const investmentMaterial = new THREE.MeshStandardMaterial({
+      color: 0x8B5CF6, // purple
+      metalness: 0.7,
+      roughness: 0.3,
+    });
+    
+    // Base plane
+    const planeGeometry = new THREE.PlaneGeometry(100, 100);
+    const planeMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x1E293B,
+      metalness: 0.2,
+      roughness: 0.8,
+    });
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.rotation.x = -Math.PI / 2;
+    plane.receiveShadow = true;
+    scene.add(plane);
+    
+    // Create city buildings
+    const buildings: THREE.Mesh[] = [];
+    const buildingCount = 75;
+    
+    for (let i = 0; i < buildingCount; i++) {
+      // Determine building type and material
+      let material;
+      const buildingType = Math.random();
+      
+      if (buildingType < 0.5) {
+        material = residentialMaterial; // 50% residential
+      } else if (buildingType < 0.8) {
+        material = commercialMaterial; // 30% commercial
+      } else {
+        material = investmentMaterial; // 20% investment
+      }
+      
+      // Building size based on type
+      let width = Math.random() * 2 + 1;
+      let depth = Math.random() * 2 + 1;
+      
+      // Taller buildings for commercial/investment
+      let maxHeight = buildingType < 0.5 ? 8 : 15;
+      let height = Math.random() * maxHeight + 2;
+      
+      // Create building geometry
+      const geometry = new THREE.BoxGeometry(width, height, depth);
+      const building = new THREE.Mesh(geometry, material);
+      
+      // Position in a grid-like pattern with some randomness
+      const gridSize = 40;
+      const cellSize = 4;
+      
+      const gridX = Math.floor(Math.random() * gridSize) - gridSize / 2;
+      const gridZ = Math.floor(Math.random() * gridSize) - gridSize / 2;
+      
+      building.position.x = gridX * cellSize + Math.random() * 2;
+      building.position.z = gridZ * cellSize + Math.random() * 2;
+      building.position.y = height / 2;
+      
+      building.castShadow = true;
+      building.receiveShadow = true;
+      
+      scene.add(building);
+      buildings.push(building);
     }
     
     // Animation loop
@@ -76,11 +144,6 @@ export const AbstractCitySkyline = ({ className, nightMode = false }: AbstractCi
         // Very subtle y-position animation based on sine wave
         building.position.y += Math.sin(time + i) * 0.0005;
       });
-      
-      // Update drones in night mode
-      if (nightMode && updateDronesFunction) {
-        updateDronesFunction();
-      }
       
       renderer.render(scene, camera);
     };
@@ -107,13 +170,13 @@ export const AbstractCitySkyline = ({ className, nightMode = false }: AbstractCi
       window.removeEventListener('resize', handleResize);
       controls.dispose();
     };
-  }, [nightMode]);
+  }, []);
   
   return (
     <div 
       ref={containerRef} 
       className={`${className || ''} w-full h-full min-h-[400px]`}
-      aria-label={`Abstract 3D visualization of Hyderabad ${nightMode ? 'nighttime' : ''} skyline`}
+      aria-label="Abstract 3D visualization of Hyderabad skyline"
     />
   );
 };

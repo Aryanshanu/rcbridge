@@ -20,7 +20,7 @@ export const FeaturedProperties = () => {
       bedrooms: 4,
       bathrooms: 4,
       area: "4500 sq.ft",
-      image: "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?q=80&w=1500&auto=format&fit=crop",
+      image: "/placeholder.svg",
     },
     {
       id: "prop-2",
@@ -30,7 +30,7 @@ export const FeaturedProperties = () => {
       bedrooms: 0,
       bathrooms: 4,
       area: "3000 sq.ft",
-      image: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?q=80&w=1500&auto=format&fit=crop",
+      image: "/placeholder.svg",
     },
     {
       id: "prop-3",
@@ -40,7 +40,7 @@ export const FeaturedProperties = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "2200 sq.ft",
-      image: "https://images.unsplash.com/photo-1600585154526-990dced4db3d?q=80&w=1500&auto=format&fit=crop",
+      image: "/placeholder.svg",
     },
   ];
 
