@@ -1,11 +1,11 @@
 
-import { PropertyCard } from "@/components/PropertyCard";
-import { PropertyRecommendations } from "@/components/PropertyRecommendations";
-import { AdvancedSearch } from "@/components/AdvancedSearch";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Calculator } from "lucide-react";
 import { InvestmentCalculator } from "@/components/InvestmentCalculator";
+import { AdvancedSearch } from "@/components/AdvancedSearch";
+import { PropertyRecommendations } from "@/components/PropertyRecommendations";
+import { AbstractPropertyCard } from "@/components/AbstractPropertyCard";
 
 export const FeaturedProperties = () => {
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
@@ -83,7 +83,7 @@ export const FeaturedProperties = () => {
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
         {featuredProperties.map((property) => (
-          <PropertyCard key={property.id} {...property} />
+          <AbstractPropertyCard key={property.id} property={property} />
         ))}
       </div>
       

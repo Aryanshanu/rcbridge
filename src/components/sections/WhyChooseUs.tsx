@@ -1,6 +1,8 @@
 
 import { Check, Clock, Shield, Users } from "lucide-react";
 import { motion } from "framer-motion";
+import { ValueComparisonTool } from "@/components/3D/ValueComparisonTool";
+import { DataVisualizationCard } from "@/components/DataVisualizationCard";
 
 export const WhyChooseUs = () => {
   const containerVariants = {
@@ -112,6 +114,59 @@ export const WhyChooseUs = () => {
             </div>
           </motion.div>
         </motion.div>
+        
+        {/* 3D Value Comparison Tool */}
+        <motion.div 
+          className="mt-16"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          <ValueComparisonTool />
+        </motion.div>
+        
+        {/* Data Visualization Cards */}
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            viewport={{ once: true, amount: 0.2 }}
+          >
+            <DataVisualizationCard 
+              title="Value Retention" 
+              description="RC Bridge helps preserve property value by avoiding public listings and mass exposure."
+              type="value-retention"
+            />
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            viewport={{ once: true, amount: 0.2 }}
+          >
+            <DataVisualizationCard 
+              title="Market Growth" 
+              description="Our properties consistently outperform the market average in terms of value growth."
+              type="growth"
+            />
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            viewport={{ once: true, amount: 0.2 }}
+          >
+            <DataVisualizationCard 
+              title="Investment ROI" 
+              description="RC Bridge properties deliver 12%+ annual ROI through our exclusive network."
+              type="roi"
+            />
+          </motion.div>
+        </div>
 
         <div className="mt-12 text-center">
           <div className="inline-block bg-gray-100 p-4 rounded-lg">

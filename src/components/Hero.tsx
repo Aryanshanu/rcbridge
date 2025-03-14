@@ -2,6 +2,7 @@
 import { Search } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { AbstractCitySkyline } from "./3D/AbstractCitySkyline";
 
 export const Hero = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -17,7 +18,6 @@ export const Hero = () => {
       });
       return;
     }
-    // TODO: Implement search functionality
     toast({
       title: "Search",
       description: `Searching for: ${searchQuery}`,
@@ -26,9 +26,13 @@ export const Hero = () => {
 
   return (
     <section className="relative bg-primary py-24 overflow-hidden" role="banner">
-      {/* Background with overlay and grid pattern */}
+      {/* Background with overlay and 3D cityscape */}
       <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/70">
         <div className="absolute inset-0 bg-grid-white/[0.1] bg-[size:20px_20px]" aria-hidden="true" />
+        {/* Abstract 3D Visualization */}
+        <div className="absolute inset-0 opacity-30">
+          <AbstractCitySkyline />
+        </div>
       </div>
       
       {/* Hero Content */}
@@ -46,12 +50,12 @@ export const Hero = () => {
           
           {/* Search Bar */}
           <div className="mt-10 max-w-xl mx-auto animate-fade-in">
-            <form onSubmit={handleSearch} className="flex items-center bg-white rounded-lg shadow-lg p-2" role="search">
+            <form onSubmit={handleSearch} className="flex items-center bg-white backdrop-blur-md bg-opacity-90 rounded-lg shadow-lg p-2" role="search">
               <Search className="h-5 w-5 text-gray-400 ml-2" aria-hidden="true" />
               <input
                 type="search"
                 placeholder="Search by location, property type, or keywords..."
-                className="flex-1 p-2 outline-none text-gray-600"
+                className="flex-1 p-2 outline-none text-gray-600 bg-transparent"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-label="Search properties"
