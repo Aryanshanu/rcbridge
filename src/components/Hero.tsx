@@ -25,13 +25,14 @@ export const Hero = () => {
   };
 
   return (
-    <section className="relative bg-primary py-24 overflow-hidden" role="banner">
+    <section className="relative bg-[#0a1529] py-24 overflow-hidden" role="banner">
       {/* Background with overlay and 3D cityscape */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/70">
+      <div className="absolute inset-0 bg-gradient-to-r from-[#0a1529]/90 to-[#0a1529]/70">
         <div className="absolute inset-0 bg-grid-white/[0.1] bg-[size:20px_20px]" aria-hidden="true" />
-        {/* Abstract 3D Visualization */}
-        <div className="absolute inset-0 opacity-30">
-          <AbstractCitySkyline />
+        
+        {/* HITEC City Night Skyline Visualization */}
+        <div className="absolute inset-0 opacity-60">
+          <AbstractCitySkyline nightMode={true} />
         </div>
       </div>
       

@@ -24,7 +24,7 @@ export const PropertyRecommendations = () => {
             bedrooms: 2,
             bathrooms: 2,
             area: "1850 sq.ft",
-            image: "/placeholder.svg",
+            image: "https://images.unsplash.com/photo-1600585152220-90363fe7e115?q=80&w=1500&auto=format&fit=crop",
           },
           {
             id: "rec-2",
@@ -34,7 +34,7 @@ export const PropertyRecommendations = () => {
             bedrooms: 3,
             bathrooms: 3,
             area: "3200 sq.ft",
-            image: "/placeholder.svg",
+            image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1500&auto=format&fit=crop",
           },
           {
             id: "rec-3",
@@ -44,7 +44,7 @@ export const PropertyRecommendations = () => {
             bedrooms: 1,
             bathrooms: 1,
             area: "650 sq.ft",
-            image: "/placeholder.svg",
+            image: "https://images.unsplash.com/photo-1602343168117-bb8ffe3e2e9f?q=80&w=1500&auto=format&fit=crop",
           },
         ];
         setRecommendedProperties(mockRecommendations);
@@ -64,7 +64,7 @@ export const PropertyRecommendations = () => {
       bedrooms: 5,
       bathrooms: 6,
       area: "7500 sq.ft",
-      image: "/placeholder.svg",
+      image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=1500&auto=format&fit=crop",
     },
     {
       id: "trend-2",
@@ -74,7 +74,7 @@ export const PropertyRecommendations = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "2800 sq.ft",
-      image: "/placeholder.svg",
+      image: "https://images.unsplash.com/photo-1600210492493-0946911123ea?q=80&w=1500&auto=format&fit=crop",
     },
     {
       id: "trend-3",
@@ -84,7 +84,7 @@ export const PropertyRecommendations = () => {
       bedrooms: 3,
       bathrooms: 2,
       area: "2100 sq.ft",
-      image: "/placeholder.svg",
+      image: "https://images.unsplash.com/photo-1615875388242-39c74f483842?q=80&w=1500&auto=format&fit=crop",
     },
   ];
 
