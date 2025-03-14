@@ -1,7 +1,8 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+// Update the import path to the correct location
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 interface AbstractCitySkylineProps {
   className?: string;
