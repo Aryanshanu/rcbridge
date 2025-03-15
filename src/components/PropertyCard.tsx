@@ -2,7 +2,7 @@ import { Building, MapPin, Bed, Bath, Square, Share2, Heart, MessageCircle } fro
 import { useState, useEffect } from "react";
 import { LazyImage } from "@/components/ui/LazyImage";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { getPropertyImage } from "@/utils/imageGeneration";
 
 interface PropertyCardProps {
@@ -28,6 +28,7 @@ export const PropertyCard = ({
 }: PropertyCardProps) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [propertyImage, setPropertyImage] = useState<string>(image);
+  const [imageLoading, setImageLoading] = useState(true);
   const { toast } = useToast();
 
   const propertyType = bedrooms === 0 ? 'commercial' : 
@@ -36,6 +37,7 @@ export const PropertyCard = ({
   useEffect(() => {
     const loadImage = async () => {
       try {
+        setImageLoading(true);
         const imageType = propertyType === 'commercial' ? 'commercial' : 
                           propertyType === 'luxury' ? 'luxury' : 'residential';
         
@@ -45,14 +47,33 @@ export const PropertyCard = ({
           isExterior: true
         });
         
-        setPropertyImage(imageUrl);
+        const img = new Image();
+        img.onload = () => {
+          setPropertyImage(imageUrl);
+        };
+        img.onerror = () => {
+          console.error('Failed to load image from URL:', imageUrl);
+          toast({
+            title: "Image Loading Error",
+            description: "Could not load the property image. Using a placeholder.",
+            variant: "destructive",
+          });
+        };
+        img.src = imageUrl;
       } catch (error) {
         console.error('Error loading property image:', error);
+        toast({
+          title: "Image Loading Error",
+          description: "Could not load the property image. Using a placeholder.",
+          variant: "destructive",
+        });
+      } finally {
+        setImageLoading(false);
       }
     };
     
     loadImage();
-  }, [location, propertyType]);
+  }, [location, propertyType, toast]);
 
   const handleFavoriteToggle = () => {
     setIsFavorite(!isFavorite);

@@ -66,6 +66,18 @@ export const LazyImage = ({
     setIsLoaded(false);
   };
 
+  // Immediately check if the URL is valid by creating an Image object
+  useEffect(() => {
+    if (src !== placeholderSrc && src !== "") {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        if (isInView) setIsLoaded(true);
+      };
+      img.onerror = handleError;
+    }
+  }, [src, placeholderSrc, isInView]);
+
   return (
     <div
       className={cn(

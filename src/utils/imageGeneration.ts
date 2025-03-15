@@ -18,7 +18,7 @@ export interface PropertyImageOptions {
   isExterior?: boolean;
 }
 
-// Pre-generated map images to use as fallbacks
+// Pre-generated map images to use as fallbacks - using publicly accessible Unsplash images
 const fallbackMapImages: Record<MapType, string[]> = {
   pricing: [
     'https://images.unsplash.com/photo-1572168312382-7dca5d9d5b88?q=80&w=1000',
@@ -38,7 +38,7 @@ const fallbackMapImages: Record<MapType, string[]> = {
   ],
 };
 
-// Pre-generated property images to use as fallbacks
+// Pre-generated property images to use as fallbacks - using publicly accessible Unsplash images
 const fallbackPropertyImages: Record<'luxury' | 'residential' | 'commercial', string[]> = {
   luxury: [
     'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=1000',
@@ -101,7 +101,7 @@ export const getGeoMapImage = async (options: GeoMapImageOptions): Promise<strin
     const randomIndex = Math.floor(Math.random() * mapTypeImages.length);
     
     // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     return mapTypeImages[randomIndex];
   } catch (error) {

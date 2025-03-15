@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Building, MapPin, Home, IndianRupee, SlidersHorizontal, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LazyImage } from '@/components/ui/LazyImage';
 import { getPropertyImage } from '@/utils/imageGeneration';
+import { useToast } from '@/hooks/use-toast';
 
 interface PropertyType {
   id: string;
@@ -23,6 +25,8 @@ interface AbstractPropertyCardProps {
 
 export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCardProps) => {
   const [propertyImage, setPropertyImage] = useState<string>(property.image || '/placeholder.svg');
+  const [imageLoading, setImageLoading] = useState(true);
+  const { toast } = useToast();
   
   // Determine property type based on bedrooms
   const propertyType = property.bedrooms === 0 ? 'commercial' : 
@@ -36,6 +40,7 @@ export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCa
     // Load a realistic property image
     const loadImage = async () => {
       try {
+        setImageLoading(true);
         const imageType = propertyType === 'commercial' ? 'commercial' : 
                           propertyType === 'luxury' ? 'luxury' : 'residential';
         
@@ -48,12 +53,18 @@ export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCa
         setPropertyImage(imageUrl);
       } catch (error) {
         console.error('Error loading property image:', error);
-        // Keep the default image if there's an error
+        toast({
+          title: "Image Loading Error",
+          description: "Could not load the property image. Using a placeholder.",
+          variant: "destructive",
+        });
+      } finally {
+        setImageLoading(false);
       }
     };
     
     loadImage();
-  }, [property.location, propertyType]);
+  }, [property.location, propertyType, toast]);
 
   const handleWhatsAppInquiry = () => {
     const message = encodeURIComponent(`Hi, I'm interested in the property: ${property.title} in ${property.location}. Could you provide more information?`);
