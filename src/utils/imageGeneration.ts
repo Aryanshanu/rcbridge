@@ -23,6 +23,7 @@ export async function initializeImageModel() {
     console.log('Initializing image generation model...');
     try {
       // Use a specialized model for real estate images
+      // @ts-ignore - text-to-image is a valid pipeline type but TypeScript definitions may be outdated
       imageModel = await pipeline(
         'text-to-image',
         'stabilityai/stable-diffusion-2-1', 
@@ -82,8 +83,11 @@ export async function getPropertyImage(options: PropertyImageOptions): Promise<s
   // First try to initialize the model
   const modelInitialized = await initializeImageModel();
   
+  // Check if WebGPU is supported in the environment
+  const webGPUSupported = typeof window !== 'undefined' && 'gpu' in navigator;
+  
   // If model is initialized successfully and we're in a compatible environment, generate image
-  if (modelInitialized && imageModel && window.navigator.gpu) {
+  if (modelInitialized && imageModel && webGPUSupported) {
     try {
       console.log('Generating property image...');
       const prompt = generatePropertyImagePrompt(options);
