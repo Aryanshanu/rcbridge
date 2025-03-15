@@ -23,7 +23,7 @@ export async function initializeImageModel() {
     console.log('Initializing image generation model...');
     try {
       // Use a specialized model for real estate images
-      // @ts-ignore - text-to-image is a valid pipeline type but TypeScript definitions may be outdated
+      // @ts-expect-error - text-to-image is a valid pipeline type in the runtime but missing in TypeScript definitions
       imageModel = await pipeline(
         'text-to-image',
         'stabilityai/stable-diffusion-2-1', 
