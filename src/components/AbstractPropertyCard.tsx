@@ -1,9 +1,9 @@
-
-import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Building, MapPin, Home, IndianRupee, SlidersHorizontal, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LazyImage } from '@/components/ui/LazyImage';
+import { getPropertyImage } from '@/utils/imageGeneration';
 
 interface PropertyType {
   id: string;
@@ -22,7 +22,7 @@ interface AbstractPropertyCardProps {
 }
 
 export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCardProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [propertyImage, setPropertyImage] = useState<string>(property.image || '/placeholder.svg');
   
   // Determine property type based on bedrooms
   const propertyType = property.bedrooms === 0 ? 'commercial' : 
@@ -31,93 +31,29 @@ export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCa
   // Set color based on property type
   const propertyColor = propertyType === 'commercial' ? '#3B82F6' : 
                        propertyType === 'luxury' ? '#8B5CF6' : '#10B981';
-                       
+  
   useEffect(() => {
-    if (!canvasRef.current) return;
-    
-    // Set up scene
-    const scene = new THREE.Scene();
-    
-    // Set up camera
-    const camera = new THREE.PerspectiveCamera(
-      50, 
-      canvasRef.current.width / canvasRef.current.height, 
-      0.1, 
-      1000
-    );
-    camera.position.z = 5;
-    
-    // Set up renderer
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvasRef.current,
-      alpha: true,
-      antialias: true
-    });
-    renderer.setSize(canvasRef.current.width, canvasRef.current.height);
-    
-    // Create abstract geometric representation based on property type
-    let geometry;
-    
-    if (propertyType === 'commercial') {
-      // Commercial: Cube-like structure
-      geometry = new THREE.BoxGeometry(2, 2, 2);
-    } else if (propertyType === 'luxury') {
-      // Luxury: Complex polyhedron
-      geometry = new THREE.OctahedronGeometry(1.5, 1);
-    } else {
-      // Residential: House-like shape
-      geometry = new THREE.ConeGeometry(1.5, 2, 4);
-    }
-    
-    // Create material
-    const material = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(propertyColor),
-      metalness: 0.3,
-      roughness: 0.6,
-      flatShading: true,
-    });
-    
-    // Create mesh
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
-    
-    // Add lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-    
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(5, 5, 5);
-    scene.add(directionalLight);
-    
-    // Animation loop
-    const animate = () => {
-      requestAnimationFrame(animate);
-      
-      mesh.rotation.x += 0.003;
-      mesh.rotation.y += 0.005;
-      
-      renderer.render(scene, camera);
+    // Load a realistic property image
+    const loadImage = async () => {
+      try {
+        const imageType = propertyType === 'commercial' ? 'commercial' : 
+                          propertyType === 'luxury' ? 'luxury' : 'residential';
+        
+        const imageUrl = await getPropertyImage({ 
+          type: imageType as 'luxury' | 'residential' | 'commercial',
+          location: property.location.split(',')[0], // Use the city part of the location
+          isExterior: true
+        });
+        
+        setPropertyImage(imageUrl);
+      } catch (error) {
+        console.error('Error loading property image:', error);
+        // Keep the default image if there's an error
+      }
     };
     
-    animate();
-    
-    // Handle window resize
-    const handleResize = () => {
-      if (!canvasRef.current) return;
-      
-      const { width, height } = canvasRef.current;
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-      renderer.setSize(width, height);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [propertyColor, propertyType]);
+    loadImage();
+  }, [property.location, propertyType]);
 
   const handleWhatsAppInquiry = () => {
     const message = encodeURIComponent(`Hi, I'm interested in the property: ${property.title} in ${property.location}. Could you provide more information?`);
@@ -135,9 +71,14 @@ export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCa
       transition={{ duration: 0.4 }}
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
     >
-      {/* Abstract Geometric Visualization */}
+      {/* Property Image */}
       <div className="relative w-full h-48 bg-gray-50">
-        <canvas ref={canvasRef} width={300} height={180} className="w-full h-full" />
+        <LazyImage 
+          src={propertyImage} 
+          alt={property.title}
+          aspectRatio="video"
+          className="w-full h-full object-cover"
+        />
         
         {/* Property Type Badge */}
         <div 

@@ -1,9 +1,9 @@
-
 import { Building, MapPin, Bed, Bath, Square, Share2, Heart, MessageCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LazyImage } from "@/components/ui/LazyImage";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
+import { getPropertyImage } from "@/utils/imageGeneration";
 
 interface PropertyCardProps {
   title: string;
@@ -27,7 +27,32 @@ export const PropertyCard = ({
   id = "property-1" 
 }: PropertyCardProps) => {
   const [isFavorite, setIsFavorite] = useState(false);
+  const [propertyImage, setPropertyImage] = useState<string>(image);
   const { toast } = useToast();
+
+  const propertyType = bedrooms === 0 ? 'commercial' : 
+                       bedrooms > 3 ? 'luxury' : 'residential';
+
+  useEffect(() => {
+    const loadImage = async () => {
+      try {
+        const imageType = propertyType === 'commercial' ? 'commercial' : 
+                          propertyType === 'luxury' ? 'luxury' : 'residential';
+        
+        const imageUrl = await getPropertyImage({ 
+          type: imageType as 'luxury' | 'residential' | 'commercial',
+          location: location.split(',')[0],
+          isExterior: true
+        });
+        
+        setPropertyImage(imageUrl);
+      } catch (error) {
+        console.error('Error loading property image:', error);
+      }
+    };
+    
+    loadImage();
+  }, [location, propertyType]);
 
   const handleFavoriteToggle = () => {
     setIsFavorite(!isFavorite);
@@ -46,7 +71,6 @@ export const PropertyCard = ({
         url: window.location.href,
       }).catch((error) => console.log('Error sharing', error));
     } else {
-      // Fallback for browsers that don't support sharing
       toast({
         title: "Link copied to clipboard",
         description: "You can now share this property with others",
@@ -65,7 +89,7 @@ export const PropertyCard = ({
     <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl group">
       <div className="relative h-48 overflow-hidden">
         <LazyImage 
-          src={image} 
+          src={propertyImage} 
           alt={title} 
           aspectRatio="video"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
