@@ -84,7 +84,7 @@ export async function getPropertyImage(options: PropertyImageOptions): Promise<s
   const modelInitialized = await initializeImageModel();
   
   // Check if WebGPU is supported in the environment
-  const webGPUSupported = typeof window !== 'undefined' && 'gpu' in navigator;
+  const webGPUSupported = typeof navigator !== 'undefined' && 'gpu' in navigator;
   
   // If model is initialized successfully and we're in a compatible environment, generate image
   if (modelInitialized && imageModel && webGPUSupported) {
