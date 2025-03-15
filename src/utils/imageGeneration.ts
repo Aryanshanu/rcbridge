@@ -96,7 +96,7 @@ export const getGeoMapImage = async (options: GeoMapImageOptions): Promise<strin
     console.log(`Generating map for ${options.location} (${options.mapType})`);
     
     // In a real implementation, you would call an image generation API here
-    // For now, we'll return a pre-defined fallback image
+    // For now, we'll return a pre-defined fallback image with direct https URLs
     const mapTypeImages = fallbackMapImages[options.mapType];
     const randomIndex = Math.floor(Math.random() * mapTypeImages.length);
     
@@ -123,7 +123,7 @@ export const getPropertyImage = async (options: PropertyImageOptions): Promise<s
     console.log(`Generating property image for ${options.location} (${options.type})`);
     
     // In a real implementation, you would call an image generation API here
-    // For now, we'll return a pre-defined fallback image
+    // For now, we'll return a pre-defined fallback image with direct https URLs
     const propertyTypeImages = fallbackPropertyImages[options.type];
     const randomIndex = Math.floor(Math.random() * propertyTypeImages.length);
     

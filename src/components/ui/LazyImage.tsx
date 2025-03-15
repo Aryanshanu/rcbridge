@@ -21,6 +21,7 @@ export const LazyImage = ({
 }: LazyImageProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
@@ -46,11 +47,23 @@ export const LazyImage = ({
     };
   }, []);
 
+  useEffect(() => {
+    // Reset error state when src changes
+    setImgError(false);
+    setIsLoaded(false);
+  }, [src]);
+
   const aspectRatioClasses = {
     square: "aspect-square",
     video: "aspect-video",
     portrait: "aspect-[3/4]",
     auto: "",
+  };
+
+  const handleError = () => {
+    console.error(`Failed to load image: ${src}`);
+    setImgError(true);
+    setIsLoaded(false);
   };
 
   return (
@@ -61,14 +74,14 @@ export const LazyImage = ({
       )}
     >
       {/* Low quality placeholder */}
-      {!isLoaded && (
+      {(!isLoaded || imgError) && (
         <img
           src={placeholderSrc}
           alt={alt}
           className={cn(
             "w-full h-full absolute inset-0 transition-opacity duration-500",
             objectFit === "contain" ? "object-contain" : "object-cover",
-            isLoaded ? "opacity-0" : "opacity-100",
+            isLoaded && !imgError ? "opacity-0" : "opacity-100",
             className
           )}
           aria-hidden="true"
@@ -76,13 +89,14 @@ export const LazyImage = ({
       )}
       
       {/* Main image */}
-      {isInView && (
+      {isInView && !imgError && (
         <img
           ref={imgRef}
           src={src}
           alt={alt}
           loading="lazy"
           onLoad={() => setIsLoaded(true)}
+          onError={handleError}
           className={cn(
             "w-full h-full transition-opacity duration-500",
             objectFit === "contain" ? "object-contain" : "object-cover",
