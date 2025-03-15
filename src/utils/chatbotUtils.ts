@@ -1,3 +1,4 @@
+
 import { pipeline, env } from '@huggingface/transformers';
 
 // Configure transformers.js to use browser cache for better performance
@@ -6,6 +7,7 @@ env.useBrowserCache = true;
 // Initialize models only once
 let chatModel = null;
 let sentimentModel = null;
+let imageModel = null;
 
 export async function initializeChatModel() {
   if (!chatModel) {
@@ -44,6 +46,52 @@ export async function initializeSentimentModel() {
     }
   }
   return true;
+}
+
+// New function to initialize image generation model
+export async function initializeImageModel() {
+  if (!imageModel) {
+    console.log('Initializing image generation model...');
+    try {
+      imageModel = await pipeline(
+        'text-to-image',
+        'stabilityai/stable-diffusion-2-base', // Using a stable diffusion model for property images
+        { device: 'webgpu' }
+      );
+      console.log('Image model initialized successfully');
+      return true;
+    } catch (error) {
+      console.error('Failed to initialize image model:', error);
+      return false;
+    }
+  }
+  return true;
+}
+
+// Function to generate property images based on description
+export async function generatePropertyImage(description) {
+  try {
+    if (!imageModel) {
+      const initialized = await initializeImageModel();
+      if (!initialized) {
+        console.error('Could not initialize image model');
+        return null;
+      }
+    }
+    
+    // Enhance the prompt for better real estate images
+    const enhancedPrompt = `High quality professional photograph of a ${description}, real estate photography, bright lighting, wide angle lens, property listing image`;
+    
+    console.log('Generating image for:', enhancedPrompt);
+    const result = await imageModel(enhancedPrompt);
+    
+    // Convert output to usable image URL
+    const imageData = result[0];
+    return imageData;
+  } catch (error) {
+    console.error('Error generating property image:', error);
+    return null;
+  }
 }
 
 // Use sentiment to adjust response tone

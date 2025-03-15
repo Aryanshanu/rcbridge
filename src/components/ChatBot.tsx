@@ -3,15 +3,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { MessageCircle, X, Send, Loader2 } from 'lucide-react';
-import { initializeChatModel, generateResponse } from '@/utils/chatbotUtils';
+import { MessageCircle, X, Send, Loader2, Image } from 'lucide-react';
+import { initializeChatModel, generateResponse, initializeImageModel, generatePropertyImage } from '@/utils/chatbotUtils';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: number;
   text: string;
   sender: 'user' | 'bot';
   timestamp: Date;
+  imageUrl?: string;
 }
 
 export function ChatBot() {
@@ -27,17 +29,29 @@ export function ChatBot() {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [modelReady, setModelReady] = useState(false);
+  const [imageGenReady, setImageGenReady] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Initialize the model when the component mounts
-    const loadModel = async () => {
-      const ready = await initializeChatModel();
-      setModelReady(ready);
+    // Initialize the models when the component mounts
+    const loadModels = async () => {
+      const chatReady = await initializeChatModel();
+      const imageReady = await initializeImageModel();
+      setModelReady(chatReady);
+      setImageGenReady(imageReady);
+      
+      if (imageReady) {
+        toast({
+          title: "AI Models Ready",
+          description: "You can now generate property images and get real estate assistance",
+        });
+      }
     };
-    loadModel();
-  }, []);
+    loadModels();
+  }, [toast]);
 
   useEffect(() => {
     // Scroll to the bottom when messages change
@@ -90,6 +104,56 @@ export function ChatBot() {
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  const handleGeneratePropertyImage = async () => {
+    if (!imageGenReady || isGeneratingImage) return;
+    
+    setIsGeneratingImage(true);
+    toast({
+      title: "Generating Property Image",
+      description: "Please wait while I create a custom property image for you...",
+    });
+    
+    try {
+      // Extract a description from recent messages
+      const recentMessages = messages.slice(-3).map(msg => msg.text).join(' ');
+      const propertyDescription = `Real estate property in Hyderabad: ${recentMessages}`;
+      
+      const imageUrl = await generatePropertyImage(propertyDescription);
+      
+      if (imageUrl) {
+        const imageMessage: Message = {
+          id: messages.length,
+          text: "Here's a generated image based on our conversation:",
+          sender: 'bot',
+          timestamp: new Date(),
+          imageUrl: imageUrl
+        };
+        
+        setMessages((prev) => [...prev, imageMessage]);
+        
+        toast({
+          title: "Image Generated",
+          description: "I've created a property visualization for you",
+        });
+      } else {
+        toast({
+          title: "Image Generation Failed",
+          description: "I couldn't generate an image. Please try again with more specific details.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate property image",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingImage(false);
     }
   };
 
@@ -150,6 +214,20 @@ export function ChatBot() {
                 )}
               >
                 <p className="text-sm">{message.text}</p>
+                
+                {message.imageUrl && (
+                  <div className="mt-2 rounded-md overflow-hidden">
+                    <img 
+                      src={message.imageUrl} 
+                      alt="Generated property" 
+                      className="w-full h-auto max-h-48 object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/placeholder.svg';
+                      }}
+                    />
+                  </div>
+                )}
+                
                 <p className="text-xs opacity-70 mt-1 text-right">
                   {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
@@ -161,15 +239,32 @@ export function ChatBot() {
           {/* Chat input */}
           <form onSubmit={handleSubmit} className="p-3 border-t">
             <div className="flex gap-2">
-              <Input
-                ref={inputRef}
-                type="text"
-                placeholder="Type your message..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={isLoading || !modelReady}
-                className="flex-1"
-              />
+              <div className="flex-1 flex gap-2">
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Type your message..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  disabled={isLoading || !modelReady}
+                  className="flex-1"
+                />
+                
+                {imageGenReady && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    onClick={handleGeneratePropertyImage}
+                    disabled={isGeneratingImage || !imageGenReady}
+                    className="flex-shrink-0"
+                    title="Generate property image"
+                  >
+                    {isGeneratingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Image className="h-4 w-4" />}
+                  </Button>
+                )}
+              </div>
+              
               <Button 
                 type="submit" 
                 size="icon" 
