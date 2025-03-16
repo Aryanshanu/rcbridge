@@ -34,7 +34,10 @@ export const ContactInformation = ({ onRequestAssistance }: ContactInformationPr
           Fill out our detailed form and get personalized property recommendations tailored to your specific needs.
         </p>
         <Button 
-          onClick={onRequestAssistance} 
+          onClick={() => {
+            console.log("Request assistance button clicked");
+            onRequestAssistance();
+          }} 
           className="w-full"
           type="button"
         >

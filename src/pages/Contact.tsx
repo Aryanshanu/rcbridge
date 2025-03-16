@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/sections/Footer";
 import { SEO } from "@/components/SEO";
@@ -9,9 +9,39 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ContactForm } from "@/components/forms/ContactForm";
 import { ContactInformation } from "@/components/contact/ContactInformation";
 import { PersonalizedAssistanceForm } from "@/components/forms/PersonalizedAssistanceForm";
+import { useTableCheck } from "@/utils/dbTableCheck";
+import { useToast } from "@/hooks/use-toast";
 
 const Contact = () => {
   const [showAssistanceDialog, setShowAssistanceDialog] = useState(false);
+  const { checkTable } = useTableCheck();
+  const { toast } = useToast();
+
+  // Check if required tables exist
+  useEffect(() => {
+    const checkRequiredTables = async () => {
+      const assistanceTableExists = await checkTable('assistance_requests', 
+        'The assistance_requests table is missing. Form submissions may not work correctly.');
+      
+      if (!assistanceTableExists) {
+        console.error("Required table 'assistance_requests' is missing");
+      }
+
+      const contactTableExists = await checkTable('contact_messages',
+        'The contact_messages table is missing. Form submissions may not work correctly.');
+      
+      if (!contactTableExists) {
+        console.error("Required table 'contact_messages' is missing");
+      }
+    };
+    
+    checkRequiredTables();
+  }, [checkTable]);
+
+  const handleRequestAssistance = () => {
+    console.log("Opening assistance dialog");
+    setShowAssistanceDialog(true);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -48,7 +78,7 @@ const Contact = () => {
             <ContactForm />
           </div>
           
-          <ContactInformation onRequestAssistance={() => setShowAssistanceDialog(true)} />
+          <ContactInformation onRequestAssistance={handleRequestAssistance} />
         </div>
       </main>
       
@@ -63,8 +93,18 @@ const Contact = () => {
           </DialogHeader>
           
           <PersonalizedAssistanceForm 
-            onSuccess={() => setShowAssistanceDialog(false)}
-            onCancel={() => setShowAssistanceDialog(false)}
+            onSuccess={() => {
+              console.log("Form submitted successfully, closing dialog");
+              setShowAssistanceDialog(false);
+              toast({
+                title: "Request Submitted",
+                description: "Thank you for your request. Our experts will contact you soon.",
+              });
+            }}
+            onCancel={() => {
+              console.log("Form cancelled, closing dialog");
+              setShowAssistanceDialog(false);
+            }}
           />
         </DialogContent>
       </Dialog>
