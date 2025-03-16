@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdvancedSearch } from "@/components/AdvancedSearch";
 import { TextPropertyCard } from "@/components/TextPropertyCard";
 import { Filter, ChevronDown, ChevronUp } from "lucide-react";
@@ -31,7 +30,11 @@ interface Property {
   type?: string;
 }
 
-export const PropertiesTab = () => {
+interface PropertiesTabProps {
+  selectedPropertyId?: string;
+}
+
+export const PropertiesTab = ({ selectedPropertyId }: PropertiesTabProps) => {
   const [showFilters, setShowFilters] = useState(false);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
@@ -377,7 +380,6 @@ export const PropertiesTab = () => {
       description: "Compact studio apartment ideal for singles or investment. In a community with shared amenities and good rental prospects.",
       type: "residential"
     },
-    // ... remaining properties with types
     {
       id: "31",
       title: "Bungalow Plot",
@@ -600,7 +602,20 @@ export const PropertiesTab = () => {
     }
   ];
 
-  // Handle inquiry form submission
+  useEffect(() => {
+    if (selectedPropertyId) {
+      const foundProperty = properties.find(p => p.id === selectedPropertyId);
+      if (foundProperty) {
+        handleWantToKnowMore(foundProperty);
+        toast({
+          title: "Property Selected",
+          description: `You selected: ${foundProperty.title}`,
+          duration: 3000,
+        });
+      }
+    }
+  }, [selectedPropertyId]);
+
   const handleInquirySubmit = () => {
     toast({
       title: "Inquiry Submitted",
@@ -616,7 +631,6 @@ export const PropertiesTab = () => {
       message
     });
     
-    // Reset form fields
     setName("");
     setEmail("");
     setPhone("");
@@ -624,13 +638,11 @@ export const PropertiesTab = () => {
     setSelectedProperty(null);
   };
   
-  // Open inquiry dialog
   const handleWantToKnowMore = (property: Property) => {
     setSelectedProperty(property);
     setMessage(`I'm interested in the ${property.title} in ${property.location}.`);
   };
 
-  // Apply filters to properties
   const applyFilters = (filters: Record<string, any>) => {
     setActiveFilters(filters);
     
@@ -730,7 +742,6 @@ export const PropertiesTab = () => {
         </div>
       )}
       
-      {/* Property Inquiry Dialog */}
       <Dialog open={selectedProperty !== null} onOpenChange={(open) => !open && setSelectedProperty(null)}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>

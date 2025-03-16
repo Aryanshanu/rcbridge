@@ -5,44 +5,12 @@ import { ChevronDown, ChevronUp, Calculator } from "lucide-react";
 import { InvestmentCalculator } from "@/components/InvestmentCalculator";
 import { AdvancedSearch } from "@/components/AdvancedSearch";
 import { PropertyRecommendations } from "@/components/PropertyRecommendations";
-import { AbstractPropertyCard } from "@/components/AbstractPropertyCard";
+import { TextFeaturedProperties } from "@/components/sections/TextFeaturedProperties";
+import { Link } from "react-router-dom";
 
 export const FeaturedProperties = () => {
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [showInvestmentCalculator, setShowInvestmentCalculator] = useState(false);
-  
-  const featuredProperties = [
-    {
-      id: "prop-1",
-      title: "Luxury Villa in Banjara Hills",
-      location: "Banjara Hills, Hyderabad",
-      price: "₹2.5Cr",
-      bedrooms: 4,
-      bathrooms: 4,
-      area: "4500 sq.ft",
-      image: "/placeholder.svg",
-    },
-    {
-      id: "prop-2",
-      title: "Modern Office Space in HITEC City",
-      location: "HITEC City, Hyderabad",
-      price: "₹1.8Cr",
-      bedrooms: 0,
-      bathrooms: 4,
-      area: "3000 sq.ft",
-      image: "/placeholder.svg",
-    },
-    {
-      id: "prop-3",
-      title: "Premium Apartment in Jubilee Hills",
-      location: "Jubilee Hills, Hyderabad",
-      price: "₹95L",
-      bedrooms: 3,
-      bathrooms: 3,
-      area: "2200 sq.ft",
-      image: "/placeholder.svg",
-    },
-  ];
 
   return (
     <section className="mb-12 sm:mb-16">
@@ -81,18 +49,16 @@ export const FeaturedProperties = () => {
         </div>
       )}
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-        {featuredProperties.map((property) => (
-          <AbstractPropertyCard key={property.id} property={property} />
-        ))}
-      </div>
+      <TextFeaturedProperties />
       
       <PropertyRecommendations />
       
       <div className="text-center mt-8">
-        <Button className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-md font-medium">
-          View All Properties
-        </Button>
+        <Link to="/properties">
+          <Button className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-md font-medium">
+            View All Properties
+          </Button>
+        </Link>
       </div>
     </section>
   );

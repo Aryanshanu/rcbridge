@@ -1,4 +1,6 @@
 
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/sections/Footer";
 import { SEO } from "@/components/SEO";
@@ -8,6 +10,24 @@ import { PropertiesTab } from "@/components/tabs/PropertiesTab";
 import { Home, Building } from "lucide-react";
 
 const Properties = () => {
+  const location = useLocation();
+  const selectedPropertyId = location.state?.selectedPropertyId;
+  
+  useEffect(() => {
+    // If a property was selected from the home page, we can highlight it or scroll to it
+    if (selectedPropertyId) {
+      console.log("Selected property ID:", selectedPropertyId);
+      // You might want to scroll to this property or highlight it
+      // This could be implemented through a ref in the PropertiesTab component
+      
+      // Scroll to the properties section
+      const propertiesSection = document.getElementById('properties-section');
+      if (propertiesSection) {
+        propertiesSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [selectedPropertyId]);
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <SEO title="Properties | RC Bridge" description="Explore our selection of premium properties" />
@@ -40,8 +60,8 @@ const Properties = () => {
           </p>
         </div>
         
-        <section className="mb-16">
-          <PropertiesTab />
+        <section id="properties-section" className="mb-16">
+          <PropertiesTab selectedPropertyId={selectedPropertyId} />
         </section>
         
         <section className="mb-16">

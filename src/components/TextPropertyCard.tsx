@@ -19,9 +19,15 @@ interface TextPropertyCardProps {
   property: PropertyType;
   className?: string;
   onWantToKnowMore?: (property: PropertyType) => void;
+  hideActions?: boolean;
 }
 
-export const TextPropertyCard = ({ property, className, onWantToKnowMore }: TextPropertyCardProps) => {
+export const TextPropertyCard = ({ 
+  property, 
+  className, 
+  onWantToKnowMore,
+  hideActions = false
+}: TextPropertyCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const { toast } = useToast();
@@ -35,7 +41,8 @@ export const TextPropertyCard = ({ property, className, onWantToKnowMore }: Text
                        propertyType === 'luxury' ? '#8B5CF6' : // Luxury (purple)
                        '#10B981'; // Residential (green)
   
-  const handleLike = () => {
+  const handleLike = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering parent click
     setIsLiked(!isLiked);
     toast({
       title: isLiked ? "Removed from likes" : "Added to likes",
@@ -44,7 +51,8 @@ export const TextPropertyCard = ({ property, className, onWantToKnowMore }: Text
     });
   };
   
-  const handleSave = () => {
+  const handleSave = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering parent click
     setIsSaved(!isSaved);
     toast({
       title: isSaved ? "Removed from saved" : "Saved property",
@@ -53,7 +61,8 @@ export const TextPropertyCard = ({ property, className, onWantToKnowMore }: Text
     });
   };
   
-  const handleCall = () => {
+  const handleCall = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering parent click
     window.location.href = "tel:+917893871223";
     toast({
       title: "Call Agent",
@@ -62,7 +71,8 @@ export const TextPropertyCard = ({ property, className, onWantToKnowMore }: Text
     });
   };
   
-  const handleWantToKnowMore = () => {
+  const handleWantToKnowMore = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering parent click
     if (onWantToKnowMore) {
       onWantToKnowMore(property);
     }
@@ -124,46 +134,50 @@ export const TextPropertyCard = ({ property, className, onWantToKnowMore }: Text
         </div>
       )}
       
-      {/* Action Buttons */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        <button 
-          onClick={handleLike}
-          className={cn(
-            "flex flex-col items-center justify-center p-2 rounded-md transition-colors duration-200",
-            isLiked ? "bg-red-50 text-red-500" : "bg-gray-50 text-gray-500 hover:bg-gray-100"
-          )}
-        >
-          <Heart className={cn("h-4 w-4", isLiked && "fill-red-500")} />
-          <span className="text-xs mt-1">Like</span>
-        </button>
-        
-        <button 
-          onClick={handleSave}
-          className={cn(
-            "flex flex-col items-center justify-center p-2 rounded-md transition-colors duration-200",
-            isSaved ? "bg-blue-50 text-blue-500" : "bg-gray-50 text-gray-500 hover:bg-gray-100"
-          )}
-        >
-          <Bookmark className={cn("h-4 w-4", isSaved && "fill-blue-500")} />
-          <span className="text-xs mt-1">Save</span>
-        </button>
-        
-        <button 
-          onClick={handleCall}
-          className="flex flex-col items-center justify-center p-2 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors duration-200"
-        >
-          <Phone className="h-4 w-4" />
-          <span className="text-xs mt-1">Call</span>
-        </button>
-      </div>
-      
-      <Button 
-        onClick={handleWantToKnowMore}
-        className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-md transition-all duration-300"
-      >
-        <Info className="h-4 w-4" />
-        Want to Know More
-      </Button>
+      {/* Action Buttons - Only show when not hidden */}
+      {!hideActions && (
+        <>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            <button 
+              onClick={handleLike}
+              className={cn(
+                "flex flex-col items-center justify-center p-2 rounded-md transition-colors duration-200",
+                isLiked ? "bg-red-50 text-red-500" : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+              )}
+            >
+              <Heart className={cn("h-4 w-4", isLiked && "fill-red-500")} />
+              <span className="text-xs mt-1">Like</span>
+            </button>
+            
+            <button 
+              onClick={handleSave}
+              className={cn(
+                "flex flex-col items-center justify-center p-2 rounded-md transition-colors duration-200",
+                isSaved ? "bg-blue-50 text-blue-500" : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+              )}
+            >
+              <Bookmark className={cn("h-4 w-4", isSaved && "fill-blue-500")} />
+              <span className="text-xs mt-1">Save</span>
+            </button>
+            
+            <button 
+              onClick={handleCall}
+              className="flex flex-col items-center justify-center p-2 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors duration-200"
+            >
+              <Phone className="h-4 w-4" />
+              <span className="text-xs mt-1">Call</span>
+            </button>
+          </div>
+          
+          <Button 
+            onClick={handleWantToKnowMore}
+            className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-md transition-all duration-300"
+          >
+            <Info className="h-4 w-4" />
+            Want to Know More
+          </Button>
+        </>
+      )}
     </div>
   );
 };
