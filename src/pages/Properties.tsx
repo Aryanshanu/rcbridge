@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -191,5 +192,24 @@ const Properties = () => {
               </p>
               {Object.keys(activeFilters).length > 0 && (
                 <div className="mt-2 text-sm text-primary">
-                  Active
+                  Active filters: {Object.entries(activeFilters).map(([key, value]) => (
+                    <span key={key} className="inline-flex items-center bg-primary/10 text-primary rounded-full px-2 py-1 text-xs mr-2">
+                      {key}: {value}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <PropertiesTab selectedPropertyId={selectedPropertyId} filters={activeFilters} />
+        </section>
+      </main>
+      
+      <CallToAction />
+      <Footer />
+    </div>
+  );
+};
 
+export default Properties;
