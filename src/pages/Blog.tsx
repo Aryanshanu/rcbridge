@@ -10,44 +10,44 @@ const Blog = () => {
   const blogPosts = [
     {
       id: 1,
-      title: "Hyderabad Real Estate Market: Q2 2025 Insights",
-      date: "June 15, 2025",
-      excerpt: "The Hyderabad real estate market continues to show robust growth with property prices in key areas like Jubilee Hills and Banjara Hills appreciating by 18% year-over-year.",
+      title: "Hyderabad Real Estate Market: Q3 2023 Insights",
+      date: "October 10, 2023",
+      excerpt: "The Hyderabad real estate market continues to show robust growth with property prices in Jubilee Hills and Banjara Hills appreciating by 15% year-over-year, outperforming national averages.",
       category: "Market Analysis"
     },
     {
       id: 2,
-      title: "Investment Hotspots: Why HITEC City Remains a Top Choice",
-      date: "May 28, 2025",
-      excerpt: "With the expansion of IT corridors and improved infrastructure, HITEC City and Financial District continue to offer excellent returns for property investors.",
+      title: "Investment Hotspots: Financial District and Kokapet Leading the Pack",
+      date: "September 22, 2023",
+      excerpt: "With the expansion of the Financial District and improved ORR connectivity, Kokapet and Narsingi continue to offer excellent returns for property investors with 18% annual appreciation.",
       category: "Investment"
     },
     {
       id: 3,
-      title: "Changes in Telangana's Real Estate Regulations: What You Need to Know",
-      date: "May 10, 2025",
-      excerpt: "Recent amendments to Telangana's real estate regulations bring important changes for property buyers and sellers. Learn how these affect your transactions.",
+      title: "RERA Implementation in Telangana: Key Updates for 2023",
+      date: "September 5, 2023",
+      excerpt: "Recent amendments to Telangana's RERA implementation bring important changes for property buyers and sellers. Learn how these affect your transactions and ensure compliance.",
       category: "Regulations"
     },
     {
       id: 4,
-      title: "Luxury Housing Trends in Hyderabad: What's Driving the Market",
-      date: "April 22, 2025",
-      excerpt: "The luxury housing segment in Hyderabad has seen significant innovation with smart homes, sustainable architecture, and premium amenities becoming standard.",
+      title: "Smart Homes in Hyderabad: The New Standard in Luxury Housing",
+      date: "August 28, 2023",
+      excerpt: "The luxury housing segment in Hyderabad has embraced smart home technology, with developments in Jubilee Hills and Gachibowli offering fully integrated home automation systems.",
       category: "Luxury Real Estate"
     },
     {
       id: 5,
-      title: "Commercial Real Estate in Hyderabad: Post-Pandemic Recovery",
-      date: "April 5, 2025",
-      excerpt: "Commercial properties in Hyderabad have bounced back strongly from pandemic lows, with office spaces and retail sectors showing renewed demand.",
+      title: "Hyderabad's IT Corridor: Driving Commercial Real Estate Revival",
+      date: "August 12, 2023",
+      excerpt: "Commercial properties along the IT corridor from Gachibowli to Financial District have seen occupancy rates rise to 92%, with rental yields averaging 6-7% annually.",
       category: "Commercial"
     },
     {
       id: 6,
-      title: "The Impact of Metro Expansion on Hyderabad's Property Values",
-      date: "March 18, 2025",
-      excerpt: "Areas connected by Hyderabad's expanding metro network have seen property values increase by up to 25%. We analyze which neighborhoods will benefit next.",
+      title: "Metro Line 2 Extension: Impact on Property Values in West Hyderabad",
+      date: "July 30, 2023",
+      excerpt: "Areas connected by Hyderabad's Metro Line 2 extension have seen property values increase by up to 22%. We analyze which neighborhoods in Kukatpally and Miyapur will benefit next.",
       category: "Infrastructure"
     }
   ];
@@ -108,22 +108,22 @@ const Blog = () => {
               #HyderabadRealEstate
             </span>
             <span className="px-4 py-2 bg-gray-100 rounded-full text-gray-700 hover:bg-primary/10 hover:text-primary cursor-pointer">
-              #PropertyInvestment
+              #FinancialDistrict
             </span>
             <span className="px-4 py-2 bg-gray-100 rounded-full text-gray-700 hover:bg-primary/10 hover:text-primary cursor-pointer">
-              #RERAAct
+              #TelanaganaRERA
             </span>
             <span className="px-4 py-2 bg-gray-100 rounded-full text-gray-700 hover:bg-primary/10 hover:text-primary cursor-pointer">
-              #HITECCity
+              #GachibowliProperties
             </span>
             <span className="px-4 py-2 bg-gray-100 rounded-full text-gray-700 hover:bg-primary/10 hover:text-primary cursor-pointer">
-              #LuxuryHomes
+              #SmartHomes
             </span>
             <span className="px-4 py-2 bg-gray-100 rounded-full text-gray-700 hover:bg-primary/10 hover:text-primary cursor-pointer">
-              #AffordableHousing
+              #HyderabadMetro
             </span>
             <span className="px-4 py-2 bg-gray-100 rounded-full text-gray-700 hover:bg-primary/10 hover:text-primary cursor-pointer">
-              #SmartCity
+              #KokapetLand
             </span>
           </div>
         </div>

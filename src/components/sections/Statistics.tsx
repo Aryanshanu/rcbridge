@@ -5,14 +5,14 @@ import { motion } from "framer-motion";
 export const Statistics = () => {
   const [isVisible, setIsVisible] = useState(false);
   
-  // Updated statistics to reflect the platform's impact
+  // Updated statistics to reflect the platform's impact with more specific numbers
   const stats = [
-    { label: "Properties Listed", value: "500+", icon: "🏡" },
-    { label: "Active Users", value: "1,000+", icon: "👥" },
-    { label: "Startups Supported", value: "50+", icon: "🚀" },
-    { label: "Successful Deals", value: "500+", icon: "🤝" },
-    { label: "Years of Excellence", value: "10+", icon: "⭐" },
-    { label: "Avg. Buyer Savings", value: "₹4.5L", icon: "💰" },
+    { label: "Properties Listed", value: "487", icon: "🏡" },
+    { label: "Active Users", value: "1,248", icon: "👥" },
+    { label: "Startups Supported", value: "42", icon: "🚀" },
+    { label: "Successful Deals", value: "356", icon: "🤝" },
+    { label: "Years in Hyderabad", value: "10", icon: "⭐" },
+    { label: "Avg. Buyer Savings", value: "₹3.8L", icon: "💰" },
   ];
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export const Statistics = () => {
         <div className="text-center mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">A Decade of Excellence in Real Estate</h2>
           <p className="mt-2 text-base sm:text-lg text-gray-600">
-            Building trust through transparent transactions and exceptional service
+            Building trust through transparent transactions and exceptional service since 2013
           </p>
         </div>
         
@@ -62,7 +62,7 @@ export const Statistics = () => {
         
         <div className="mt-10 text-center">
           <p className="text-gray-600 italic">
-            "Eliminating middlemen and preserving property value through direct connections"
+            "Eliminating middlemen and preserving property value through direct connections since 2013"
           </p>
         </div>
       </div>

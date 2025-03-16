@@ -7,7 +7,7 @@ export const Footer = () => {
           <div>
             <h3 className="text-white text-lg font-semibold mb-4">RCBridge</h3>
             <p className="text-sm">
-              Connecting landowners, buyers, and startups in Hyderabad's property market.
+              Connecting landowners, buyers, and startups in Hyderabad's property market since 2013.
             </p>
           </div>
           <div>
@@ -31,13 +31,15 @@ export const Footer = () => {
           <div>
             <h4 className="text-white font-semibold mb-4">Contact Us</h4>
             <ul className="space-y-2 text-sm">
-              <li>Hyderabad</li>
+              <li>Jubilee Hills, Hyderabad</li>
               <li>aryan@rcbridge.co</li>
+              <li>+91 9876543210</li>
+              <li>RERA Reg: TS12345678</li>
             </ul>
           </div>
         </div>
         <div className="border-t border-gray-800 mt-8 pt-8 text-sm text-center">
-          © 2025 RCBridge. All rights reserved.
+          © 2013-2023 RCBridge. All rights reserved.
         </div>
       </div>
     </footer>
