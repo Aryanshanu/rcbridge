@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/sections/Footer";
@@ -122,7 +121,8 @@ const Contact = () => {
             phone: data.phone || "",
             requirement: data.requirement,
             property_type: data.propertyType,
-            budget: data.budget
+            budget: data.budget,
+            status: 'pending'
           }
         ]);
         
