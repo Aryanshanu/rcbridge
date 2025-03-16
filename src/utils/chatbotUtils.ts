@@ -1,3 +1,4 @@
+
 import { pipeline, env } from '@huggingface/transformers';
 
 // Configure transformers.js to use browser cache for better performance
@@ -9,11 +10,10 @@ let chatModel = null;
 let imageModel = null;
 
 /**
- * Get a response from the chatbot based on user message
- * @param message User message
- * @returns Chatbot response
+ * Initialize the chat model
+ * @returns Boolean indicating if initialization was successful
  */
-export async function getChatbotResponse(message: string): Promise<string> {
+export async function initializeChatModel(): Promise<boolean> {
   try {
     if (!chatModel) {
       console.log('Initializing chat model...');
@@ -21,9 +21,56 @@ export async function getChatbotResponse(message: string): Promise<string> {
       chatModel = await pipeline(
         'text2text-generation', 
         'onnx-community/distilgpt2', 
-        { max_new_tokens: 150 }
+        { 
+          // Use maxLength instead of max_new_tokens
+          maxLength: 150 
+        }
       );
       console.log('Chat model initialized successfully');
+    }
+    return true;
+  } catch (error) {
+    console.error('Error initializing chat model:', error);
+    return false;
+  }
+}
+
+/**
+ * Initialize the image generation model
+ * @returns Boolean indicating if initialization was successful
+ */
+export async function initializeImageModel(): Promise<boolean> {
+  try {
+    if (!imageModel) {
+      console.log('Initializing image generation model...');
+      // Using 'text-generation' pipeline as a fallback since text-to-image isn't available
+      imageModel = await pipeline(
+        'text-generation',
+        'stabilityai/stable-diffusion-2-base',
+        { device: 'webgpu' }
+      );
+      console.log('Image model initialized successfully');
+    }
+    return true;
+  } catch (error) {
+    console.error('Failed to initialize image model:', error);
+    return false;
+  }
+}
+
+/**
+ * Get a response from the chatbot based on user message
+ * @param message User message
+ * @returns Chatbot response
+ */
+export async function generateResponse(message: string): Promise<string> {
+  try {
+    if (!chatModel) {
+      await initializeChatModel();
+    }
+    
+    if (!chatModel) {
+      return "I'm sorry, I couldn't initialize my chat capabilities. Please try again later.";
     }
     
     // Generate response
@@ -54,19 +101,11 @@ export async function getChatbotResponse(message: string): Promise<string> {
 export async function generatePropertyImage(description: string): Promise<string> {
   try {
     if (!imageModel) {
-      console.log('Initializing image generation model...');
-      try {
-        // Using 'text-to-text' pipeline as a fallback since text-to-image isn't available
-        imageModel = await pipeline(
-          'text-generation',
-          'stabilityai/stable-diffusion-2-base', // Using a stable diffusion model for property images
-          { device: 'webgpu' }
-        );
-        console.log('Image model initialized successfully');
-      } catch (error) {
-        console.error('Failed to initialize image model:', error);
-        return '/placeholder.svg';
-      }
+      await initializeImageModel();
+    }
+    
+    if (!imageModel) {
+      return '/placeholder.svg';
     }
     
     // For now, return a placeholder image since we don't have a working text-to-image model
