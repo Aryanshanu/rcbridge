@@ -31,9 +31,9 @@ const knowledgeBase = {
     "Developing areas like Kokapet and Tellapur offer good entry points for long-term investment."
   ],
   process: [
-    "Our buying process includes property selection, due diligence, documentation verification, and seamless closing.",
-    "For sellers, we provide valuation services, marketing, qualified buyer screening, and transaction management.",
-    "RC Bridge handles all legal documentation and regulatory compliance for a hassle-free transaction experience."
+    "Our buying process includes property selection, due diligence, and connecting you with the right sellers.",
+    "For sellers, we provide valuation services, marketing, and qualified buyer screening.",
+    "RC Bridge connects buyers and sellers directly for a more efficient transaction experience."
   ]
 };
 
@@ -116,7 +116,7 @@ function analyzeIntent(message: string): string {
     return 'financing';
   } else if (message.includes('location') || message.includes('area') || message.includes('neighborhood') || message.includes('jubilee') || message.includes('banjara') || message.includes('hitech')) {
     return 'location';
-  } else if (message.includes('process') || message.includes('buying') || message.includes('selling') || message.includes('documents') || message.includes('legal')) {
+  } else if (message.includes('process') || message.includes('buying') || message.includes('selling') || message.includes('documents')) {
     return 'process';
   } else if (message.includes('agricultural') || message.includes('farm') || message.includes('land')) {
     return 'agricultural';
@@ -143,6 +143,7 @@ export async function generateResponse(message: string): Promise<string> {
     switch (intent) {
       case 'greeting':
         response = knowledgeBase.greetings[Math.floor(Math.random() * knowledgeBase.greetings.length)];
+        response += "\n\nAre you looking to buy, sell, or invest in properties? I can provide information about available properties, market trends, and connect you with the right opportunities.";
         break;
       case 'property':
         // If asking about specific property features
@@ -174,7 +175,7 @@ export async function generateResponse(message: string): Promise<string> {
         break;
       case 'process':
         response = knowledgeBase.process[Math.floor(Math.random() * knowledgeBase.process.length)];
-        response += "\n\nCan I help you with starting this process or answer any specific questions?";
+        response += "\n\nWould you like to tell me more about what you're looking for so I can help you get started?";
         break;
       default:
         // Check for questions about price ranges
@@ -187,7 +188,7 @@ export async function generateResponse(message: string): Promise<string> {
         }
         // General fallback response
         else {
-          response = "I'd be happy to help you with information about properties in Hyderabad, investment opportunities, financing options, or the buying/selling process. Could you please specify what you're looking for?";
+          response = "I'd be happy to help you with information about properties in Hyderabad, investment opportunities, financing options, or the buying/selling process. Could you please tell me more about what you're looking for?";
         }
     }
     
