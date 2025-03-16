@@ -34,10 +34,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       console.log("Starting Google Sign In process...");
+      
+      // Get the current window location for debugging
+      console.log("Current window location:", window.location.href);
+      
+      // Build and log the redirectTo URL for debugging
+      const redirectUrl = window.location.origin;
+      console.log("Redirect URL being used:", redirectUrl);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
       
@@ -52,7 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       console.log("Google Sign In successful, data:", data);
-      // We don't need to show a toast here since the page will redirect to Google
+      
+      // If the URL property exists in the response, redirect the user
+      if (data?.url) {
+        console.log("Redirecting to:", data.url);
+        window.location.href = data.url;
+      }
     } catch (error: any) {
       console.error('Error signing in with Google:', error);
       toast({
