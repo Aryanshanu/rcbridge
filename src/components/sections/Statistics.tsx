@@ -5,14 +5,14 @@ import { motion } from "framer-motion";
 export const Statistics = () => {
   const [isVisible, setIsVisible] = useState(false);
   
-  // Updated statistics to reflect the platform's impact with more specific numbers
+  // Updated statistics to reflect more realistic numbers
   const stats = [
-    { label: "Properties Listed", value: "487", icon: "🏡" },
-    { label: "Active Users", value: "1,248", icon: "👥" },
-    { label: "Startups Supported", value: "42", icon: "🚀" },
-    { label: "Successful Deals", value: "356", icon: "🤝" },
-    { label: "Years in Hyderabad", value: "10", icon: "⭐" },
-    { label: "Avg. Buyer Savings", value: "₹3.8L", icon: "💰" },
+    { label: "Properties Listed", value: "215", icon: "🏡" },
+    { label: "Active Users", value: "732", icon: "👥" },
+    { label: "Startups Supported", value: "27", icon: "🚀" },
+    { label: "Successful Deals", value: "183", icon: "🤝" },
+    { label: "Years in Hyderabad", value: "7", icon: "⭐" },
+    { label: "Avg. Buyer Savings", value: "₹2.1L", icon: "💰" },
   ];
 
   useEffect(() => {
@@ -38,9 +38,9 @@ export const Statistics = () => {
     <section id="statistics-section" className="py-10 sm:py-16 bg-white rounded-lg shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">A Decade of Excellence in Real Estate</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Building Trust in Real Estate</h2>
           <p className="mt-2 text-base sm:text-lg text-gray-600">
-            Building trust through transparent transactions and exceptional service since 2013
+            Creating transparent transactions and exceptional service since 2016
           </p>
         </div>
         
@@ -62,7 +62,7 @@ export const Statistics = () => {
         
         <div className="mt-10 text-center">
           <p className="text-gray-600 italic">
-            "Eliminating middlemen and preserving property value through direct connections since 2013"
+            "Connecting buyers and sellers directly to preserve property value since 2016"
           </p>
         </div>
       </div>
