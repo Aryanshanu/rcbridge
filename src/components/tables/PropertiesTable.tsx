@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Eye, Zap, Calendar, GitCompare, Map } from "lucide-react";
 import { 
@@ -488,7 +487,7 @@ export const PropertiesTable = ({ properties, onPropertySelect }: PropertiesTabl
                   <div className="flex items-center justify-center gap-1">
                     {viewsData[property.id] || 0}
                     {(viewsData[property.id] || 0) > 50 && (
-                      <Zap className="h-3 w-3 text-amber-500" title="Popular property" />
+                      <Zap className="h-3 w-3 text-amber-500" aria-label="Popular property" />
                     )}
                   </div>
                 </TableCell>

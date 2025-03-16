@@ -35,14 +35,16 @@ interface Property {
 interface PropertiesTabProps {
   selectedPropertyId?: string;
   filters?: Record<string, any>;
+  viewMode?: "grid" | "table";
+  isDarkMode?: boolean;
 }
 
-export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTabProps) => {
+export const PropertiesTab = ({ selectedPropertyId, filters = {}, viewMode: initialViewMode = "grid", isDarkMode = false }: PropertiesTabProps) => {
   const [showFilters, setShowFilters] = useState(false);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "table">(initialViewMode);
   
   // Form states for the inquiry dialog
   const [name, setName] = useState("");
@@ -627,6 +629,13 @@ export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTa
     }
   }, [selectedPropertyId, filters]);
 
+  // Set initial view mode from props
+  useEffect(() => {
+    if (initialViewMode) {
+      setViewMode(initialViewMode);
+    }
+  }, [initialViewMode]);
+
   const handleInquirySubmit = () => {
     toast({
       title: "Inquiry Submitted",
@@ -727,13 +736,14 @@ export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTa
   const displayProperties = Object.keys(activeFilters).length > 0 ? filteredProperties : properties;
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isDarkMode ? 'text-gray-200' : ''}`}>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-2">
           <Toggle 
             pressed={viewMode === "grid"}
             onPressedChange={() => setViewMode("grid")}
             aria-label="Grid view"
+            className={isDarkMode ? "bg-gray-800 data-[state=on]:bg-blue-900 hover:bg-gray-700" : ""}
           >
             <LayoutGrid className="h-4 w-4 mr-1" />
             Grid
@@ -742,6 +752,7 @@ export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTa
             pressed={viewMode === "table"}
             onPressedChange={() => setViewMode("table")}
             aria-label="Table view"
+            className={isDarkMode ? "bg-gray-800 data-[state=on]:bg-blue-900 hover:bg-gray-700" : ""}
           >
             <LayoutList className="h-4 w-4 mr-1" />
             Table
@@ -749,7 +760,7 @@ export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTa
         </div>
         <Button 
           variant="outline" 
-          className="flex items-center gap-2"
+          className={`flex items-center gap-2 ${isDarkMode ? 'border-gray-700 text-gray-300 hover:bg-gray-800' : ''}`}
           onClick={() => setShowFilters(!showFilters)}
         >
           <Filter className="h-4 w-4" />
@@ -765,9 +776,9 @@ export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTa
       )}
       
       {displayProperties.length === 0 ? (
-        <div className="bg-white p-8 rounded-lg shadow-md text-center">
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">No properties found</h3>
-          <p className="text-gray-600">Try adjusting your filters to see more results.</p>
+        <div className={`p-8 rounded-lg shadow-md text-center ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          <h3 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>No properties found</h3>
+          <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Try adjusting your filters to see more results.</p>
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -784,7 +795,7 @@ export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTa
                 area: property.area
               }}
               onWantToKnowMore={() => handleWantToKnowMore(property)}
-              className="h-full hover:shadow-lg transition-shadow duration-300"
+              className={`h-full hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}
             />
           ))}
         </div>
@@ -796,69 +807,73 @@ export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTa
       )}
       
       <Dialog open={selectedProperty !== null} onOpenChange={(open) => !open && setSelectedProperty(null)}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className={`sm:max-w-[500px] ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100' : ''}`}>
           <DialogHeader>
             <DialogTitle className="text-xl">
               Request Information
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className={isDarkMode ? 'text-gray-400' : ''}>
               Fill out this form to get more information about <span className="font-semibold">{selectedProperty?.title}</span>
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
             <div>
-              <Label htmlFor="name" className="text-gray-700">Your Name</Label>
+              <Label htmlFor="name" className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Your Name</Label>
               <Input 
                 id="name" 
                 value={name} 
                 onChange={(e) => setName(e.target.value)} 
                 placeholder="Enter your name"
-                className="mt-1"
+                className={`mt-1 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder:text-gray-500' : ''}`}
                 required
               />
             </div>
             
             <div>
-              <Label htmlFor="email" className="text-gray-700">Email Address</Label>
+              <Label htmlFor="email" className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Email Address</Label>
               <Input 
                 id="email" 
                 type="email" 
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 placeholder="Enter your email"
-                className="mt-1"
+                className={`mt-1 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder:text-gray-500' : ''}`}
                 required
               />
             </div>
             
             <div>
-              <Label htmlFor="phone" className="text-gray-700">Phone Number</Label>
+              <Label htmlFor="phone" className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Phone Number</Label>
               <Input 
                 id="phone" 
                 value={phone} 
                 onChange={(e) => setPhone(e.target.value)} 
                 placeholder="Enter your phone number"
-                className="mt-1"
+                className={`mt-1 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder:text-gray-500' : ''}`}
                 required
               />
             </div>
             
             <div>
-              <Label htmlFor="message" className="text-gray-700">Message</Label>
+              <Label htmlFor="message" className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Message</Label>
               <Textarea 
                 id="message" 
                 value={message} 
                 onChange={(e) => setMessage(e.target.value)} 
                 placeholder="What would you like to know about this property?"
-                className="mt-1 h-24"
+                className={`mt-1 h-24 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder:text-gray-500' : ''}`}
                 required
               />
             </div>
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedProperty(null)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setSelectedProperty(null)}
+              className={isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : ''}
+            >
               Cancel
             </Button>
             <Button 
