@@ -13,6 +13,7 @@ import { ChatBot } from "@/components/ChatBot";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { TextFeaturedProperties } from "@/components/sections/TextFeaturedProperties";
+import { WhyChooseUs } from "@/components/sections/WhyChooseUs";
 
 const Testimonials = lazy(() => import("@/components/sections/Testimonials").then(module => ({ default: module.Testimonials })));
 const Features = lazy(() => import("@/components/sections/Features").then(module => ({ default: module.Features })));
@@ -40,7 +41,12 @@ const Index = () => {
           <Statistics />
         </Suspense>
         
-        {/* Tell Us Your Requirements Section - Moved up */}
+        {/* Why Choose Us Section - Moved to top */}
+        <section className="mt-16 mb-16">
+          <WhyChooseUs />
+        </section>
+        
+        {/* Tell Us Your Requirements Section - Moved after Why Choose Us */}
         <section className="mb-16 mt-8">
           <div className="text-center mb-6 sm:mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Tell Us Your Requirements</h2>

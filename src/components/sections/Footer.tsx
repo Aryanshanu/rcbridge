@@ -1,3 +1,4 @@
+
 export const Footer = () => {
   return (
     <footer className="bg-gray-900 text-gray-300 py-8 sm:py-12">
@@ -13,9 +14,9 @@ export const Footer = () => {
             <h4 className="text-white font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2 text-sm">
               <li><a href="#" className="hover:text-white">About Us</a></li>
-              <li><a href="#" className="hover:text-white">Properties</a></li>
-              <li><a href="#" className="hover:text-white">Startup Support</a></li>
-              <li><a href="#" className="hover:text-white">Contact</a></li>
+              <li><a href="/properties" className="hover:text-white">Properties</a></li>
+              <li><a href="/services" className="hover:text-white">Services</a></li>
+              <li><a href="/contact" className="hover:text-white">Contact</a></li>
             </ul>
           </div>
           <div>
@@ -31,8 +32,7 @@ export const Footer = () => {
             <h4 className="text-white font-semibold mb-4">Contact Us</h4>
             <ul className="space-y-2 text-sm">
               <li>Hyderabad, India</li>
-              <li>aryan@rcbridge.co</li>
-              <li>Contact us through email</li>
+              <li>info@rcbridge.com</li>
             </ul>
           </div>
         </div>

@@ -4,11 +4,12 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/sections/Footer";
 import { SEO } from "@/components/SEO";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Home, Mail, Phone, MapPin, MessageSquare } from "lucide-react";
+import { Home, Mail, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Contact = () => {
   const { toast } = useToast();
@@ -26,17 +27,31 @@ const Contact = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
-      console.log("Form data submitted:", formData);
+    try {
+      // Store the contact form data in Supabase
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert([
+          { 
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            subject: formData.subject,
+            message: formData.message
+          }
+        ]);
+        
+      if (error) throw error;
+      
       toast({
         title: "Message Sent!",
         description: "We'll get back to you as soon as possible.",
       });
+      
       setFormData({
         name: "",
         email: "",
@@ -44,8 +59,16 @@ const Contact = () => {
         subject: "",
         message: ""
       });
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem sending your message. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -144,17 +167,8 @@ const Contact = () => {
               <div className="flex items-start">
                 <MapPin className="h-6 w-6 text-primary mr-4 mt-1" />
                 <div>
-                  <h3 className="font-semibold text-lg">Office Address</h3>
-                  <p className="text-gray-600">123 Real Estate Tower, Financial District</p>
-                  <p className="text-gray-600">Hyderabad, Telangana 500032</p>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <Phone className="h-6 w-6 text-primary mr-4 mt-1" />
-                <div>
-                  <h3 className="font-semibold text-lg">Phone</h3>
-                  <p className="text-gray-600">+91 98765 43210</p>
-                  <p className="text-gray-600">+91 12345 67890 (Toll-free)</p>
+                  <h3 className="font-semibold text-lg">Address</h3>
+                  <p className="text-gray-600">Hyderabad, India</p>
                 </div>
               </div>
               <div className="flex items-start">
@@ -162,16 +176,6 @@ const Contact = () => {
                 <div>
                   <h3 className="font-semibold text-lg">Email</h3>
                   <p className="text-gray-600">info@rcbridge.com</p>
-                  <p className="text-gray-600">support@rcbridge.com</p>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <MessageSquare className="h-6 w-6 text-primary mr-4 mt-1" />
-                <div>
-                  <h3 className="font-semibold text-lg">Business Hours</h3>
-                  <p className="text-gray-600">Monday - Friday: 9:00 AM - 7:00 PM</p>
-                  <p className="text-gray-600">Saturday: 10:00 AM - 5:00 PM</p>
-                  <p className="text-gray-600">Sunday: Closed</p>
                 </div>
               </div>
             </div>
