@@ -8,6 +8,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, metadata?: { [key: string]: any }) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -80,6 +82,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signIn = async (email: string, password: string) => {
+    try {
+      console.log("Starting email/password sign in process...");
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        console.error('Sign in error:', error);
+        throw error;
+      }
+      
+      console.log("Sign in successful:", data);
+      return data;
+    } catch (error: any) {
+      console.error('Error signing in:', error);
+      toast({
+        title: "Error signing in",
+        description: error.message || "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const signUp = async (email: string, password: string, metadata?: { [key: string]: any }) => {
+    try {
+      console.log("Starting sign up process...");
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata
+        }
+      });
+      
+      if (error) {
+        console.error('Sign up error:', error);
+        throw error;
+      }
+      
+      console.log("Sign up successful:", data);
+      return data;
+    } catch (error: any) {
+      console.error('Error signing up:', error);
+      toast({
+        title: "Error signing up",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -102,6 +161,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     loading,
     signInWithGoogle,
+    signIn,
+    signUp,
     signOut,
   };
 
