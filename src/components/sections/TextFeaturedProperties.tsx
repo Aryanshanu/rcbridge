@@ -39,7 +39,7 @@ export const TextFeaturedProperties = () => {
     <div className="space-y-6">
       {properties.map((property) => (
         <Link 
-          to={`/properties#${property.id}`} 
+          to={`/properties`} 
           key={property.id}
           className="block bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-all"
         >

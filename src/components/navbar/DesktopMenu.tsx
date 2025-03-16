@@ -1,139 +1,83 @@
 
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { 
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-import { ChevronDown } from "lucide-react";
+import { Building, Home, LogIn, MapPin, Phone, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { cn } from "@/lib/utils";
 
 interface DesktopMenuProps {
-  className?: string;
-  scrollToPropertyForm?: () => void;
-  handleContactClick?: () => void;
+  scrollToPropertyForm: () => void;
+  handleContactClick: () => void;
 }
 
-export const DesktopMenu: React.FC<DesktopMenuProps> = ({ className, scrollToPropertyForm, handleContactClick }) => {
+export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: DesktopMenuProps) => {
   const { user, signOut } = useAuth();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const location = useLocation();
-
-  const handleLogout = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
 
   return (
-    <div className={`hidden lg:flex items-center space-x-6 ${className}`}>
-      <div className="flex space-x-6">
-        <Link 
-          to="/" 
-          className={cn(
-            "text-sm font-medium transition-colors hover:text-primary",
-            isActive("/") && "text-primary font-semibold"
-          )}
-        >
-          Home
-        </Link>
-        <Link 
-          to="/properties" 
-          className={cn(
-            "text-sm font-medium transition-colors hover:text-primary",
-            isActive("/properties") && "text-primary font-semibold"
-          )}
-        >
-          Properties
-        </Link>
-        <Link 
-          to="/services" 
-          className={cn(
-            "text-sm font-medium transition-colors hover:text-primary",
-            isActive("/services") && "text-primary font-semibold"
-          )}
-        >
-          Services
-        </Link>
-        <Link 
-          to="/calculator" 
-          className={cn(
-            "text-sm font-medium transition-colors hover:text-primary",
-            isActive("/calculator") && "text-primary font-semibold"
-          )}
-        >
-          Calculator
-        </Link>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="p-0 h-auto text-sm font-medium transition-colors hover:text-primary">
-              Resources <ChevronDown className="h-4 w-4 ml-1" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white shadow-md z-50">
-            <DropdownMenuItem>
-              <Link to="/blog" className="w-full">Blog</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Link to="/faq" className="w-full">FAQ</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Link to="/contact" className="w-full">Contact Us</Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <div className="flex items-center ml-6">
-        {user ? (
-          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="p-0 h-auto text-sm font-medium transition-colors hover:text-primary">
-                {user.email} <ChevronDown className="h-4 w-4 ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-white shadow-md z-50">
-              <DropdownMenuItem>
-                <Link to="/profile" className="w-full">Profile</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link to="/my-properties" className="w-full">My Properties</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link to="/saved-searches" className="w-full">Saved Searches</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <div className="flex space-x-3">
-            <Link to="/login">
-              <Button variant="outline" size="sm">
-                Login
-              </Button>
+    <div className="hidden md:flex items-center space-x-8">
+      <Link to="/" className="text-gray-700 hover:text-primary font-medium">
+        Home
+      </Link>
+      <Link to="/properties" className="text-gray-700 hover:text-primary font-medium">
+        Properties
+      </Link>
+      <Link to="/services" className="text-gray-700 hover:text-primary font-medium">
+        Services
+      </Link>
+      <Link to="/calculator" className="text-gray-700 hover:text-primary font-medium">
+        Calculator
+      </Link>
+      <div className="relative group">
+        <div className="text-gray-700 hover:text-primary font-medium cursor-pointer">
+          Resources
+          <div className="absolute bg-white shadow-md py-2 rounded-md mt-2 z-50 min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+            <Link to="/blog" className="block px-4 py-2 hover:bg-gray-50 text-gray-700">
+              Blog
             </Link>
-            <Link to="/register">
-              <Button size="sm">Register</Button>
+            <Link to="/faq" className="block px-4 py-2 hover:bg-gray-50 text-gray-700">
+              FAQ
+            </Link>
+            <Link to="/contact" className="block px-4 py-2 hover:bg-gray-50 text-gray-700">
+              Contact
             </Link>
           </div>
-        )}
+        </div>
       </div>
+      
+      {user ? (
+        <div className="relative group">
+          <div className="text-gray-700 hover:text-primary font-medium cursor-pointer">
+            My Account
+            <div className="absolute bg-white shadow-md py-2 rounded-md mt-2 right-0 z-50 min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+              <Link to="/profile" className="block px-4 py-2 hover:bg-gray-50 text-gray-700">
+                Profile
+              </Link>
+              <Link to="/my-properties" className="block px-4 py-2 hover:bg-gray-50 text-gray-700">
+                My Properties
+              </Link>
+              <Link to="/saved-searches" className="block px-4 py-2 hover:bg-gray-50 text-gray-700">
+                Saved Searches
+              </Link>
+              <button 
+                onClick={signOut}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-700"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <Link to="/login">
+          <Button variant="outline" className="flex items-center" size="sm">
+            <LogIn className="mr-2 h-4 w-4" />
+            Sign In
+          </Button>
+        </Link>
+      )}
+      
+      <Button size="sm" onClick={scrollToPropertyForm}>
+        List Property
+      </Button>
     </div>
   );
 };
