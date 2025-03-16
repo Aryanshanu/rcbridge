@@ -5,6 +5,7 @@ import { DesktopMenu } from "./navbar/DesktopMenu";
 import { MobileMenu } from "./navbar/MobileMenu";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Link } from "react-router-dom";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -49,46 +50,50 @@ export const Navbar = () => {
         ? "bg-white/95 backdrop-blur-sm shadow-md" 
         : "bg-white"
     )}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <div className="flex-shrink-0 flex items-center">
+      <div className="content-container flex justify-between h-16 md:h-20">
+        <div className="flex items-center">
+          <Link to="/" className="flex-shrink-0 flex items-center gap-2">
+            <div className="flex items-center">
               <img
-                className="h-10 w-auto"
+                className="h-10 w-auto md:h-12"
                 src="/lovable-uploads/5fd561ff-5bbd-449c-94a3-d39d0a8b4f03.png"
                 alt="RC Bridge"
               />
+              <div className="ml-2 flex flex-col items-start">
+                <span className="text-primary font-heading text-lg md:text-xl font-bold leading-tight">RC Bridge</span>
+                <span className="text-gray-500 text-xs md:text-sm leading-tight">Real Estate Solutions</span>
+              </div>
             </div>
-          </div>
+          </Link>
+        </div>
 
-          {/* Desktop menu */}
-          <DesktopMenu 
-            scrollToPropertyForm={scrollToPropertyForm} 
-            handleContactClick={handleContactClick} 
-          />
+        {/* Desktop menu */}
+        <DesktopMenu 
+          scrollToPropertyForm={scrollToPropertyForm} 
+          handleContactClick={handleContactClick} 
+        />
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center space-x-2">
-            <button
-              onClick={toggleSearch}
-              className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
-              aria-label="Toggle search"
-            >
-              <Search className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
-              aria-expanded={isOpen}
-            >
-              <span className="sr-only">{isOpen ? 'Close main menu' : 'Open main menu'}</span>
-              {isOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
-              ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
-              )}
-            </button>
-          </div>
+        {/* Mobile menu button */}
+        <div className="md:hidden flex items-center space-x-2">
+          <button
+            onClick={toggleSearch}
+            className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+            aria-label="Toggle search"
+          >
+            <Search className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+            aria-expanded={isOpen}
+          >
+            <span className="sr-only">{isOpen ? 'Close main menu' : 'Open main menu'}</span>
+            {isOpen ? (
+              <X className="block h-6 w-6" aria-hidden="true" />
+            ) : (
+              <Menu className="block h-6 w-6" aria-hidden="true" />
+            )}
+          </button>
         </div>
       </div>
 
