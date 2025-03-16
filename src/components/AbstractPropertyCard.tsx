@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Building, MapPin, Home, IndianRupee, SlidersHorizontal, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LazyImage } from '@/components/ui/LazyImage';
-import { getPropertyImage } from '@/utils/imageGeneration';
+import { getPropertyImage, createImagePrompt } from '@/utils/imageGeneration';
 import { useToast } from '@/hooks/use-toast';
 
 interface PropertyType {
@@ -44,12 +44,12 @@ export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCa
         const imageType = propertyType === 'commercial' ? 'commercial' : 
                           propertyType === 'luxury' ? 'luxury' : 'residential';
         
-        const imageUrl = await getPropertyImage({ 
-          type: imageType as 'luxury' | 'residential' | 'commercial',
-          location: property.location.split(',')[0], // Use the city part of the location
-          isExterior: true
+        const prompt = createImagePrompt({
+          ...property,
+          type: imageType
         });
         
+        const imageUrl = await getPropertyImage(prompt);
         setPropertyImage(imageUrl);
       } catch (error) {
         console.error('Error loading property image:', error);
@@ -64,7 +64,7 @@ export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCa
     };
     
     loadImage();
-  }, [property.location, propertyType, toast]);
+  }, [property, propertyType, toast]);
 
   const handleWhatsAppInquiry = () => {
     const message = encodeURIComponent(`Hi, I'm interested in the property: ${property.title} in ${property.location}. Could you provide more information?`);

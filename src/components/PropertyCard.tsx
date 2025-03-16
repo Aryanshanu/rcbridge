@@ -1,9 +1,10 @@
+
 import { Building, MapPin, Bed, Bath, Square, Share2, Heart, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { LazyImage } from "@/components/ui/LazyImage";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { getPropertyImage } from "@/utils/imageGeneration";
+import { getPropertyImage, createImagePrompt } from "@/utils/imageGeneration";
 
 interface PropertyCardProps {
   title: string;
@@ -41,11 +42,14 @@ export const PropertyCard = ({
         const imageType = propertyType === 'commercial' ? 'commercial' : 
                           propertyType === 'luxury' ? 'luxury' : 'residential';
         
-        const imageUrl = await getPropertyImage({ 
-          type: imageType as 'luxury' | 'residential' | 'commercial',
-          location: location.split(',')[0],
-          isExterior: true
+        const prompt = createImagePrompt({
+          title,
+          location,
+          bedrooms,
+          type: imageType
         });
+        
+        const imageUrl = await getPropertyImage(prompt);
         
         const img = new Image();
         img.onload = () => {
@@ -73,7 +77,7 @@ export const PropertyCard = ({
     };
     
     loadImage();
-  }, [location, propertyType, toast]);
+  }, [location, propertyType, toast, title, bedrooms]);
 
   const handleFavoriteToggle = () => {
     setIsFavorite(!isFavorite);

@@ -1,4 +1,5 @@
 
+import React, { useState, useEffect } from 'react';
 import { generatePropertyImage } from './chatbotUtils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -71,10 +72,10 @@ export function createImagePrompt(property: any): string {
 // Hook to handle image loading with feedback
 export function usePropertyImage(propertyDescription: string) {
   const { toast } = useToast();
-  const [imageUrl, setImageUrl] = React.useState<string>('/placeholder.svg');
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [imageUrl, setImageUrl] = useState<string>('/placeholder.svg');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   
-  React.useEffect(() => {
+  useEffect(() => {
     let isMounted = true;
     
     const loadImage = async () => {

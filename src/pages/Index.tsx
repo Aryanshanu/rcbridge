@@ -4,7 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { Statistics } from "@/components/sections/Statistics";
 import { WhyChooseUs } from "@/components/sections/WhyChooseUs";
-import { FeaturedProperties } from "@/components/sections/FeaturedProperties";
+import { TextFeaturedProperties } from "@/components/sections/TextFeaturedProperties";
 import { Features } from "@/components/sections/Features";
 import { CallToAction } from "@/components/sections/CallToAction";
 import { Footer } from "@/components/sections/Footer";
@@ -93,7 +93,7 @@ const Index = () => {
         </section>
 
         <Suspense fallback={<LoadingSpinner />}>
-          <FeaturedProperties />
+          <TextFeaturedProperties />
         </Suspense>
         
         <Suspense fallback={<LoadingSpinner />}>
