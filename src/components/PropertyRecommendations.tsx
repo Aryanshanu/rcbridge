@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Link } from "react-router-dom";
 
 export const PropertyRecommendations = () => {
   const [recommendedProperties, setRecommendedProperties] = useState<any[]>([]);
@@ -28,6 +29,8 @@ export const PropertyRecommendations = () => {
         }
         
         if (data) {
+          console.log("Fetched properties:", data);
+          
           // Format the properties for display
           const formattedProperties = data.map(property => ({
             id: property.id,
@@ -51,6 +54,11 @@ export const PropertyRecommendations = () => {
             return priceB - priceA;
           });
           setTrendingProperties(trending.slice(0, 3));
+        } else {
+          console.log("No properties found");
+          // Set empty arrays if no data
+          setRecommendedProperties([]);
+          setTrendingProperties([]);
         }
       } catch (error) {
         console.error('Error fetching properties:', error);
@@ -107,11 +115,15 @@ export const PropertyRecommendations = () => {
                 <div key={i} className="bg-gray-100 animate-pulse h-64 rounded-lg" />
               ))}
             </div>
-          ) : (
+          ) : recommendedProperties.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {recommendedProperties.map((property) => (
                 <PropertyCard key={property.id} {...property} />
               ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No recommended properties available at the moment.</p>
             </div>
           )}
         </TabsContent>
@@ -123,15 +135,29 @@ export const PropertyRecommendations = () => {
                 <div key={i} className="bg-gray-100 animate-pulse h-64 rounded-lg" />
               ))}
             </div>
-          ) : (
+          ) : trendingProperties.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {trendingProperties.map((property) => (
                 <PropertyCard key={property.id} {...property} />
               ))}
             </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No trending properties available at the moment.</p>
+            </div>
           )}
         </TabsContent>
       </Tabs>
+      
+      <div className="text-center mt-6">
+        <Link to="/properties">
+          <Button 
+            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-6 py-2 rounded-md font-medium"
+          >
+            View All Properties
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 };

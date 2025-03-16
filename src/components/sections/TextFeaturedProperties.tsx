@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Link } from "react-router-dom";
 
 export const TextFeaturedProperties = () => {
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
@@ -34,7 +35,9 @@ export const TextFeaturedProperties = () => {
           throw error;
         }
         
-        if (data) {
+        if (data && data.length > 0) {
+          console.log("Fetched properties:", data);
+          
           // Format the properties for display
           const formattedProperties = data.map(property => ({
             id: property.id,
@@ -66,6 +69,13 @@ export const TextFeaturedProperties = () => {
             return priceB - priceA;
           });
           setTrendingProperties(trending.slice(0, 6));
+        } else {
+          console.log("No properties found");
+          // Set empty arrays if no data
+          setProperties([]);
+          setFilteredProperties([]);
+          setRecommendedProperties([]);
+          setTrendingProperties([]);
         }
       } catch (error) {
         console.error('Error fetching properties:', error);
@@ -80,7 +90,7 @@ export const TextFeaturedProperties = () => {
     };
     
     fetchProperties();
-  }, [toast]);
+  }, [toast, showAllProperties]);
   
   const formatPrice = (price: number, listingType: string) => {
     if (listingType === 'rent') {
@@ -156,11 +166,15 @@ export const TextFeaturedProperties = () => {
               <div key={i} className="h-64 bg-gray-200 rounded-lg animate-pulse" />
             ))}
           </div>
-        ) : (
+        ) : filteredProperties.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredProperties.map((property) => (
               <TextPropertyCard key={property.id} property={property} />
             ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No featured properties available at the moment.</p>
           </div>
         )}
         
@@ -170,7 +184,7 @@ export const TextFeaturedProperties = () => {
             variant="outline" 
             className="border-[#1e40af] text-[#1e40af]"
           >
-            {showAllProperties ? "Show Fewer Properties" : "View All Properties"}
+            {showAllProperties ? "Show Fewer Properties" : "View More"}
           </Button>
         </div>
       </div>
@@ -205,11 +219,15 @@ export const TextFeaturedProperties = () => {
                   <div key={i} className="h-64 bg-gray-200 rounded-lg animate-pulse" />
                 ))}
               </div>
-            ) : (
+            ) : recommendedProperties.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {recommendedProperties.map((property) => (
                   <TextPropertyCard key={property.id} property={property} />
                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No recommended properties available at the moment.</p>
               </div>
             )}
           </TabsContent>
@@ -221,11 +239,15 @@ export const TextFeaturedProperties = () => {
                   <div key={i} className="h-64 bg-gray-200 rounded-lg animate-pulse" />
                 ))}
               </div>
-            ) : (
+            ) : trendingProperties.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {trendingProperties.map((property) => (
                   <TextPropertyCard key={property.id} property={property} />
                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No trending properties available at the moment.</p>
               </div>
             )}
           </TabsContent>
@@ -233,12 +255,13 @@ export const TextFeaturedProperties = () => {
       </div>
       
       <div className="text-center mt-8">
-        <Button 
-          onClick={handleViewAllToggle}
-          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-8 py-3 rounded-md font-medium text-lg shadow-md"
-        >
-          {showAllProperties ? "Show Fewer Properties" : "View All Properties"}
-        </Button>
+        <Link to="/properties">
+          <Button 
+            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-8 py-3 rounded-md font-medium text-lg shadow-md"
+          >
+            View All Properties
+          </Button>
+        </Link>
       </div>
     </section>
   );
