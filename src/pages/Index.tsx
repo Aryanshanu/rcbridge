@@ -7,13 +7,16 @@ import { CallToAction } from "@/components/sections/CallToAction";
 import { Footer } from "@/components/sections/Footer";
 import { PropertyForm } from "@/components/PropertyForm";
 import { SEO } from "@/components/SEO";
-import { Loader2, Building, Sparkles, Calculator } from "lucide-react";
+import { Loader2, Building, Sparkles, Calculator, Clock, Shield, Users, HeartHandshake, Target, Trophy } from "lucide-react";
 import { NotificationButton } from "@/components/ui/NotificationButton";
 import { ChatBot } from "@/components/ChatBot";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const Testimonials = lazy(() => import("@/components/sections/Testimonials").then(module => ({ default: module.Testimonials })));
+const FeaturedProperties = lazy(() => import("@/components/sections/FeaturedProperties").then(module => ({ default: module.FeaturedProperties })));
+const Features = lazy(() => import("@/components/sections/Features").then(module => ({ default: module.Features })));
+const PropertyVisualizations = lazy(() => import("@/components/sections/PropertyVisualizations").then(module => ({ default: module.PropertyVisualizations })));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center p-8">
@@ -38,8 +41,110 @@ const Index = () => {
           <Statistics />
         </Suspense>
         
+        {/* Our Core Values Section */}
+        <section className="mt-16 mb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Our Core Values</h2>
+            <p className="mt-2 text-base sm:text-lg text-gray-600">
+              The principles that drive our commitment to excellence in real estate
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
+              <div className="rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-4 mx-auto">
+                <HeartHandshake className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-center">Integrity</h3>
+              <p className="text-gray-600 text-center">
+                Upholding the highest ethical standards in every transaction and relationship, ensuring trust and transparency.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
+              <div className="rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-4 mx-auto">
+                <Target className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-center">Innovation</h3>
+              <p className="text-gray-600 text-center">
+                Constantly evolving our approach to meet changing market needs and leveraging technology for better outcomes.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
+              <div className="rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-4 mx-auto">
+                <Users className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-center">Community</h3>
+              <p className="text-gray-600 text-center">
+                Building relationships that extend beyond transactions, fostering a vibrant ecosystem of property stakeholders.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
+              <div className="rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-4 mx-auto">
+                <Trophy className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-center">Excellence</h3>
+              <p className="text-gray-600 text-center">
+                Committed to delivering exceptional service and results that exceed expectations in every aspect.
+              </p>
+            </div>
+          </div>
+        </section>
+        
+        {/* How It Works Section */}
+        <section className="mb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">How RC Bridge Works</h2>
+            <p className="mt-2 text-base sm:text-lg text-gray-600">
+              Our unique approach to revolutionizing real estate transactions
+            </p>
+          </div>
+          
+          <div className="relative">
+            {/* Process steps with connecting line */}
+            <div className="hidden md:block absolute left-1/2 top-24 bottom-24 w-0.5 bg-primary/30 -translate-x-1/2 z-0"></div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all text-center">
+                <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto">
+                  <Users className="h-8 w-8 text-primary" />
+                </div>
+                <div className="bg-primary text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-3 mx-auto">
+                  1
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Share Your Requirements</h3>
+                <p className="text-gray-600">Tell us what you're looking for, whether buying, selling, or renting property.</p>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all text-center">
+                <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto">
+                  <Clock className="h-8 w-8 text-primary" />
+                </div>
+                <div className="bg-primary text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-3 mx-auto">
+                  2
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Personalized Matching</h3>
+                <p className="text-gray-600">We match you with exclusive off-market properties or serious buyers based on your criteria.</p>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all text-center">
+                <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto">
+                  <Shield className="h-8 w-8 text-primary" />
+                </div>
+                <div className="bg-primary text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-3 mx-auto">
+                  3
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Direct Connections</h3>
+                <p className="text-gray-600">Connect directly with property owners or buyers, eliminating middlemen and unnecessary fees.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+        
         {/* Navigation Links to Pages */}
-        <section className="mt-12 mb-12">
+        <section className="mt-12 mb-16">
           <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Explore Our Services</h2>
             <p className="mt-2 text-base sm:text-lg text-gray-600">
@@ -81,6 +186,26 @@ const Index = () => {
               </Link>
             </div>
           </div>
+        </section>
+        
+        {/* Featured Properties Section */}
+        <section className="mb-16">
+          <Suspense fallback={<LoadingSpinner />}>
+            <FeaturedProperties />
+          </Suspense>
+        </section>
+        
+        {/* Property Visualizations */}
+        <section className="mb-16">
+          <Suspense fallback={<LoadingSpinner />}>
+            <PropertyVisualizations />
+          </Suspense>
+        </section>
+        
+        <section className="mb-16">
+          <Suspense fallback={<LoadingSpinner />}>
+            <Features />
+          </Suspense>
         </section>
         
         <section className="mb-12 sm:mb-16">

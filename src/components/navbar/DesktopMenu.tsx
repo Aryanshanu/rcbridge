@@ -1,109 +1,112 @@
-
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Home, LogIn, Phone, Users, Building, Calculator } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { AuthDialog } from "../auth/AuthDialog";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+import { Button } from "@/components/ui/button";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+import { ChevronDown, Home, Building, Landmark, Calculator, MapPin } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DesktopMenuProps {
-  scrollToPropertyForm: () => void;
-  handleContactClick: () => void;
+  className?: string;
 }
 
-export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: DesktopMenuProps) => {
-  const { user, signOut } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(false);
-  
+export const DesktopMenu: React.FC<DesktopMenuProps> = ({ className }) => {
+  const { user, logout } = useAuth();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   return (
-    <div className="hidden md:flex md:items-center md:space-x-6">
-      <Link
-        to="/"
-        className="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors group relative"
-      >
-        <Home className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
-        <span>Home</span>
-        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-      </Link>
-      
-      <Link
-        to="/properties"
-        className="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors group relative"
-      >
-        <Building className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
-        <span>Properties</span>
-        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-      </Link>
-      
-      <Link
-        to="/services"
-        className="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors group relative"
-      >
-        <Users className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
-        <span>Services</span>
-        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-      </Link>
-      
-      <Link
-        to="/calculator"
-        className="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors group relative"
-      >
-        <Calculator className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
-        <span>Calculator</span>
-        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-      </Link>
-      
-      <button
-        onClick={handleContactClick}
-        className="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors group relative"
-      >
-        <Phone className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
-        <span>Contact</span>
-        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-      </button>
+    <div className={`hidden lg:flex items-center space-x-6 ${className}`}>
+      <NavigationMenu>
+        <NavigationMenuList>
+          <NavigationMenuItem>
+            <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
+              Home
+            </Link>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
+            <Link to="/properties" className="text-sm font-medium transition-colors hover:text-primary">
+              Properties
+            </Link>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
+            <Link to="/services" className="text-sm font-medium transition-colors hover:text-primary">
+              Services
+            </Link>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
+            <Link to="/calculator" className="text-sm font-medium transition-colors hover:text-primary">
+              Calculator
+            </Link>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="p-0 h-auto text-sm font-medium transition-colors hover:text-primary">
+                  Resources <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56">
+                <DropdownMenuItem>
+                  <Link to="/blog" className="w-full">Blog</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link to="/faq" className="w-full">FAQ</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link to="/contact" className="w-full">Contact Us</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
 
       {user ? (
-        <DropdownMenu>
+        <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                {user.user_metadata?.avatar_url ? (
-                  <AvatarImage src={user.user_metadata.avatar_url} alt={user.email || 'User'} />
-                ) : (
-                  <AvatarFallback className="bg-primary text-white">{user.email?.charAt(0).toUpperCase() ?? 'U'}</AvatarFallback>
-                )}
-              </Avatar>
+            <Button variant="ghost" className="p-0 h-auto text-sm font-medium transition-colors hover:text-primary">
+              {user.email} <ChevronDown className="h-4 w-4 ml-1" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem className="cursor-pointer font-medium text-sm" onClick={() => scrollToPropertyForm()}>
-              <MapPin className="mr-2 h-4 w-4" />
-              My Properties
+          <DropdownMenuContent className="w-56">
+            <DropdownMenuItem>
+              <Link to="/profile" className="w-full">Profile</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer font-medium text-sm" onClick={signOut}>
-              <LogIn className="mr-2 h-4 w-4 rotate-180" />
-              Sign out
-            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button data-testid="sign-in-button" variant="default" size="sm" className="bg-primary hover:bg-primary/90">
-              <LogIn className="h-4 w-4 mr-2" />
-              Sign In
+        <>
+          <Link to="/login">
+            <Button variant="outline" size="sm">
+              Login
             </Button>
-          </DialogTrigger>
-          <AuthDialog isSignUp={isSignUp} setIsSignUp={setIsSignUp} />
-        </Dialog>
+          </Link>
+          <Link to="/register">
+            <Button size="sm">Register</Button>
+          </Link>
+        </>
       )}
     </div>
   );
