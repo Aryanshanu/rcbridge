@@ -1,5 +1,8 @@
-
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { TextPropertyCard } from "@/components/TextPropertyCard";
+import { AdvancedSearch } from "@/components/AdvancedSearch";
+import { ChevronDown, ChevronUp, Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Property {
   id: string;
@@ -13,6 +16,10 @@ interface Property {
 }
 
 export const TextFeaturedProperties = () => {
+  const [showFilters, setShowFilters] = useState(false);
+  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
+  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
+  
   const properties: Property[] = [
     {
       id: "1",
@@ -436,7 +443,7 @@ export const TextFeaturedProperties = () => {
     },
     {
       id: "43",
-      title: "Loft Apartment",
+ title: "Loft Apartment",
       location: "Kokapet, Hyderabad",
       price: "₹1.25 Cr",
       bedrooms: 2,
@@ -516,45 +523,113 @@ export const TextFeaturedProperties = () => {
     }
   ];
 
+  const applyFilters = (filters: Record<string, any>) => {
+    setActiveFilters(filters);
+    
+    let results = [...properties];
+    
+    if (filters.propertyType && filters.propertyType !== 'all') {
+      results = results.filter(property => {
+        if (filters.propertyType === 'residential') {
+          return property.bedrooms && property.bedrooms > 0 && property.bedrooms <= 3;
+        }
+        if (filters.propertyType === 'commercial') {
+          return property.bedrooms === null || property.bedrooms === 0;
+        }
+        if (filters.propertyType === 'luxury') {
+          return property.bedrooms && property.bedrooms > 3;
+        }
+        return true;
+      });
+    }
+    
+    if (filters.location && filters.location.trim() !== '') {
+      const locationQuery = filters.location.toLowerCase();
+      results = results.filter(property => 
+        property.location.toLowerCase().includes(locationQuery) ||
+        property.title.toLowerCase().includes(locationQuery)
+      );
+    }
+    
+    if (filters.priceRange && filters.priceRange.length === 2) {
+      results = results.filter(property => {
+        let numericPrice = 0;
+        const priceStr = property.price.replace('₹', '');
+        
+        if (priceStr.includes('Cr')) {
+          numericPrice = parseFloat(priceStr.replace(' Cr', '')) * 10000000;
+        } else if (priceStr.includes('L')) {
+          numericPrice = parseFloat(priceStr.replace(' L', '')) * 100000;
+        } else {
+          numericPrice = parseFloat(priceStr);
+        }
+        
+        return numericPrice >= filters.priceRange[0] && numericPrice <= filters.priceRange[1];
+      });
+    }
+    
+    if (filters.bedrooms && filters.bedrooms !== 'any') {
+      const bedroomCount = parseInt(filters.bedrooms);
+      results = results.filter(property => 
+        property.bedrooms && property.bedrooms >= bedroomCount
+      );
+    }
+    
+    if (filters.bathrooms && filters.bathrooms !== 'any') {
+      const bathroomCount = parseInt(filters.bathrooms);
+      results = results.filter(property => 
+        property.bathrooms && property.bathrooms >= bathroomCount
+      );
+    }
+    
+    setFilteredProperties(results);
+  };
+
+  const displayProperties = Object.keys(activeFilters).length > 0 ? filteredProperties : properties;
+
   return (
     <div className="space-y-6">
-      {properties.map((property) => (
-        <Link 
-          to={`/properties`} 
-          key={property.id}
-          className="block bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-all"
+      <div className="flex justify-end mb-4">
+        <Button 
+          variant="outline" 
+          className="flex items-center gap-2"
+          onClick={() => setShowFilters(!showFilters)}
         >
-          <div className="flex flex-col sm:flex-row sm:justify-between">
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 hover:text-primary transition-colors">{property.title}</h3>
-              <p className="text-gray-600 mt-1">{property.location}</p>
-            </div>
-            <p className="text-primary font-bold text-lg mt-2 sm:mt-0">{property.price}</p>
-          </div>
-          
-          <div className="mt-4 flex flex-wrap gap-4">
-            {property.bedrooms && (
-              <div className="text-gray-600">
-                <span className="font-medium">{property.bedrooms}</span> Bedrooms
-              </div>
-            )}
-            {property.bathrooms && (
-              <div className="text-gray-600">
-                <span className="font-medium">{property.bathrooms}</span> Bathrooms
-              </div>
-            )}
-            <div className="text-gray-600">
-              <span className="font-medium">{property.area}</span>
-            </div>
-          </div>
-          
-          <p className="mt-4 text-gray-700">{property.description}</p>
-          
-          <div className="mt-4 flex justify-end">
-            <span className="text-primary hover:underline">View details →</span>
-          </div>
-        </Link>
-      ))}
+          <Filter className="h-4 w-4" />
+          {showFilters ? 'Hide Filters' : 'Show Filters'}
+          {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
+      </div>
+      
+      {showFilters && (
+        <div className="mb-6">
+          <AdvancedSearch onFilterChange={applyFilters} />
+        </div>
+      )}
+      
+      {displayProperties.length === 0 ? (
+        <div className="bg-white p-8 rounded-lg shadow-md text-center">
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">No properties found</h3>
+          <p className="text-gray-600">Try adjusting your filters to see more results.</p>
+        </div>
+      ) : (
+        displayProperties.map((property) => (
+          <TextPropertyCard 
+            key={property.id}
+            property={{
+              id: property.id,
+              title: property.title,
+              location: property.location,
+              price: property.price,
+              bedrooms: property.bedrooms || undefined,
+              bathrooms: property.bathrooms || undefined,
+              area: property.area
+            }}
+            className="hover:bg-gray-50 transition-colors duration-300"
+          />
+        ))
+      )}
     </div>
   );
 };
+

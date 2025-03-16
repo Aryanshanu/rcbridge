@@ -3,7 +3,6 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/sections/Footer";
 import { SEO } from "@/components/SEO";
 import { TextFeaturedProperties } from "@/components/sections/TextFeaturedProperties";
-import { FeaturedProperties } from "@/components/sections/FeaturedProperties";
 import { CallToAction } from "@/components/sections/CallToAction";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Home } from "lucide-react";
@@ -40,10 +39,6 @@ const Properties = () => {
         
         <section className="mb-16">
           <TextFeaturedProperties />
-        </section>
-        
-        <section className="mb-16">
-          <FeaturedProperties />
         </section>
         
         <section className="mb-16">

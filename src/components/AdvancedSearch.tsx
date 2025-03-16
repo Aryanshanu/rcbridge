@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -12,11 +12,22 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 
-export const AdvancedSearch = () => {
+interface AdvancedSearchProps {
+  onFilterChange?: (filters: Record<string, any>) => void;
+}
+
+export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
   const [priceRange, setPriceRange] = useState([1000000, 10000000]); // ₹10L to ₹1Cr
   const [areaRange, setAreaRange] = useState([500, 5000]); // 500 sq.ft to 5000 sq.ft
+  const [propertyType, setPropertyType] = useState("all");
+  const [location, setLocation] = useState("");
+  const [propertyStatus, setPropertyStatus] = useState("all");
+  const [bedrooms, setBedrooms] = useState("any");
+  const [bathrooms, setBathrooms] = useState("any");
+  const [propertyAge, setPropertyAge] = useState("any");
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   
   const formatPrice = (price: number): string => {
     if (price >= 10000000) {
@@ -38,13 +49,81 @@ export const AdvancedSearch = () => {
     { id: "school", label: "Near School" },
     { id: "hospital", label: "Near Hospital" },
   ];
+  
+  const handleAmenityChange = (amenityId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedAmenities([...selectedAmenities, amenityId]);
+    } else {
+      setSelectedAmenities(selectedAmenities.filter(id => id !== amenityId));
+    }
+  };
+  
+  const handleSearch = () => {
+    if (onFilterChange) {
+      onFilterChange({
+        propertyType,
+        location,
+        propertyStatus,
+        priceRange,
+        areaRange,
+        bedrooms,
+        bathrooms,
+        propertyAge,
+        amenities: selectedAmenities
+      });
+    }
+  };
+  
+  const clearFilters = () => {
+    setPriceRange([1000000, 10000000]);
+    setAreaRange([500, 5000]);
+    setPropertyType("all");
+    setLocation("");
+    setPropertyStatus("all");
+    setBedrooms("any");
+    setBathrooms("any");
+    setPropertyAge("any");
+    setSelectedAmenities([]);
+    
+    if (onFilterChange) {
+      onFilterChange({});
+    }
+  };
+  
+  // Apply filters when form values change
+  useEffect(() => {
+    // Using a debounce to avoid too many filter operations
+    const handler = setTimeout(() => {
+      handleSearch();
+    }, 500);
+    
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [propertyType, location, propertyStatus, priceRange, areaRange, bedrooms, bathrooms, propertyAge, selectedAmenities]);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md mb-8 animate-in fade-in slide-in-from-top duration-300">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-semibold text-lg">Filter Properties</h3>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={clearFilters}
+          className="text-gray-500 hover:text-gray-700 flex items-center"
+        >
+          <X className="h-4 w-4 mr-1" />
+          Clear All
+        </Button>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div>
           <Label className="text-gray-700 mb-2 block">Property Type</Label>
-          <Select defaultValue="all">
+          <Select 
+            value={propertyType} 
+            onValueChange={setPropertyType}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select property type" />
             </SelectTrigger>
@@ -52,6 +131,7 @@ export const AdvancedSearch = () => {
               <SelectItem value="all">All Properties</SelectItem>
               <SelectItem value="residential">Residential</SelectItem>
               <SelectItem value="commercial">Commercial</SelectItem>
+              <SelectItem value="luxury">Luxury</SelectItem>
               <SelectItem value="industrial">Industrial</SelectItem>
               <SelectItem value="agricultural">Agricultural</SelectItem>
               <SelectItem value="undeveloped">Undeveloped Land</SelectItem>
@@ -61,12 +141,19 @@ export const AdvancedSearch = () => {
 
         <div>
           <Label className="text-gray-700 mb-2 block">Location</Label>
-          <Input placeholder="Enter location" />
+          <Input 
+            placeholder="Enter location" 
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+          />
         </div>
 
         <div>
           <Label className="text-gray-700 mb-2 block">Property Status</Label>
-          <Select defaultValue="all">
+          <Select 
+            value={propertyStatus}
+            onValueChange={setPropertyStatus}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
@@ -86,7 +173,7 @@ export const AdvancedSearch = () => {
             Price Range: {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
           </Label>
           <Slider 
-            defaultValue={[1000000, 10000000]} 
+            value={priceRange} 
             min={100000} 
             max={50000000} 
             step={100000}
@@ -100,7 +187,7 @@ export const AdvancedSearch = () => {
             Area Range: {areaRange[0]} - {areaRange[1]} sq.ft
           </Label>
           <Slider 
-            defaultValue={[500, 5000]} 
+            value={areaRange}
             min={100} 
             max={10000} 
             step={50}
@@ -113,7 +200,10 @@ export const AdvancedSearch = () => {
       <div className="mb-6">
         <Label className="text-gray-700 mb-2 block">Bedrooms & Bathrooms</Label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Select defaultValue="any">
+          <Select 
+            value={bedrooms}
+            onValueChange={setBedrooms}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Bedrooms" />
             </SelectTrigger>
@@ -127,7 +217,10 @@ export const AdvancedSearch = () => {
             </SelectContent>
           </Select>
 
-          <Select defaultValue="any">
+          <Select 
+            value={bathrooms}
+            onValueChange={setBathrooms}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Bathrooms" />
             </SelectTrigger>
@@ -140,7 +233,10 @@ export const AdvancedSearch = () => {
             </SelectContent>
           </Select>
 
-          <Select defaultValue="any">
+          <Select 
+            value={propertyAge}
+            onValueChange={setPropertyAge}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Age" />
             </SelectTrigger>
@@ -152,18 +248,6 @@ export const AdvancedSearch = () => {
               <SelectItem value="20">Less than 20 years</SelectItem>
             </SelectContent>
           </Select>
-
-          <Select defaultValue="any">
-            <SelectTrigger>
-              <SelectValue placeholder="Stories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="any">Any Stories</SelectItem>
-              <SelectItem value="1">1 Story</SelectItem>
-              <SelectItem value="2">2 Stories</SelectItem>
-              <SelectItem value="3">3+ Stories</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
@@ -172,7 +256,13 @@ export const AdvancedSearch = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {amenities.map((amenity) => (
             <div key={amenity.id} className="flex items-center space-x-2">
-              <Checkbox id={amenity.id} />
+              <Checkbox 
+                id={amenity.id} 
+                checked={selectedAmenities.includes(amenity.id)}
+                onCheckedChange={(checked) => 
+                  handleAmenityChange(amenity.id, checked as boolean)
+                }
+              />
               <label
                 htmlFor={amenity.id}
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -185,7 +275,10 @@ export const AdvancedSearch = () => {
       </div>
 
       <div className="flex justify-end">
-        <Button className="flex items-center gap-2">
+        <Button 
+          className="flex items-center gap-2"
+          onClick={handleSearch}
+        >
           <Search className="h-4 w-4" />
           Search Properties
         </Button>
