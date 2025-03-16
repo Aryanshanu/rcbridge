@@ -4,7 +4,7 @@ import { Features } from "@/components/sections/Features";
 
 export const ServicesTab = () => {
   return (
-    <section className="space-y-12">
+    <section className="w-full space-y-12">
       <WhyChooseUs />
       <Features />
     </section>

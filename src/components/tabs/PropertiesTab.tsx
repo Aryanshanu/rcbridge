@@ -3,7 +3,7 @@ import { TextFeaturedProperties } from "@/components/sections/TextFeaturedProper
 
 export const PropertiesTab = () => {
   return (
-    <section>
+    <section className="w-full">
       <TextFeaturedProperties />
     </section>
   );

@@ -5,7 +5,7 @@ import { Calculator } from "lucide-react";
 
 export const CalculatorTab = () => {
   return (
-    <section className="max-w-4xl mx-auto">
+    <section className="w-full max-w-4xl mx-auto">
       <Card className="p-4 sm:p-6 bg-white border border-gray-200">
         <div className="flex items-center mb-6">
           <Calculator className="h-6 w-6 mr-3 text-[#1e40af]" />
