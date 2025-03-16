@@ -44,15 +44,15 @@ const Index = () => {
         {/* Tabbed Content */}
         <section className="mt-12 mb-12">
           <TabsContainer>
-            <TabsContent value="properties" className="mt-0 animate-in fade-in-50 duration-300">
+            <TabsContent value="properties" className="mt-6 animate-in fade-in-50 duration-300">
               <PropertiesTab />
             </TabsContent>
             
-            <TabsContent value="services" className="mt-0 animate-in fade-in-50 duration-300">
+            <TabsContent value="services" className="mt-6 animate-in fade-in-50 duration-300">
               <ServicesTab />
             </TabsContent>
             
-            <TabsContent value="calculator" className="mt-0 animate-in fade-in-50 duration-300">
+            <TabsContent value="calculator" className="mt-6 animate-in fade-in-50 duration-300">
               <CalculatorTab />
             </TabsContent>
           </TabsContainer>

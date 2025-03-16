@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Building, Sparkles, Calculator } from "lucide-react";
 
 interface TabsContainerProps {
