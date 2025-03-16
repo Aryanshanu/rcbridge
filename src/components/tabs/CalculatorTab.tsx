@@ -13,7 +13,7 @@ export const CalculatorTab = () => {
         </div>
         <p className="text-gray-600 mb-6">
           Our investment calculator helps you evaluate the potential return on investment for properties.
-          Calculate rental yield, price appreciation, and determine if a property meets the 12% annual return threshold.
+          Calculate rental yield, price appreciation, and determine if a property meets our investment criteria.
         </p>
         <InvestmentCalculator />
       </Card>

@@ -1,4 +1,3 @@
-
 import { Building2, Users, Brain, Shield, Users2, ChartBar, Calculator, Home, Building, Map, Landmark, LineChart, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InvestmentCalculator } from "@/components/InvestmentCalculator";
@@ -37,7 +36,6 @@ export const Features = () => {
     },
   ];
 
-  // Enhanced competitive comparison data with 10-point ratings
   const competitors = [
     { name: "RC Bridge", color: "bg-primary/80" },
     { name: "MagicBricks", color: "bg-red-500/80" },
@@ -47,7 +45,6 @@ export const Features = () => {
     { name: "NoBroker", color: "bg-purple-500/80" },
   ];
 
-  // Enhanced comparative matrix with ratings and indicators
   const competitiveMatrix = [
     { 
       feature: "Public Listings", 
@@ -106,7 +103,6 @@ export const Features = () => {
     }
   ];
 
-  // Detailed feature breakdown
   const detailedFeatures = [
     {
       id: "property-matching",
@@ -202,7 +198,6 @@ export const Features = () => {
         </p>
       </div>
 
-      {/* Section Navigation */}
       <div className="mb-8 flex flex-wrap justify-center gap-4">
         <a href="#core-features" className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">Core Features</a>
         <a href="#detailed-breakdown" className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">Detailed Breakdown</a>
@@ -210,7 +205,6 @@ export const Features = () => {
         <a href="#investment-calculator" className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">Investment Calculator</a>
       </div>
       
-      {/* Core Features Section */}
       <div id="core-features" className="mb-16">
         <div className="text-center mb-6">
           <h3 className="text-xl sm:text-2xl font-bold">Core Features</h3>
@@ -251,7 +245,6 @@ export const Features = () => {
         </div>
       </div>
       
-      {/* Detailed Breakdown Section */}
       <div id="detailed-breakdown" className="mb-16">
         <div className="text-center mb-6">
           <h3 className="text-xl sm:text-2xl font-bold">Detailed Breakdown</h3>
@@ -298,7 +291,6 @@ export const Features = () => {
         </div>
       </div>
       
-      {/* Competitive Analysis Section */}
       <div id="competitive-analysis" className="mb-16">
         <div className="text-center mb-6">
           <h3 className="text-xl sm:text-2xl font-bold">Competitive Analysis</h3>
@@ -364,7 +356,6 @@ export const Features = () => {
         </div>
       </div>
       
-      {/* Investment Calculator Section */}
       <div id="investment-calculator" className="mb-16">
         <div className="text-center mb-6">
           <h3 className="text-xl sm:text-2xl font-bold">Investment Calculator</h3>

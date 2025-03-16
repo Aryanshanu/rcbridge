@@ -1,6 +1,5 @@
 
 import { ArrowUp, TrendingUp, Gauge } from "lucide-react";
-import { convertNumberToWords } from "@/utils/numberFormatting";
 
 export type CalculationResult = {
   rentalYield: number;
@@ -38,9 +37,6 @@ export function InvestmentResults({ result }: InvestmentResultsProps) {
         <div className="flex justify-center mb-6">
           <div className={`${getStatusColor(result.investmentStatus)} w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-xl`}>
             {result.totalReturn.toFixed(1)}%
-            <span className="text-xs block mt-1">
-              ({convertNumberToWords(parseFloat(result.totalReturn.toFixed(1)))} percent)
-            </span>
           </div>
         </div>
         
@@ -50,9 +46,6 @@ export function InvestmentResults({ result }: InvestmentResultsProps) {
             <div className="flex items-center">
               <span className="text-lg font-semibold">{result.rentalYield.toFixed(2)}%</span>
               <ArrowUp className="h-4 w-4 ml-1 text-[#10B981]" />
-              <span className="text-xs ml-1 text-gray-500">
-                ({convertNumberToWords(parseFloat(result.rentalYield.toFixed(2)))})
-              </span>
             </div>
           </div>
           
@@ -61,14 +54,11 @@ export function InvestmentResults({ result }: InvestmentResultsProps) {
             <div className="flex items-center">
               <span className="text-lg font-semibold">{result.priceAppreciation.toFixed(2)}%</span>
               <TrendingUp className="h-4 w-4 ml-1 text-[#1e40af]" />
-              <span className="text-xs ml-1 text-gray-500">
-                ({convertNumberToWords(parseFloat(result.priceAppreciation.toFixed(2)))})
-              </span>
             </div>
           </div>
           
           <div className="space-y-1 p-3 bg-white rounded-md border border-gray-100 md:col-span-2">
-            <p className="text-sm font-medium text-gray-700">RSI Indicator</p>
+            <p className="text-sm font-medium text-gray-700">Indicator</p>
             <div className="flex items-center justify-between">
               <span className="text-lg font-semibold">{result.rsi.toFixed(0)}</span>
               <div className="h-2 flex-1 mx-4 bg-gray-200 rounded-full overflow-hidden">
@@ -99,8 +89,8 @@ export function InvestmentResults({ result }: InvestmentResultsProps) {
           </div>
           <p className="text-sm mt-1 text-gray-600">
             {result.totalReturn >= 12 
-              ? "This property meets the 12% annual return threshold." 
-              : "This property does not meet the 12% annual return threshold."}
+              ? "This property meets the annual return threshold." 
+              : "This property does not meet the annual return threshold."}
           </p>
         </div>
       </div>

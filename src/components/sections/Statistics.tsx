@@ -11,8 +11,8 @@ export const Statistics = () => {
     { label: "Active Users", value: "732", icon: "👥" },
     { label: "Startups Supported", value: "27", icon: "🚀" },
     { label: "Successful Deals", value: "183", icon: "🤝" },
-    { label: "Years in Hyderabad", value: "7", icon: "⭐" },
-    { label: "Avg. Buyer Savings", value: "₹2.1L", icon: "💰" },
+    { label: "Years in Hyderabad", value: "10+", icon: "⭐" },
+    { label: "Avg. Buyer Savings", value: "₹2.7L", icon: "💰" },
   ];
 
   useEffect(() => {

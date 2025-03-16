@@ -88,14 +88,14 @@ export const Hero = () => {
             </button>
           </div>
           
-          {/* Trust Indicators - Updated with more realistic numbers */}
+          {/* Trust Indicators - Updated with revised numbers */}
           <div className="mt-12 flex flex-wrap justify-center gap-8 md:gap-16 animate-fade-in delay-600">
             <div className="flex flex-col items-center text-white">
-              <span className="font-display font-bold text-3xl md:text-4xl">7+</span>
+              <span className="font-display font-bold text-3xl md:text-4xl">10+</span>
               <span className="text-gray-200 text-sm md:text-base">Years of Service</span>
             </div>
             <div className="flex flex-col items-center text-white">
-              <span className="font-display font-bold text-3xl md:text-4xl">₹120Cr+</span>
+              <span className="font-display font-bold text-3xl md:text-4xl">₹750Cr+</span>
               <span className="text-gray-200 text-sm md:text-base">Transactions</span>
             </div>
             <div className="flex flex-col items-center text-white">

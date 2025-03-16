@@ -81,7 +81,7 @@ export function InvestmentCalculator() {
     <div className="rounded-lg border border-gray-200 overflow-hidden">
       <div className="bg-[#1e40af]/10 p-4">
         <h3 className="text-lg font-bold text-[#1e40af] mb-1">Investment Calculator</h3>
-        <p className="text-sm text-gray-600">Evaluate if a property meets the 12% annual return threshold</p>
+        <p className="text-sm text-gray-600">Evaluate the potential return on real estate investments</p>
       </div>
 
       <div className="p-4">
