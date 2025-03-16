@@ -67,7 +67,7 @@ export default {
       fontFamily: {
         sans: ["Inter", "sans-serif"],
         body: ["Open Sans", "sans-serif"],
-        display: ["Playfair Display", "serif"], // Added display font
+        heading: ["Playfair Display", "serif"], // Changed from "display" to "heading"
       },
       spacing: {
         "navbar-height": "70px",
