@@ -40,6 +40,21 @@ const Index = () => {
           <Statistics />
         </Suspense>
         
+        {/* Tell Us Your Requirements Section - Moved up */}
+        <section className="mb-16 mt-8">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Tell Us Your Requirements</h2>
+            <p className="mt-2 text-base sm:text-lg text-gray-600">
+              Whether you're looking to buy, sell, or rent, we'll help you find the perfect match.
+            </p>
+          </div>
+          <div id="property-form" className="bg-gray-100 backdrop-blur-lg rounded-lg shadow-lg p-4 sm:p-8">
+            <Suspense fallback={<LoadingSpinner />}>
+              <PropertyForm />
+            </Suspense>
+          </div>
+        </section>
+        
         {/* Our Core Values Section */}
         <section className="mt-16 mb-16">
           <div className="text-center mb-8">
@@ -189,6 +204,12 @@ const Index = () => {
         
         {/* Featured Properties Section - Text Only */}
         <section className="mb-16">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Featured Properties</h2>
+            <Link to="/properties" className="text-primary hover:underline font-medium">
+              View all properties
+            </Link>
+          </div>
           <TextFeaturedProperties />
         </section>
         
@@ -196,20 +217,6 @@ const Index = () => {
           <Suspense fallback={<LoadingSpinner />}>
             <Features />
           </Suspense>
-        </section>
-        
-        <section className="mb-12 sm:mb-16">
-          <div className="text-center mb-6 sm:mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Tell Us Your Requirements</h2>
-            <p className="mt-2 text-base sm:text-lg text-gray-600">
-              Whether you're looking to buy, sell, or rent, we'll help you find the perfect match.
-            </p>
-          </div>
-          <div id="property-form" className="bg-gray-100 backdrop-blur-lg rounded-lg shadow-lg p-4 sm:p-8">
-            <Suspense fallback={<LoadingSpinner />}>
-              <PropertyForm />
-            </Suspense>
-          </div>
         </section>
         
         <Suspense fallback={<LoadingSpinner />}>

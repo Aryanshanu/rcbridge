@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       console.log("Sign in successful:", data);
-      return data;
+      // Not returning data
     } catch (error: any) {
       console.error('Error signing in:', error);
       toast({
@@ -127,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       console.log("Sign up successful:", data);
-      return data;
+      // Not returning data
     } catch (error: any) {
       console.error('Error signing up:', error);
       toast({
