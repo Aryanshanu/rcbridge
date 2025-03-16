@@ -1,8 +1,9 @@
 
 import { useState } from "react";
-import { Building, MapPin, Bed, Bath, Square, MessageCircle, Heart, Bookmark, Phone } from "lucide-react";
+import { Building, MapPin, Bed, Bath, Square, Heart, Bookmark, Phone, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 interface PropertyType {
   id: string;
@@ -17,9 +18,10 @@ interface PropertyType {
 interface TextPropertyCardProps {
   property: PropertyType;
   className?: string;
+  onWantToKnowMore?: (property: PropertyType) => void;
 }
 
-export const TextPropertyCard = ({ property, className }: TextPropertyCardProps) => {
+export const TextPropertyCard = ({ property, className, onWantToKnowMore }: TextPropertyCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const { toast } = useToast();
@@ -32,17 +34,6 @@ export const TextPropertyCard = ({ property, className }: TextPropertyCardProps)
   const propertyColor = propertyType === 'commercial' ? '#3B82F6' : // Commercial (blue)
                        propertyType === 'luxury' ? '#8B5CF6' : // Luxury (purple)
                        '#10B981'; // Residential (green)
-  
-  const handleWhatsAppInquiry = () => {
-    const message = encodeURIComponent(`Hi, I'm interested in the property: ${property.title} in ${property.location}. Could you provide more information?`);
-    window.open(`https://wa.me/917893871223?text=${message}`, '_blank');
-    
-    toast({
-      title: "WhatsApp Inquiry",
-      description: "Opening WhatsApp with your inquiry message",
-      duration: 3000,
-    });
-  };
   
   const handleLike = () => {
     setIsLiked(!isLiked);
@@ -69,6 +60,12 @@ export const TextPropertyCard = ({ property, className }: TextPropertyCardProps)
       description: "Connecting you with our property agent",
       duration: 3000,
     });
+  };
+  
+  const handleWantToKnowMore = () => {
+    if (onWantToKnowMore) {
+      onWantToKnowMore(property);
+    }
   };
   
   return (
@@ -128,7 +125,7 @@ export const TextPropertyCard = ({ property, className }: TextPropertyCardProps)
       )}
       
       {/* Action Buttons */}
-      <div className="grid grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-3 gap-2 mb-3">
         <button 
           onClick={handleLike}
           className={cn(
@@ -158,23 +155,15 @@ export const TextPropertyCard = ({ property, className }: TextPropertyCardProps)
           <Phone className="h-4 w-4" />
           <span className="text-xs mt-1">Call</span>
         </button>
-        
-        <button 
-          onClick={handleWhatsAppInquiry}
-          className="flex flex-col items-center justify-center p-2 rounded-md bg-green-50 text-green-600 hover:bg-green-100 transition-colors duration-200"
-        >
-          <MessageCircle className="h-4 w-4" />
-          <span className="text-xs mt-1">Chat</span>
-        </button>
       </div>
       
-      <button 
-        onClick={handleWhatsAppInquiry}
-        className="w-full flex items-center justify-center gap-2 bg-[#10B981] hover:bg-[#10B981]/90 text-white py-2 rounded-md transition-all duration-300"
+      <Button 
+        onClick={handleWantToKnowMore}
+        className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-md transition-all duration-300"
       >
-        <MessageCircle className="h-4 w-4" />
-        Inquire via WhatsApp
-      </button>
+        <Info className="h-4 w-4" />
+        Want to Know More
+      </Button>
     </div>
   );
 };

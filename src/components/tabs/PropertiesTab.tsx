@@ -1,8 +1,23 @@
+
 import { useState } from "react";
 import { AdvancedSearch } from "@/components/AdvancedSearch";
 import { TextPropertyCard } from "@/components/TextPropertyCard";
 import { Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 interface Property {
   id: string;
@@ -13,12 +28,22 @@ interface Property {
   bathrooms: number | null;
   area: string;
   description: string;
+  type?: string;
 }
 
 export const PropertiesTab = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  
+  // Form states for the inquiry dialog
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState("");
+  
+  const { toast } = useToast();
   
   // This is the source of truth for all properties
   const properties: Property[] = [
@@ -30,7 +55,8 @@ export const PropertiesTab = () => {
       bedrooms: 4,
       bathrooms: 4,
       area: "4500 sq. ft.",
-      description: "Magnificent villa with modern architecture, swimming pool and garden area. Close to Jubilee Hills Club and Filmnagar."
+      description: "Magnificent villa with modern architecture, swimming pool and garden area. Close to Jubilee Hills Club and Filmnagar.",
+      type: "luxury"
     },
     {
       id: "2",
@@ -40,7 +66,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "2100 sq. ft.",
-      description: "High-end apartment with premium amenities, 24/7 security and panoramic city views. Walking distance to GVK One Mall."
+      description: "High-end apartment with premium amenities, 24/7 security and panoramic city views. Walking distance to GVK One Mall.",
+      type: "residential"
     },
     {
       id: "3",
@@ -50,7 +77,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: 8,
       area: "12000 sq. ft.",
-      description: "Prime commercial building suitable for IT/ITES companies with ample parking space. Near Mindspace IT Park and metro station."
+      description: "Prime commercial building suitable for IT/ITES companies with ample parking space. Near Mindspace IT Park and metro station.",
+      type: "commercial"
     },
     {
       id: "4",
@@ -60,7 +88,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: null,
       area: "500 sq. yards",
-      description: "HMDA approved residential plot in a gated community with excellent connectivity to ORR and Financial District."
+      description: "HMDA approved residential plot in a gated community with excellent connectivity to ORR and Financial District.",
+      type: "undeveloped"
     },
     {
       id: "5",
@@ -70,7 +99,8 @@ export const PropertiesTab = () => {
       bedrooms: 4,
       bathrooms: 5,
       area: "4200 sq. ft.",
-      description: "Exclusive penthouse with private terrace, 360° city views and premium interiors. Near Ramanaidu Studios and Khairatabad."
+      description: "Exclusive penthouse with private terrace, 360° city views and premium interiors. Near Ramanaidu Studios and Khairatabad.",
+      type: "luxury"
     },
     {
       id: "6",
@@ -80,7 +110,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "2200 sq. ft.",
-      description: "Well-designed independent house with spacious rooms, modern fixtures and small garden. Close to Gachibowli."
+      description: "Well-designed independent house with spacious rooms, modern fixtures and small garden. Close to Gachibowli.",
+      type: "residential"
     },
     {
       id: "7",
@@ -90,7 +121,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: 4,
       area: "3000 sq. ft.",
-      description: "Ready-to-move office space with modern interiors, conference rooms and dedicated parking. Near Begumpet Airport."
+      description: "Ready-to-move office space with modern interiors, conference rooms and dedicated parking. Near Begumpet Airport.",
+      type: "commercial"
     },
     {
       id: "8",
@@ -100,7 +132,8 @@ export const PropertiesTab = () => {
       bedrooms: 4,
       bathrooms: 4,
       area: "3200 sq. ft.",
-      description: "Beautiful villa in a prestigious gated community with club house, swimming pool and 24/7 security. Near BHEL and ISB."
+      description: "Beautiful villa in a prestigious gated community with club house, swimming pool and 24/7 security. Near BHEL and ISB.",
+      type: "residential"
     },
     {
       id: "9",
@@ -110,7 +143,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 2,
       area: "1750 sq. ft.",
-      description: "Spacious flats with modern amenities in a well-connected location. Close to metro station and IT corridor."
+      description: "Spacious flats with modern amenities in a well-connected location. Close to metro station and IT corridor.",
+      type: "residential"
     },
     {
       id: "10",
@@ -120,7 +154,8 @@ export const PropertiesTab = () => {
       bedrooms: 4,
       bathrooms: 4,
       area: "2800 sq. ft.",
-      description: "Elegant duplex apartment with premium fittings, modular kitchen and private terrace garden. Near major IT companies."
+      description: "Elegant duplex apartment with premium fittings, modular kitchen and private terrace garden. Near major IT companies.",
+      type: "residential"
     },
     {
       id: "11",
@@ -130,7 +165,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: null,
       area: "1000 sq. yards",
-      description: "Prime commercial plot with excellent frontage and all approvals in place. Near metro station and Uppal junction."
+      description: "Prime commercial plot with excellent frontage and all approvals in place. Near metro station and Uppal junction.",
+      type: "commercial"
     },
     {
       id: "12",
@@ -140,7 +176,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "2400 sq. ft.",
-      description: "Stylish villa with modern architecture in North Hyderabad. Includes garden, car parking and servant quarters."
+      description: "Stylish villa with modern architecture in North Hyderabad. Includes garden, car parking and servant quarters.",
+      type: "residential"
     },
     {
       id: "13",
@@ -150,7 +187,8 @@ export const PropertiesTab = () => {
       bedrooms: 2,
       bathrooms: 2,
       area: "1250 sq. ft.",
-      description: "Well-designed apartment with spacious rooms and modern amenities. Near KPHB Metro Station and JNTU."
+      description: "Well-designed apartment with spacious rooms and modern amenities. Near KPHB Metro Station and JNTU.",
+      type: "residential"
     },
     {
       id: "14",
@@ -160,7 +198,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: null,
       area: "5 acres",
-      description: "Fertile agricultural land with water facility suitable for farming or investment purposes. 30 minutes from Secunderabad."
+      description: "Fertile agricultural land with water facility suitable for farming or investment purposes. 30 minutes from Secunderabad.",
+      type: "agricultural"
     },
     {
       id: "15",
@@ -170,7 +209,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "1800 sq. ft.",
-      description: "Premium apartment with designer interiors, high-end fixtures and amenities. Walking distance to Inorbit Mall and IT hub."
+      description: "Premium apartment with designer interiors, high-end fixtures and amenities. Walking distance to Inorbit Mall and IT hub.",
+      type: "residential"
     },
     {
       id: "16",
@@ -180,7 +220,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: 2,
       area: "1200 sq. ft.",
-      description: "Prime retail space in high footfall area suitable for brands and showrooms. Near metro station and main road."
+      description: "Prime retail space in high footfall area suitable for brands and showrooms. Near metro station and main road.",
+      type: "commercial"
     },
     {
       id: "17",
@@ -190,7 +231,8 @@ export const PropertiesTab = () => {
       bedrooms: 2,
       bathrooms: 2,
       area: "1100 sq. ft.",
-      description: "Affordable well-constructed apartment in a good location with basic amenities. Close to IT corridor and schools."
+      description: "Affordable well-constructed apartment in a good location with basic amenities. Close to IT corridor and schools.",
+      type: "residential"
     },
     {
       id: "18",
@@ -200,7 +242,8 @@ export const PropertiesTab = () => {
       bedrooms: 5,
       bathrooms: 5,
       area: "4800 sq. ft.",
-      description: "Historic bungalow with colonial architecture on a large plot with mature garden. Near Parade Ground and Military area."
+      description: "Historic bungalow with colonial architecture on a large plot with mature garden. Near Parade Ground and Military area.",
+      type: "luxury"
     },
     {
       id: "19",
@@ -210,7 +253,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "1550 sq. ft. onwards",
-      description: "Apartments in an upcoming township with extensive amenities including club house, sports facilities and shopping complex."
+      description: "Apartments in an upcoming township with extensive amenities including club house, sports facilities and shopping complex.",
+      type: "residential"
     },
     {
       id: "20",
@@ -220,7 +264,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: 2,
       area: "15000 sq. ft.",
-      description: "Modern warehouse facility with loading bays, office space and security. Excellent connectivity to ORR and NH44."
+      description: "Modern warehouse facility with loading bays, office space and security. Excellent connectivity to ORR and NH44.",
+      type: "industrial"
     },
     {
       id: "21",
@@ -230,7 +275,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 2,
       area: "1650 sq. ft.",
-      description: "Well-maintained apartment in a prestigious society with good amenities. Near P.V Narasimha Rao Expressway."
+      description: "Well-maintained apartment in a prestigious society with good amenities. Near P.V Narasimha Rao Expressway.",
+      type: "residential"
     },
     {
       id: "22",
@@ -240,7 +286,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "1800 sq. ft. built-up on 1 acre",
-      description: "Beautiful farmhouse with scenic surroundings, fruit orchard and swimming pool. Perfect for weekend getaways."
+      description: "Beautiful farmhouse with scenic surroundings, fruit orchard and swimming pool. Perfect for weekend getaways.",
+      type: "agricultural"
     },
     {
       id: "23",
@@ -250,7 +297,8 @@ export const PropertiesTab = () => {
       bedrooms: 4,
       bathrooms: 4,
       area: "3800 sq. ft.",
-      description: "Spectacular villa on an elevated plot offering panoramic lake views and cool breeze. Includes home theater and gym."
+      description: "Spectacular villa on an elevated plot offering panoramic lake views and cool breeze. Includes home theater and gym.",
+      type: "luxury"
     },
     {
       id: "24",
@@ -260,7 +308,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: 6,
       area: "4500 sq. ft.",
-      description: "Ready-fitted co-working space with high-speed internet, conference facilities and pantry area. Excellent investment opportunity."
+      description: "Ready-fitted co-working space with high-speed internet, conference facilities and pantry area. Excellent investment opportunity.",
+      type: "commercial"
     },
     {
       id: "25",
@@ -270,7 +319,8 @@ export const PropertiesTab = () => {
       bedrooms: 4,
       bathrooms: 4,
       area: "3200 sq. ft.",
-      description: "Ultra-luxury apartment with Italian marble flooring, German kitchen and smart home features. In a premium high-rise building."
+      description: "Ultra-luxury apartment with Italian marble flooring, German kitchen and smart home features. In a premium high-rise building.",
+      type: "luxury"
     },
     {
       id: "26",
@@ -280,7 +330,8 @@ export const PropertiesTab = () => {
       bedrooms: 2,
       bathrooms: 2,
       area: "1250 sq. ft.",
-      description: "Specifically designed senior living apartment with medical facilities, emergency response system and community activities."
+      description: "Specifically designed senior living apartment with medical facilities, emergency response system and community activities.",
+      type: "residential"
     },
     {
       id: "27",
@@ -290,7 +341,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "2100 sq. ft.",
-      description: "Tech-enabled smart home with automated lighting, security and climate control. Near Kothaguda Junction and IT companies."
+      description: "Tech-enabled smart home with automated lighting, security and climate control. Near Kothaguda Junction and IT companies.",
+      type: "residential"
     },
     {
       id: "28",
@@ -300,7 +352,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: null,
       area: "2000 sq. yards",
-      description: "Industrial land with all approvals for setting up manufacturing facility. Located in designated industrial zone with good connectivity."
+      description: "Industrial land with all approvals for setting up manufacturing facility. Located in designated industrial zone with good connectivity.",
+      type: "industrial"
     },
     {
       id: "29",
@@ -310,7 +363,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "1950 sq. ft.",
-      description: "Sustainable home with solar panels, rainwater harvesting and energy-efficient design. Reduced carbon footprint and lower bills."
+      description: "Sustainable home with solar panels, rainwater harvesting and energy-efficient design. Reduced carbon footprint and lower bills.",
+      type: "residential"
     },
     {
       id: "30",
@@ -320,8 +374,10 @@ export const PropertiesTab = () => {
       bedrooms: 1,
       bathrooms: 1,
       area: "650 sq. ft.",
-      description: "Compact studio apartment ideal for singles or investment. In a community with shared amenities and good rental prospects."
+      description: "Compact studio apartment ideal for singles or investment. In a community with shared amenities and good rental prospects.",
+      type: "residential"
     },
+    // ... remaining properties with types
     {
       id: "31",
       title: "Bungalow Plot",
@@ -330,7 +386,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: null,
       area: "800 sq. yards",
-      description: "Premium plot in a gated layout approved for bungalow construction. Close to Financial District and ORR."
+      description: "Premium plot in a gated layout approved for bungalow construction. Close to Financial District and ORR.",
+      type: "undeveloped"
     },
     {
       id: "32",
@@ -340,7 +397,8 @@ export const PropertiesTab = () => {
       bedrooms: 25,
       bathrooms: 15,
       area: "8000 sq. ft.",
-      description: "Purpose-built hostel building currently operating with good occupancy. Excellent investment with steady returns."
+      description: "Purpose-built hostel building currently operating with good occupancy. Excellent investment with steady returns.",
+      type: "commercial"
     },
     {
       id: "33",
@@ -350,7 +408,8 @@ export const PropertiesTab = () => {
       bedrooms: 6,
       bathrooms: 6,
       area: "3200 sq. ft.",
-      description: "Spacious G+2 house suitable for joint family or rental income. Each floor has separate entrance and utilities."
+      description: "Spacious G+2 house suitable for joint family or rental income. Each floor has separate entrance and utilities.",
+      type: "residential"
     },
     {
       id: "34",
@@ -360,7 +419,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "2400 sq. ft.",
-      description: "Beautiful apartment with unobstructed views of Musi River. Premium community with excellent amenities."
+      description: "Beautiful apartment with unobstructed views of Musi River. Premium community with excellent amenities.",
+      type: "residential"
     },
     {
       id: "35",
@@ -370,7 +430,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: 12,
       area: "10000 sq. ft.",
-      description: "Fully operational hospital building with all medical infrastructure in place. Excellent location with high visibility."
+      description: "Fully operational hospital building with all medical infrastructure in place. Excellent location with high visibility.",
+      type: "commercial"
     },
     {
       id: "36",
@@ -380,7 +441,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "1800 sq. ft.",
-      description: "Elegant row houses with modern design and independent car parking. Part of a well-maintained gated community."
+      description: "Elegant row houses with modern design and independent car parking. Part of a well-maintained gated community.",
+      type: "residential"
     },
     {
       id: "37",
@@ -390,7 +452,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: 4,
       area: "3500 sq. ft.",
-      description: "Ready-to-use restaurant space in high-profile location with all facilities and permissions. Previously housed a successful chain."
+      description: "Ready-to-use restaurant space in high-profile location with all facilities and permissions. Previously housed a successful chain.",
+      type: "commercial"
     },
     {
       id: "38",
@@ -400,7 +463,8 @@ export const PropertiesTab = () => {
       bedrooms: 2,
       bathrooms: 2,
       area: "1050 sq. ft.",
-      description: "Budget-friendly apartment in a well-connected location with basic amenities. Ideal for first-time homebuyers."
+      description: "Budget-friendly apartment in a well-connected location with basic amenities. Ideal for first-time homebuyers.",
+      type: "residential"
     },
     {
       id: "39",
@@ -410,7 +474,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: 3,
       area: "3200 sq. ft.",
-      description: "Operational rooftop restaurant with panoramic city views, modern interiors and all licenses. Popular among IT professionals."
+      description: "Operational rooftop restaurant with panoramic city views, modern interiors and all licenses. Popular among IT professionals.",
+      type: "commercial"
     },
     {
       id: "40",
@@ -420,7 +485,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "1950 sq. ft.",
-      description: "Premium apartment with beautiful lake views and cool breeze. Located in a serene environment yet close to IT hub."
+      description: "Premium apartment with beautiful lake views and cool breeze. Located in a serene environment yet close to IT hub.",
+      type: "residential"
     },
     {
       id: "41",
@@ -430,7 +496,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: 15,
       area: "20000 sq. ft.",
-      description: "Functioning school building with classrooms, labs, playground and all facilities. Established institution with good reputation."
+      description: "Functioning school building with classrooms, labs, playground and all facilities. Established institution with good reputation.",
+      type: "commercial"
     },
     {
       id: "42",
@@ -440,7 +507,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: null,
       area: "1500 sq. yards",
-      description: "Highway-facing plot suitable for petrol pump with all necessary NOCs and approvals. High traffic location."
+      description: "Highway-facing plot suitable for petrol pump with all necessary NOCs and approvals. High traffic location.",
+      type: "commercial"
     },
     {
       id: "43",
@@ -450,7 +518,8 @@ export const PropertiesTab = () => {
       bedrooms: 2,
       bathrooms: 2,
       area: "1650 sq. ft.",
-      description: "Modern loft-style apartment with double-height living space and mezzanine floor. Contemporary design with premium fittings."
+      description: "Modern loft-style apartment with double-height living space and mezzanine floor. Contemporary design with premium fittings.",
+      type: "residential"
     },
     {
       id: "44",
@@ -460,7 +529,8 @@ export const PropertiesTab = () => {
       bedrooms: 4,
       bathrooms: 5,
       area: "5000 sq. ft.",
-      description: "Luxurious villa overlooking the golf course with premium interiors, home theater and swimming pool. In an exclusive community."
+      description: "Luxurious villa overlooking the golf course with premium interiors, home theater and swimming pool. In an exclusive community.",
+      type: "luxury"
     },
     {
       id: "45",
@@ -470,7 +540,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: 2,
       area: "12000 sq. ft.",
-      description: "Operational cold storage facility with modern refrigeration equipment. Near airport and highway for easy logistics."
+      description: "Operational cold storage facility with modern refrigeration equipment. Near airport and highway for easy logistics.",
+      type: "industrial"
     },
     {
       id: "46",
@@ -480,7 +551,8 @@ export const PropertiesTab = () => {
       bedrooms: 4,
       bathrooms: 4,
       area: "2200 sq. ft.",
-      description: "Spacious duplex with modern interiors, double-height living space and private terrace. In a secure gated community."
+      description: "Spacious duplex with modern interiors, double-height living space and private terrace. In a secure gated community.",
+      type: "residential"
     },
     {
       id: "47",
@@ -490,7 +562,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: 6,
       area: "5500 sq. ft.",
-      description: "Corporate office space in a premium tech park with IT infrastructure, power backup and professional facilities. Near major MNCs."
+      description: "Corporate office space in a premium tech park with IT infrastructure, power backup and professional facilities. Near major MNCs.",
+      type: "commercial"
     },
     {
       id: "48",
@@ -500,7 +573,8 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "1800 sq. ft.",
-      description: "Serene apartment overlooking forest reserve with pollution-free environment. Ideal for nature lovers and families."
+      description: "Serene apartment overlooking forest reserve with pollution-free environment. Ideal for nature lovers and families.",
+      type: "residential"
     },
     {
       id: "49",
@@ -510,7 +584,8 @@ export const PropertiesTab = () => {
       bedrooms: null,
       bathrooms: null,
       area: "600 sq. yards",
-      description: "Commercial plot with high visibility on main highway. Suitable for showroom, restaurant or retail establishment."
+      description: "Commercial plot with high visibility on main highway. Suitable for showroom, restaurant or retail establishment.",
+      type: "commercial"
     },
     {
       id: "50",
@@ -520,28 +595,49 @@ export const PropertiesTab = () => {
       bedrooms: 3,
       bathrooms: 3,
       area: "2100 sq. ft.",
-      description: "Fully furnished service apartment with hotel-like amenities including housekeeping, dining and concierge services."
+      description: "Fully furnished service apartment with hotel-like amenities including housekeeping, dining and concierge services.",
+      type: "luxury"
     }
   ];
 
+  // Handle inquiry form submission
+  const handleInquirySubmit = () => {
+    toast({
+      title: "Inquiry Submitted",
+      description: `Thank you ${name}! We'll contact you about "${selectedProperty?.title}" soon.`,
+      duration: 5000,
+    });
+    
+    console.log("Property inquiry:", {
+      property: selectedProperty,
+      name,
+      email,
+      phone,
+      message
+    });
+    
+    // Reset form fields
+    setName("");
+    setEmail("");
+    setPhone("");
+    setMessage("");
+    setSelectedProperty(null);
+  };
+  
+  // Open inquiry dialog
+  const handleWantToKnowMore = (property: Property) => {
+    setSelectedProperty(property);
+    setMessage(`I'm interested in the ${property.title} in ${property.location}.`);
+  };
+
+  // Apply filters to properties
   const applyFilters = (filters: Record<string, any>) => {
     setActiveFilters(filters);
     
     let results = [...properties];
     
     if (filters.propertyType && filters.propertyType !== 'all') {
-      results = results.filter(property => {
-        if (filters.propertyType === 'residential') {
-          return property.bedrooms && property.bedrooms > 0 && property.bedrooms <= 3;
-        }
-        if (filters.propertyType === 'commercial') {
-          return property.bedrooms === null || property.bedrooms === 0;
-        }
-        if (filters.propertyType === 'luxury') {
-          return property.bedrooms && property.bedrooms > 3;
-        }
-        return true;
-      });
+      results = results.filter(property => property.type === filters.propertyType);
     }
     
     if (filters.location && filters.location.trim() !== '') {
@@ -627,11 +723,89 @@ export const PropertiesTab = () => {
                 bathrooms: property.bathrooms || undefined,
                 area: property.area
               }}
+              onWantToKnowMore={() => handleWantToKnowMore(property)}
               className="h-full hover:shadow-lg transition-shadow duration-300"
             />
           ))}
         </div>
       )}
+      
+      {/* Property Inquiry Dialog */}
+      <Dialog open={selectedProperty !== null} onOpenChange={(open) => !open && setSelectedProperty(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              Request Information
+            </DialogTitle>
+            <DialogDescription>
+              Fill out this form to get more information about <span className="font-semibold">{selectedProperty?.title}</span>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="name" className="text-gray-700">Your Name</Label>
+              <Input 
+                id="name" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                placeholder="Enter your name"
+                className="mt-1"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="email" className="text-gray-700">Email Address</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                placeholder="Enter your email"
+                className="mt-1"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="phone" className="text-gray-700">Phone Number</Label>
+              <Input 
+                id="phone" 
+                value={phone} 
+                onChange={(e) => setPhone(e.target.value)} 
+                placeholder="Enter your phone number"
+                className="mt-1"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="message" className="text-gray-700">Message</Label>
+              <Textarea 
+                id="message" 
+                value={message} 
+                onChange={(e) => setMessage(e.target.value)} 
+                placeholder="What would you like to know about this property?"
+                className="mt-1 h-24"
+                required
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedProperty(null)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleInquirySubmit} 
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              Submit Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
