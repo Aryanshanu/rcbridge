@@ -3,12 +3,15 @@ import { Search } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AbstractCitySkyline } from "./3D/AbstractCitySkyline";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Hero = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) {
       toast({
@@ -18,10 +21,31 @@ export const Hero = () => {
       });
       return;
     }
-    toast({
-      title: "Search",
-      description: `Searching for: ${searchQuery}`,
-    });
+
+    try {
+      // Save search query to Supabase
+      await supabase.from("search_queries").insert({
+        query: searchQuery,
+        user_id: user?.id || null,
+        location: searchQuery.includes("in") ? searchQuery.split("in")[1]?.trim() : null,
+        property_type: 
+          searchQuery.toLowerCase().includes("apartment") ? "residential" :
+          searchQuery.toLowerCase().includes("commercial") ? "commercial" :
+          searchQuery.toLowerCase().includes("land") ? "undeveloped" : null
+      });
+
+      toast({
+        title: "Search",
+        description: `Searching for: ${searchQuery}`,
+      });
+    } catch (error) {
+      console.error("Error saving search query:", error);
+      // Still show search toast even if saving fails
+      toast({
+        title: "Search",
+        description: `Searching for: ${searchQuery}`,
+      });
+    }
   };
 
   return (

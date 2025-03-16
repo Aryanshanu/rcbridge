@@ -6,12 +6,14 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { InvestmentForm, CalculatorFormData } from "@/components/InvestmentForm";
 import { InvestmentResults, CalculationResult } from "@/components/InvestmentResults";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function InvestmentCalculator() {
   const { toast } = useToast();
   const [isCalculating, setIsCalculating] = useState(false);
   const [calculationResult, setCalculationResult] = useState<CalculationResult | null>(null);
   const [appreciationRate, setAppreciationRate] = useState<number>(5);
+  const { user } = useAuth();
 
   const form = useForm<CalculatorFormData>({
     defaultValues: {
@@ -53,13 +55,34 @@ export function InvestmentCalculator() {
       const priceAppreciation = marketData?.priceAppreciation || appreciationRate;
       const totalReturn = rentalYield + priceAppreciation;
       
-      setCalculationResult({
+      const result = {
         rentalYield,
         priceAppreciation,
         totalReturn,
         rsi: marketData?.rsi || 65,
         investmentStatus: totalReturn >= 12 ? 'good' : totalReturn >= 8 ? 'moderate' : 'poor'
-      });
+      };
+      
+      setCalculationResult(result);
+      
+      // Save calculation to database if user is logged in
+      if (user) {
+        try {
+          await supabase.from('investment_calculations').insert({
+            user_id: user.id,
+            property_price: data.propertyPrice,
+            rental_income: data.rentalIncome,
+            property_type: data.propertyType,
+            location: data.location,
+            timeframe: data.timeframe,
+            appreciation_rate: appreciationRate,
+            calculation_result: result
+          });
+        } catch (saveError) {
+          console.error("Error saving calculation:", saveError);
+          // Continue even if saving fails
+        }
+      }
       
       toast({
         title: "Investment Analysis Complete",

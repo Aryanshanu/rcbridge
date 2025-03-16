@@ -322,6 +322,36 @@ export type Database = {
           },
         ]
       }
+      search_queries: {
+        Row: {
+          created_at: string
+          id: string
+          location: string | null
+          price_range: Json | null
+          property_type: string | null
+          query: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          price_range?: Json | null
+          property_type?: string | null
+          query: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          price_range?: Json | null
+          property_type?: string | null
+          query?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_rewards: {
         Row: {
           created_at: string
