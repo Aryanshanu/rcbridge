@@ -23,7 +23,7 @@ export async function initializeChatModel(): Promise<boolean> {
         'onnx-community/distilgpt2', 
         { 
           // Use the correct parameter name for this model
-          max_length: 150 
+          maxLength: 150 
         }
       );
       console.log('Chat model initialized successfully');
