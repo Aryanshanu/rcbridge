@@ -22,7 +22,8 @@
 /* Desktop optimization styles */
 @layer utilities {
   .container-desktop {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply w-full mx-auto px-4 sm:px-6 lg:px-8;
+    max-width: 100%;
   }
   
   .card-desktop {
@@ -38,10 +39,12 @@
 @media (min-width: 1024px) {
   .desktop-nav {
     height: 70px;
+    width: 100%;
   }
   
   .desktop-content {
-    max-width: 1280px;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
   }
 }
@@ -51,6 +54,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
+  width: 100%;
 }
 
 @media (min-width: 1024px) {
@@ -58,4 +62,28 @@
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 2rem;
   }
+  
+  /* Full width container for desktop */
+  .full-width-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+  
+  /* Content container with some padding */
+  .content-container {
+    width: 100%;
+    padding: 0 2rem;
+  }
+}
+
+/* Full-width section styles */
+.full-width-section {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
 }

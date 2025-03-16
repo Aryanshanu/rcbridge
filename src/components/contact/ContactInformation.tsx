@@ -41,7 +41,7 @@ export const ContactInformation = ({ onRequestAssistance }: ContactInformationPr
   };
   
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white rounded-lg shadow-md p-6 w-full">
       <h2 className="text-2xl font-bold mb-6">Contact Information</h2>
       
       <div className="space-y-6 md:space-y-8">
