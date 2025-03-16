@@ -168,7 +168,7 @@ const Contact = () => {
                 <MapPin className="h-6 w-6 text-primary mr-4 mt-1" />
                 <div>
                   <h3 className="font-semibold text-lg">Address</h3>
-                  <p className="text-gray-600">Hyderabad, India</p>
+                  <p className="text-gray-600">Hyderabad</p>
                 </div>
               </div>
               <div className="flex items-start">
