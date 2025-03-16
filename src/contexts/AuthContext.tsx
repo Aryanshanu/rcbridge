@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -32,15 +33,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log("Starting Google Sign In process...");
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin,
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Detailed Google sign-in error:', {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+          stack: error.stack
+        });
+        throw error;
+      }
       
+      console.log("Google Sign In successful, data:", data);
       // We don't need to show a toast here since the page will redirect to Google
     } catch (error: any) {
       console.error('Error signing in with Google:', error);
