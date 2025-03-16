@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/sections/Footer";
@@ -264,6 +265,7 @@ const Contact = () => {
               <Button 
                 onClick={() => setShowAssistanceDialog(true)} 
                 className="w-full"
+                type="button"
               >
                 Get Personalized Assistance
               </Button>
