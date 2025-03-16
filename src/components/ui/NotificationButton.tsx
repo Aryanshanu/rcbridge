@@ -1,27 +1,172 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+type PropertyType = 'residential' | 'commercial' | 'agricultural' | 'undeveloped';
+type ListingType = 'sale' | 'rent' | 'development_partnership';
 
 export const NotificationButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState("");
-  const { toast } = useToast();
+  const [location, setLocation] = useState("");
+  const [minPrice, setMinPrice] = useState<string>("");
+  const [maxPrice, setMaxPrice] = useState<string>("");
+  const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
+  const [listingType, setListingType] = useState<ListingType | "">("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [alertCount, setAlertCount] = useState(3); // Default count, will be updated
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  
+  // Check if a property type is selected
+  const isPropertyTypeSelected = (type: PropertyType) => {
+    return propertyTypes.includes(type);
+  };
+
+  // Toggle property type selection
+  const togglePropertyType = (type: PropertyType) => {
+    if (isPropertyTypeSelected(type)) {
+      setPropertyTypes(propertyTypes.filter(t => t !== type));
+    } else {
+      setPropertyTypes([...propertyTypes, type]);
+    }
+  };
+
+  // Fetch user's existing alerts count if logged in
+  useEffect(() => {
+    if (user) {
+      const fetchAlertCount = async () => {
+        const { data, error } = await supabase
+          .from('property_alerts')
+          .select('*')
+          .eq('user_id', user.id);
+        
+        if (error) {
+          console.error('Error fetching alerts:', error);
+          return;
+        }
+        
+        setAlertCount(data.length);
+        
+        // Pre-fill email if user is logged in
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (profiles && user.email) {
+          setEmail(user.email);
+        }
+      };
+      
+      fetchAlertCount();
+    }
+  }, [user]);
+
+  const validateForm = () => {
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please provide your email address to receive alerts.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (!location) {
+      toast({
+        title: "Location required",
+        description: "Please specify a location for property alerts.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (propertyTypes.length === 0) {
+      toast({
+        title: "Property type required",
+        description: "Please select at least one property type.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Add subscription logic here
     
-    toast({
-      title: "Notification preferences saved",
-      description: "You'll be notified about new properties matching your criteria.",
-    });
+    if (!validateForm()) return;
     
-    setIsOpen(false);
-    setEmail("");
+    setIsSubmitting(true);
+    
+    try {
+      // For each property type, create an alert
+      for (const propertyType of propertyTypes) {
+        const alertData = {
+          user_id: user?.id ?? null,
+          location,
+          property_type: propertyType,
+          listing_type: listingType || null,
+          min_price: minPrice ? parseFloat(minPrice) : null,
+          max_price: maxPrice ? parseFloat(maxPrice) : null,
+          is_active: true,
+        };
+
+        console.log("Saving alert:", alertData);
+        
+        const { error } = await supabase.from('property_alerts').insert(alertData);
+        
+        if (error) {
+          console.error('Error saving alert:', error);
+          throw new Error(error.message);
+        }
+      }
+      
+      toast({
+        title: "Notification preferences saved",
+        description: "You'll be notified about new properties matching your criteria.",
+      });
+      
+      // Reset form and close dialog
+      setIsOpen(false);
+      setLocation("");
+      setMinPrice("");
+      setMaxPrice("");
+      setPropertyTypes([]);
+      setListingType("");
+      
+      // Update alert count
+      if (user) {
+        const { data } = await supabase
+          .from('property_alerts')
+          .select('*')
+          .eq('user_id', user.id);
+          
+        if (data) {
+          setAlertCount(data.length);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast({
+        title: "Error saving preferences",
+        description: error.message || "There was a problem saving your alert preferences.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -33,7 +178,7 @@ export const NotificationButton = () => {
       >
         <Bell className="h-6 w-6" />
         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-          3
+          {alertCount}
         </span>
         <span className="absolute left-0 -ml-28 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
           Property Alerts
@@ -61,29 +206,125 @@ export const NotificationButton = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 required
+                disabled={Boolean(user)}
               />
             </div>
             
-            <div className="flex flex-wrap gap-3">
-              <Button type="button" variant="outline" size="sm" className="rounded-full">
-                Apartments
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="rounded-full">
-                Villas
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="rounded-full">
-                Commercial
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="rounded-full">
-                Plots
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="rounded-full">
-                New Projects
-              </Button>
+            <div className="space-y-2">
+              <label htmlFor="location" className="text-sm font-medium">
+                Location
+              </label>
+              <Input
+                id="location"
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="E.g., Hyderabad, Banjara Hills"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="price-range" className="text-sm font-medium">
+                Price Range (₹)
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  id="min-price"
+                  type="number"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  placeholder="Min"
+                />
+                <Input
+                  id="max-price"
+                  type="number"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  placeholder="Max"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Property Type</label>
+              <div className="flex flex-wrap gap-3">
+                <Button 
+                  type="button" 
+                  variant={isPropertyTypeSelected("residential") ? "default" : "outline"} 
+                  size="sm" 
+                  className="rounded-full"
+                  onClick={() => togglePropertyType("residential")}
+                >
+                  Residential
+                </Button>
+                <Button 
+                  type="button" 
+                  variant={isPropertyTypeSelected("commercial") ? "default" : "outline"} 
+                  size="sm" 
+                  className="rounded-full"
+                  onClick={() => togglePropertyType("commercial")}
+                >
+                  Commercial
+                </Button>
+                <Button 
+                  type="button" 
+                  variant={isPropertyTypeSelected("agricultural") ? "default" : "outline"} 
+                  size="sm" 
+                  className="rounded-full"
+                  onClick={() => togglePropertyType("agricultural")}
+                >
+                  Agricultural
+                </Button>
+                <Button 
+                  type="button" 
+                  variant={isPropertyTypeSelected("undeveloped") ? "default" : "outline"} 
+                  size="sm" 
+                  className="rounded-full"
+                  onClick={() => togglePropertyType("undeveloped")}
+                >
+                  Undeveloped
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Listing Type</label>
+              <div className="flex flex-wrap gap-3">
+                <Button 
+                  type="button" 
+                  variant={listingType === "sale" ? "default" : "outline"} 
+                  size="sm" 
+                  className="rounded-full"
+                  onClick={() => setListingType(listingType === "sale" ? "" : "sale")}
+                >
+                  For Sale
+                </Button>
+                <Button 
+                  type="button" 
+                  variant={listingType === "rent" ? "default" : "outline"} 
+                  size="sm" 
+                  className="rounded-full"
+                  onClick={() => setListingType(listingType === "rent" ? "" : "rent")}
+                >
+                  For Rent
+                </Button>
+                <Button 
+                  type="button" 
+                  variant={listingType === "development_partnership" ? "default" : "outline"} 
+                  size="sm" 
+                  className="rounded-full"
+                  onClick={() => setListingType(listingType === "development_partnership" ? "" : "development_partnership")}
+                >
+                  Development
+                </Button>
+              </div>
             </div>
             
             <DialogFooter className="pt-4">
-              <Button type="submit">Save Preferences</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Save Preferences"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
