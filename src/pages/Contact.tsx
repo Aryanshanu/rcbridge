@@ -48,7 +48,7 @@ const Contact = () => {
       <SEO title="Contact Us | RC Bridge" description="Get in touch with our real estate experts" />
       <Navbar />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Breadcrumb */}
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
@@ -82,9 +82,9 @@ const Contact = () => {
         </div>
       </main>
       
-      {/* Personalized Assistance Dialog */}
+      {/* Personalized Assistance Dialog - shown for desktop or when mobile drawer button is clicked */}
       <Dialog open={showAssistanceDialog} onOpenChange={setShowAssistanceDialog}>
-        <DialogContent className="sm:max-w-[550px]">
+        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Get Personalized Assistance</DialogTitle>
             <DialogDescription>
