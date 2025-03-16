@@ -1,4 +1,3 @@
-
 import { pipeline, env } from '@huggingface/transformers';
 
 // Configure transformers.js to use browser cache for better performance
@@ -53,8 +52,9 @@ export async function initializeImageModel() {
   if (!imageModel) {
     console.log('Initializing image generation model...');
     try {
+      // Using 'image-to-image' pipeline instead of 'text-to-image' which is not valid
       imageModel = await pipeline(
-        'text-to-image',
+        'image-generation',
         'stabilityai/stable-diffusion-2-base', // Using a stable diffusion model for property images
         { device: 'webgpu' }
       );
