@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { AdvancedSearch } from "@/components/AdvancedSearch";
 import { TextPropertyCard } from "@/components/TextPropertyCard";
-import { Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { PropertiesTable } from "@/components/tables/PropertiesTable";
+import { Filter, ChevronDown, ChevronUp, LayoutGrid, LayoutList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Dialog, 
@@ -9,7 +11,6 @@ import {
   DialogDescription, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger,
   DialogFooter,
   DialogClose
 } from "@/components/ui/dialog";
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Toggle } from "@/components/ui/toggle";
 
 interface Property {
   id: string;
@@ -40,6 +42,7 @@ export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTa
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   
   // Form states for the inquiry dialog
   const [name, setName] = useState("");
@@ -619,6 +622,8 @@ export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTa
     // Apply filters passed from parent component
     if (filters && Object.keys(filters).length > 0) {
       applyFilters(filters);
+    } else {
+      setFilteredProperties(properties);
     }
   }, [selectedPropertyId, filters]);
 
@@ -707,6 +712,14 @@ export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTa
         property.bathrooms && property.bathrooms >= bathroomCount
       );
     }
+
+    // Type filter from quick filters
+    if (filters.type && filters.type.trim() !== '') {
+      const typeFilter = filters.type.toLowerCase();
+      results = results.filter(property => 
+        property.type && property.type.toLowerCase() === typeFilter
+      );
+    }
     
     setFilteredProperties(results);
   };
@@ -715,7 +728,25 @@ export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTa
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-2">
+          <Toggle 
+            pressed={viewMode === "grid"}
+            onPressedChange={() => setViewMode("grid")}
+            aria-label="Grid view"
+          >
+            <LayoutGrid className="h-4 w-4 mr-1" />
+            Grid
+          </Toggle>
+          <Toggle 
+            pressed={viewMode === "table"}
+            onPressedChange={() => setViewMode("table")}
+            aria-label="Table view"
+          >
+            <LayoutList className="h-4 w-4 mr-1" />
+            Table
+          </Toggle>
+        </div>
         <Button 
           variant="outline" 
           className="flex items-center gap-2"
@@ -738,7 +769,7 @@ export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTa
           <h3 className="text-xl font-semibold text-gray-800 mb-2">No properties found</h3>
           <p className="text-gray-600">Try adjusting your filters to see more results.</p>
         </div>
-      ) : (
+      ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayProperties.map((property) => (
             <TextPropertyCard 
@@ -757,6 +788,11 @@ export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTa
             />
           ))}
         </div>
+      ) : (
+        <PropertiesTable 
+          properties={displayProperties} 
+          onPropertySelect={handleWantToKnowMore} 
+        />
       )}
       
       <Dialog open={selectedProperty !== null} onOpenChange={(open) => !open && setSelectedProperty(null)}>
