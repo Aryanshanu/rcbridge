@@ -10,6 +10,8 @@ interface PropertyType {
   bedrooms?: number;
   bathrooms?: number;
   area: string;
+  propertyType?: string;
+  listingType?: string;
 }
 
 interface TextPropertyCardProps {
@@ -18,14 +20,21 @@ interface TextPropertyCardProps {
 }
 
 export const TextPropertyCard = ({ property, className }: TextPropertyCardProps) => {
-  // Determine property type based on bedrooms
-  const propertyType = property.bedrooms === 0 ? 'commercial' : 
-                      property.bedrooms && property.bedrooms > 3 ? 'luxury' : 'residential';
+  // Determine property type based on property.propertyType or bedrooms
+  const propertyType = property.propertyType || 
+                      (property.bedrooms === 0 ? 'commercial' : 
+                      property.bedrooms && property.bedrooms > 3 ? 'luxury' : 'residential');
   
   // Set color based on property type
   const propertyColor = propertyType === 'commercial' ? '#3B82F6' : // Commercial (blue)
-                       propertyType === 'luxury' ? '#8B5CF6' : // Luxury (purple)
+                       propertyType === 'luxury' || propertyType === 'agricultural' ? '#8B5CF6' : // Luxury/Agricultural (purple)
+                       propertyType === 'undeveloped' ? '#F59E0B' : // Undeveloped (amber)
                        '#10B981'; // Residential (green)
+  
+  // Determine listing type label
+  const listingTypeLabel = property.listingType === 'rent' ? 'For Rent' :
+                          property.listingType === 'development_partnership' ? 'Development' :
+                          'For Sale';
   
   const handleWhatsAppInquiry = () => {
     const message = encodeURIComponent(`Hi, I'm interested in the property: ${property.title} in ${property.location}. Could you provide more information?`);
@@ -41,16 +50,22 @@ export const TextPropertyCard = ({ property, className }: TextPropertyCardProps)
     >
       <div className="flex justify-between items-start mb-2">
         <h3 className="text-lg font-bold text-gray-900 line-clamp-2">{property.title}</h3>
-        <div 
-          className="px-2 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap ml-2 flex-shrink-0"
-          style={{ backgroundColor: propertyColor }}
-        >
-          {propertyType === 'commercial' ? (
-            <span className="flex items-center"><Building className="w-3 h-3 mr-1" /> Commercial</span>
-          ) : propertyType === 'luxury' ? (
-            <span className="flex items-center"><Building className="w-3 h-3 mr-1" /> Luxury</span>
-          ) : (
-            <span className="flex items-center"><Building className="w-3 h-3 mr-1" /> Residential</span>
+        <div className="flex flex-col items-end gap-1">
+          <div 
+            className="px-2 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap ml-2 flex-shrink-0"
+            style={{ backgroundColor: propertyColor }}
+          >
+            <span className="flex items-center">
+              <Building className="w-3 h-3 mr-1" /> 
+              {propertyType.charAt(0).toUpperCase() + propertyType.slice(1)}
+            </span>
+          </div>
+          {property.listingType && (
+            <div 
+              className="px-2 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap ml-2 flex-shrink-0 bg-gray-600"
+            >
+              {listingTypeLabel}
+            </div>
           )}
         </div>
       </div>

@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,21 +12,52 @@ export const CallToAction = () => {
   const [isSchedulingDemo, setIsSchedulingDemo] = useState(false);
   const [demoEmail, setDemoEmail] = useState("");
   const [demoName, setDemoName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { signInWithGoogle } = useAuth();
 
   const handleDemoRequest = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate inputs
+    if (!demoName.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter your name to schedule a demo.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!demoEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(demoEmail)) {
+      toast({
+        title: "Valid Email Required",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
     try {
-      const { error } = await supabase
+      console.log("Submitting demo request:", { name: demoName, email: demoEmail });
+      
+      const { data, error } = await supabase
         .from('demo_requests')
         .insert({
           name: demoName,
           email: demoEmail,
           status: 'pending'
-        });
+        })
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error submitting demo request:", error);
+        throw error;
+      }
+
+      console.log("Demo request submitted successfully:", data);
 
       toast({
         title: "Demo Request Received",
@@ -35,9 +67,6 @@ export const CallToAction = () => {
       setIsSchedulingDemo(false);
       setDemoEmail("");
       setDemoName("");
-      
-      console.log("Demo requested for:", { demoName, demoEmail });
-      
     } catch (error: any) {
       console.error("Error scheduling demo:", error);
       toast({
@@ -45,6 +74,8 @@ export const CallToAction = () => {
         description: "Failed to schedule demo. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -147,8 +178,8 @@ export const CallToAction = () => {
                   data-testid="demo-email-input"
                 />
               </div>
-              <Button type="submit" className="w-full" data-testid="submit-demo-request">
-                Request Demo
+              <Button type="submit" className="w-full" data-testid="submit-demo-request" disabled={isSubmitting}>
+                {isSubmitting ? "Submitting..." : "Request Demo"}
               </Button>
             </form>
           </DialogContent>

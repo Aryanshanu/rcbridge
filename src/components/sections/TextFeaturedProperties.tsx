@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Calculator, Building, Home, TrendingUp, Heart } from "lucide-react";
 import { InvestmentCalculator } from "@/components/InvestmentCalculator";
@@ -7,180 +7,105 @@ import { AdvancedSearch } from "@/components/AdvancedSearch";
 import { TextPropertyCard } from "@/components/TextPropertyCard";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 export const TextFeaturedProperties = () => {
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  const [showAllProperties, setShowAllProperties] = useState(false);
+  const [properties, setProperties] = useState<any[]>([]);
+  const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
+  const [recommendedProperties, setRecommendedProperties] = useState<any[]>([]);
+  const [trendingProperties, setTrendingProperties] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  const featuredProperties = [
-    {
-      id: "prop-1",
-      title: "Luxury Villa in Banjara Hills",
-      location: "Banjara Hills, Hyderabad",
-      price: "₹2.5Cr",
-      bedrooms: 4,
-      bathrooms: 4,
-      area: "4500 sq.ft",
-    },
-    {
-      id: "prop-2",
-      title: "Modern Office Space in HITEC City",
-      location: "HITEC City, Hyderabad",
-      price: "₹1.8Cr",
-      bedrooms: 0,
-      bathrooms: 4,
-      area: "3000 sq.ft",
-    },
-    {
-      id: "prop-3",
-      title: "Premium Apartment in Jubilee Hills",
-      location: "Jubilee Hills, Hyderabad",
-      price: "₹95L",
-      bedrooms: 3,
-      bathrooms: 3,
-      area: "2200 sq.ft",
-    },
-    {
-      id: "prop-4",
-      title: "Spacious Bungalow with Garden",
-      location: "Gachibowli, Hyderabad",
-      price: "₹3.2Cr",
-      bedrooms: 5,
-      bathrooms: 5,
-      area: "5500 sq.ft",
-    },
-    {
-      id: "prop-5",
-      title: "Retail Space in Shopping Mall",
-      location: "Kukatpally, Hyderabad",
-      price: "₹1.2Cr",
-      bedrooms: 0,
-      bathrooms: 2,
-      area: "1800 sq.ft",
-    },
-    {
-      id: "prop-6",
-      title: "Cozy 2BHK Near Metro Station",
-      location: "Miyapur, Hyderabad",
-      price: "₹65L",
-      bedrooms: 2,
-      bathrooms: 2,
-      area: "1200 sq.ft",
-    },
-  ];
-
-  const recommendedProperties = [
-    {
-      id: "rec-1",
-      title: "Modern Apartment with Garden View",
-      location: "Financial District, Hyderabad",
-      price: "₹85L",
-      bedrooms: 2,
-      bathrooms: 2,
-      area: "1850 sq.ft",
-    },
-    {
-      id: "rec-2",
-      title: "Spacious Penthouse with Rooftop",
-      location: "Gachibowli, Hyderabad",
-      price: "₹2.1Cr",
-      bedrooms: 3,
-      bathrooms: 3,
-      area: "3200 sq.ft",
-    },
-    {
-      id: "rec-3",
-      title: "Cozy Studio Apartment near Tech Hub",
-      location: "HITEC City, Hyderabad",
-      price: "₹45L",
-      bedrooms: 1,
-      bathrooms: 1,
-      area: "650 sq.ft",
-    },
-    {
-      id: "rec-4",
-      title: "Family Home with Backyard",
-      location: "Kondapur, Hyderabad",
-      price: "₹1.4Cr",
-      bedrooms: 3,
-      bathrooms: 3,
-      area: "2400 sq.ft",
-    },
-    {
-      id: "rec-5",
-      title: "Budget Apartment for First-time Buyers",
-      location: "Uppal, Hyderabad",
-      price: "₹38L",
-      bedrooms: 2,
-      bathrooms: 1,
-      area: "950 sq.ft",
-    },
-    {
-      id: "rec-6",
-      title: "Investment Property with Good Rental Yield",
-      location: "Manikonda, Hyderabad",
-      price: "₹55L",
-      bedrooms: 2,
-      bathrooms: 2,
-      area: "1100 sq.ft",
-    },
-  ];
-
-  const trendingProperties = [
-    {
-      id: "trend-1",
-      title: "Waterfront Villa with Private Beach",
-      location: "Gandipet Lake, Hyderabad",
-      price: "₹5.2Cr",
-      bedrooms: 5,
-      bathrooms: 6,
-      area: "7500 sq.ft",
-    },
-    {
-      id: "trend-2",
-      title: "Luxury Apartment with City Views",
-      location: "Madhapur, Hyderabad",
-      price: "₹1.7Cr",
-      bedrooms: 3,
-      bathrooms: 3,
-      area: "2800 sq.ft",
-    },
-    {
-      id: "trend-3",
-      title: "Smart Home with Home Office",
-      location: "Kondapur, Hyderabad",
-      price: "₹1.2Cr",
-      bedrooms: 3,
-      bathrooms: 2,
-      area: "2100 sq.ft",
-    },
-    {
-      id: "trend-4",
-      title: "Heritage Property with Modern Amenities",
-      location: "Old City, Hyderabad",
-      price: "₹2.8Cr",
-      bedrooms: 4,
-      bathrooms: 4,
-      area: "3800 sq.ft",
-    },
-    {
-      id: "trend-5",
-      title: "Premium Office Space with Lake View",
-      location: "Hitech City, Hyderabad",
-      price: "₹2.2Cr",
-      bedrooms: 0,
-      bathrooms: 3,
-      area: "2600 sq.ft",
-    },
-    {
-      id: "trend-6",
-      title: "Modern Minimalist Apartment",
-      location: "Financial District, Hyderabad",
-      price: "₹1.1Cr",
-      bedrooms: 2,
-      bathrooms: 2,
-      area: "1750 sq.ft",
-    },
-  ];
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    const fetchProperties = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('properties')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          // Format the properties for display
+          const formattedProperties = data.map(property => ({
+            id: property.id,
+            title: property.title,
+            location: property.location,
+            price: formatPrice(property.price, property.listing_type),
+            bedrooms: property.bedrooms,
+            bathrooms: property.bathrooms,
+            area: `${property.area} sq.ft`,
+            description: property.description,
+            propertyType: property.property_type,
+            listingType: property.listing_type
+          }));
+          
+          setProperties(formattedProperties);
+          
+          // Set featured properties (first 6)
+          setFilteredProperties(formattedProperties.slice(0, showAllProperties ? formattedProperties.length : 6));
+          
+          // Set recommended (random selection of 6)
+          const shuffled = [...formattedProperties].sort(() => 0.5 - Math.random());
+          setRecommendedProperties(shuffled.slice(0, 6));
+          
+          // Set trending (sort by price descending, take 6)
+          const trending = [...formattedProperties].sort((a, b) => {
+            // Extract numeric part of price for sorting
+            const priceA = extractPriceValue(a.price);
+            const priceB = extractPriceValue(b.price);
+            return priceB - priceA;
+          });
+          setTrendingProperties(trending.slice(0, 6));
+        }
+      } catch (error) {
+        console.error('Error fetching properties:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load properties. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProperties();
+  }, [toast]);
+  
+  const formatPrice = (price: number, listingType: string) => {
+    if (listingType === 'rent') {
+      return `₹${price.toLocaleString('en-IN')}/month`;
+    }
+    
+    if (price >= 10000000) {
+      return `₹${(price / 10000000).toFixed(1)}Cr`;
+    } else if (price >= 100000) {
+      return `₹${(price / 100000).toFixed(0)}L`;
+    } else {
+      return `₹${price.toLocaleString('en-IN')}`;
+    }
+  };
+  
+  const extractPriceValue = (priceString: string) => {
+    // Extract numeric value from price strings like "₹2.5Cr" or "₹25000/month"
+    const numericPart = priceString.replace(/[^\d.]/g, '');
+    return parseFloat(numericPart);
+  };
+  
+  const handleViewAllToggle = () => {
+    setShowAllProperties(!showAllProperties);
+    setFilteredProperties(properties.slice(0, showAllProperties ? 6 : properties.length));
+  };
 
   return (
     <section className="mb-12 sm:mb-16 p-4 sm:p-6 bg-gray-50 rounded-lg shadow-sm">
@@ -225,10 +150,28 @@ export const TextFeaturedProperties = () => {
           <h3 className="text-xl font-semibold text-center">Featured Properties</h3>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {featuredProperties.map((property) => (
-            <TextPropertyCard key={property.id} property={property} />
-          ))}
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-64 bg-gray-200 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {filteredProperties.map((property) => (
+              <TextPropertyCard key={property.id} property={property} />
+            ))}
+          </div>
+        )}
+        
+        <div className="mt-6 text-center">
+          <Button 
+            onClick={handleViewAllToggle} 
+            variant="outline" 
+            className="border-[#1e40af] text-[#1e40af]"
+          >
+            {showAllProperties ? "Show Fewer Properties" : "View All Properties"}
+          </Button>
         </div>
       </div>
       
@@ -256,26 +199,45 @@ export const TextFeaturedProperties = () => {
           </TabsList>
           
           <TabsContent value="recommended" className="mt-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {recommendedProperties.map((property) => (
-                <TextPropertyCard key={property.id} property={property} />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="h-64 bg-gray-200 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {recommendedProperties.map((property) => (
+                  <TextPropertyCard key={property.id} property={property} />
+                ))}
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="trending" className="mt-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {trendingProperties.map((property) => (
-                <TextPropertyCard key={property.id} property={property} />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="h-64 bg-gray-200 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {trendingProperties.map((property) => (
+                  <TextPropertyCard key={property.id} property={property} />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
       
       <div className="text-center mt-8">
-        <Button className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-8 py-3 rounded-md font-medium text-lg shadow-md">
-          View All Properties
+        <Button 
+          onClick={handleViewAllToggle}
+          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-8 py-3 rounded-md font-medium text-lg shadow-md"
+        >
+          {showAllProperties ? "Show Fewer Properties" : "View All Properties"}
         </Button>
       </div>
     </section>

@@ -4,89 +4,88 @@ import { Button } from "@/components/ui/button";
 import { PropertyCard } from "@/components/PropertyCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 export const PropertyRecommendations = () => {
   const [recommendedProperties, setRecommendedProperties] = useState<any[]>([]);
+  const [trendingProperties, setTrendingProperties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate API fetch for property recommendations
-    const fetchRecommendations = async () => {
+    const fetchProperties = async () => {
       setIsLoading(true);
-      // In a real implementation, this would be a call to your recommendation API
-      setTimeout(() => {
-        const mockRecommendations = [
-          {
-            id: "rec-1",
-            title: "Modern Apartment with Garden View",
-            location: "Financial District, Hyderabad",
-            price: "₹85L",
-            bedrooms: 2,
-            bathrooms: 2,
-            area: "1850 sq.ft",
-            image: "/placeholder.svg",
-          },
-          {
-            id: "rec-2",
-            title: "Spacious Penthouse with Rooftop",
-            location: "Gachibowli, Hyderabad",
-            price: "₹2.1Cr",
-            bedrooms: 3,
-            bathrooms: 3,
-            area: "3200 sq.ft",
-            image: "/placeholder.svg",
-          },
-          {
-            id: "rec-3",
-            title: "Cozy Studio Apartment near Tech Hub",
-            location: "HITEC City, Hyderabad",
-            price: "₹45L",
-            bedrooms: 1,
-            bathrooms: 1,
-            area: "650 sq.ft",
-            image: "/placeholder.svg",
-          },
-        ];
-        setRecommendedProperties(mockRecommendations);
+      try {
+        const { data, error } = await supabase
+          .from('properties')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(12);
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          // Format the properties for display
+          const formattedProperties = data.map(property => ({
+            id: property.id,
+            title: property.title,
+            location: property.location,
+            price: formatPrice(property.price, property.listing_type),
+            bedrooms: property.bedrooms || 0,
+            bathrooms: property.bathrooms || 0,
+            area: `${property.area} sq.ft`,
+            image: "/placeholder.svg", // Default image to be replaced by the getPropertyImage function
+          }));
+          
+          // Get recommended properties - random 3
+          const shuffled = [...formattedProperties].sort(() => 0.5 - Math.random());
+          setRecommendedProperties(shuffled.slice(0, 3));
+          
+          // Get trending properties - by price (highest)
+          const trending = [...formattedProperties].sort((a, b) => {
+            const priceA = extractPriceValue(a.price);
+            const priceB = extractPriceValue(b.price);
+            return priceB - priceA;
+          });
+          setTrendingProperties(trending.slice(0, 3));
+        }
+      } catch (error) {
+        console.error('Error fetching properties:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load properties. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
         setIsLoading(false);
-      }, 1000);
+      }
     };
-
-    fetchRecommendations();
-  }, []);
-
-  const trendingProperties = [
-    {
-      id: "trend-1",
-      title: "Waterfront Villa with Private Beach",
-      location: "Gandipet Lake, Hyderabad",
-      price: "₹5.2Cr",
-      bedrooms: 5,
-      bathrooms: 6,
-      area: "7500 sq.ft",
-      image: "/placeholder.svg",
-    },
-    {
-      id: "trend-2",
-      title: "Luxury Apartment with City Views",
-      location: "Madhapur, Hyderabad",
-      price: "₹1.7Cr",
-      bedrooms: 3,
-      bathrooms: 3,
-      area: "2800 sq.ft",
-      image: "/placeholder.svg",
-    },
-    {
-      id: "trend-3",
-      title: "Smart Home with Home Office",
-      location: "Kondapur, Hyderabad",
-      price: "₹1.2Cr",
-      bedrooms: 3,
-      bathrooms: 2,
-      area: "2100 sq.ft",
-      image: "/placeholder.svg",
-    },
-  ];
+    
+    fetchProperties();
+  }, [toast]);
+  
+  const formatPrice = (price: number, listingType: string) => {
+    if (listingType === 'rent') {
+      return `₹${price.toLocaleString('en-IN')}/month`;
+    }
+    
+    if (price >= 10000000) {
+      return `₹${(price / 10000000).toFixed(1)}Cr`;
+    } else if (price >= 100000) {
+      return `₹${(price / 100000).toFixed(0)}L`;
+    } else {
+      return `₹${price.toLocaleString('en-IN')}`;
+    }
+  };
+  
+  const extractPriceValue = (priceString: string) => {
+    // Extract numeric value from price strings like "₹2.5Cr" or "₹25000/month"
+    const numericPart = priceString.replace(/[^\d.]/g, '');
+    return parseFloat(numericPart);
+  };
 
   return (
     <div className="mt-12">
@@ -118,11 +117,19 @@ export const PropertyRecommendations = () => {
         </TabsContent>
         
         <TabsContent value="trending" className="mt-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {trendingProperties.map((property) => (
-              <PropertyCard key={property.id} {...property} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-gray-100 animate-pulse h-64 rounded-lg" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {trendingProperties.map((property) => (
+                <PropertyCard key={property.id} {...property} />
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
