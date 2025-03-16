@@ -1,10 +1,11 @@
 
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Home, LogIn, Phone, Users, Building, MapPin } from "lucide-react";
+import { Home, LogIn, Phone, Users, Building, Calculator } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthDialog } from "../auth/AuthDialog";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,32 +25,41 @@ export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: Deskto
   
   return (
     <div className="hidden md:flex md:items-center md:space-x-6">
-      <button
-        onClick={() => window.location.href = '/'}
+      <Link
+        to="/"
         className="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors group relative"
       >
         <Home className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
         <span>Home</span>
         <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-      </button>
+      </Link>
       
-      <button
-        onClick={scrollToPropertyForm}
+      <Link
+        to="/properties"
         className="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors group relative"
       >
         <Building className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
         <span>Properties</span>
         <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-      </button>
+      </Link>
       
-      <button
-        onClick={scrollToPropertyForm}
+      <Link
+        to="/services"
         className="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors group relative"
       >
         <Users className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
-        <span>Community</span>
+        <span>Services</span>
         <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-      </button>
+      </Link>
+      
+      <Link
+        to="/calculator"
+        className="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors group relative"
+      >
+        <Calculator className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
+        <span>Calculator</span>
+        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
+      </Link>
       
       <button
         onClick={handleContactClick}
