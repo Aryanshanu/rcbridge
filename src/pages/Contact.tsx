@@ -10,6 +10,31 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { 
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
+// Define the form schema using zod
+const assistanceFormSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  phone: z.string().optional(),
+  requirement: z.string().min(10, { message: "Please provide more details about your requirements." }),
+  propertyType: z.string().min(1, { message: "Please select a property type." }),
+  budget: z.string().min(1, { message: "Please provide your budget." }),
+});
+
+type AssistanceFormValues = z.infer<typeof assistanceFormSchema>;
 
 const Contact = () => {
   const { toast } = useToast();
@@ -21,6 +46,20 @@ const Contact = () => {
     message: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAssistanceDialog, setShowAssistanceDialog] = useState(false);
+
+  // Initialize react-hook-form with zod validation
+  const assistanceForm = useForm<AssistanceFormValues>({
+    resolver: zodResolver(assistanceFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      requirement: "",
+      propertyType: "",
+      budget: "",
+    },
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -68,6 +107,42 @@ const Contact = () => {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const onAssistanceSubmit = async (data: AssistanceFormValues) => {
+    try {
+      // Store the personalized assistance request in Supabase
+      const { error } = await supabase
+        .from('assistance_requests')
+        .insert([
+          { 
+            name: data.name,
+            email: data.email,
+            phone: data.phone || "",
+            requirement: data.requirement,
+            property_type: data.propertyType,
+            budget: data.budget
+          }
+        ]);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Request Received!",
+        description: "Our team will reach out to you shortly with personalized assistance.",
+      });
+      
+      setShowAssistanceDialog(false);
+      assistanceForm.reset();
+      
+    } catch (error) {
+      console.error("Error submitting assistance request:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem sending your request. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -179,9 +254,160 @@ const Contact = () => {
                 </div>
               </div>
             </div>
+            
+            {/* Get Personalized Assistance Button */}
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <h3 className="text-xl font-semibold mb-4">Need Personalized Guidance?</h3>
+              <p className="text-gray-600 mb-4">
+                Fill out our detailed form and get personalized property recommendations tailored to your specific needs.
+              </p>
+              <Button 
+                onClick={() => setShowAssistanceDialog(true)} 
+                className="w-full"
+              >
+                Get Personalized Assistance
+              </Button>
+            </div>
           </div>
         </div>
       </main>
+      
+      {/* Personalized Assistance Dialog */}
+      <Dialog open={showAssistanceDialog} onOpenChange={setShowAssistanceDialog}>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogHeader>
+            <DialogTitle>Get Personalized Assistance</DialogTitle>
+            <DialogDescription>
+              Tell us about your requirements and our experts will provide personalized recommendations for you.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...assistanceForm}>
+            <form onSubmit={assistanceForm.handleSubmit(onAssistanceSubmit)} className="space-y-4 pt-4">
+              <FormField
+                control={assistanceForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={assistanceForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="you@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={assistanceForm.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+91 98765 43210" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={assistanceForm.control}
+                name="propertyType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Property Type</FormLabel>
+                    <FormControl>
+                      <select
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        {...field}
+                      >
+                        <option value="">Select property type</option>
+                        <option value="residential">Residential</option>
+                        <option value="commercial">Commercial</option>
+                        <option value="agricultural">Agricultural Land</option>
+                        <option value="plot">Plot/Land</option>
+                        <option value="villa">Villa</option>
+                        <option value="apartment">Apartment</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={assistanceForm.control}
+                name="budget"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget Range</FormLabel>
+                    <FormControl>
+                      <select
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        {...field}
+                      >
+                        <option value="">Select budget range</option>
+                        <option value="under-50l">Under ₹50 Lakhs</option>
+                        <option value="50l-1cr">₹50 Lakhs - ₹1 Crore</option>
+                        <option value="1cr-2cr">₹1 Crore - ₹2 Crore</option>
+                        <option value="2cr-5cr">₹2 Crore - ₹5 Crore</option>
+                        <option value="above-5cr">Above ₹5 Crore</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={assistanceForm.control}
+                name="requirement"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Your Requirements</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Tell us what you're looking for. Include details like location preferences, size requirements, amenities, etc."
+                        rows={4}
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      The more details you provide, the better we can assist you.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setShowAssistanceDialog(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  Submit Request
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
       
       <Footer />
     </div>

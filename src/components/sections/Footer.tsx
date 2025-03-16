@@ -31,15 +31,13 @@ export const Footer = () => {
           <div>
             <h4 className="text-white font-semibold mb-4">Contact Us</h4>
             <ul className="space-y-2 text-sm">
-              <li>Jubilee Hills, Hyderabad</li>
+              <li>Hyderabad</li>
               <li>aryan@rcbridge.co</li>
-              <li>+91 9876543210</li>
-              <li>RERA Reg: TS12345678</li>
             </ul>
           </div>
         </div>
         <div className="border-t border-gray-800 mt-8 pt-8 text-sm text-center">
-          © 2013-2023 RCBridge. All rights reserved.
+          © 2013-2025 RCBridge. All rights reserved.
         </div>
       </div>
     </footer>
