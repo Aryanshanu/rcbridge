@@ -78,21 +78,23 @@ export function InvestmentCalculator() {
   };
 
   return (
-    <Card className="p-6 rounded-lg shadow-md">
-      <div className="mb-6">
-        <h3 className="text-xl font-bold mb-2">Investment Calculator</h3>
-        <p className="text-gray-600">Evaluate if a property meets the 12% annual return threshold</p>
+    <div className="rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-[#1e40af]/10 p-4">
+        <h3 className="text-lg font-bold text-[#1e40af] mb-1">Investment Calculator</h3>
+        <p className="text-sm text-gray-600">Evaluate if a property meets the 12% annual return threshold</p>
       </div>
 
-      <InvestmentForm 
-        form={form} 
-        appreciationRate={appreciationRate}
-        setAppreciationRate={setAppreciationRate}
-        onSubmit={calculateInvestment}
-        isCalculating={isCalculating}
-      />
+      <div className="p-4">
+        <InvestmentForm 
+          form={form} 
+          appreciationRate={appreciationRate}
+          setAppreciationRate={setAppreciationRate}
+          onSubmit={calculateInvestment}
+          isCalculating={isCalculating}
+        />
 
-      {calculationResult && <InvestmentResults result={calculationResult} />}
-    </Card>
+        {calculationResult && <InvestmentResults result={calculationResult} />}
+      </div>
+    </div>
   );
 }

@@ -23,8 +23,9 @@ export const TextPropertyCard = ({ property, className }: TextPropertyCardProps)
                       property.bedrooms && property.bedrooms > 3 ? 'luxury' : 'residential';
   
   // Set color based on property type
-  const propertyColor = propertyType === 'commercial' ? '#3B82F6' : 
-                       propertyType === 'luxury' ? '#8B5CF6' : '#10B981';
+  const propertyColor = propertyType === 'commercial' ? '#3B82F6' : // Commercial (blue)
+                       propertyType === 'luxury' ? '#8B5CF6' : // Luxury (purple)
+                       '#10B981'; // Residential (green)
   
   const handleWhatsAppInquiry = () => {
     const message = encodeURIComponent(`Hi, I'm interested in the property: ${property.title} in ${property.location}. Could you provide more information?`);
@@ -39,9 +40,9 @@ export const TextPropertyCard = ({ property, className }: TextPropertyCardProps)
       )}
     >
       <div className="flex justify-between items-start mb-2">
-        <h3 className="text-lg font-bold text-gray-900">{property.title}</h3>
+        <h3 className="text-lg font-bold text-gray-900 line-clamp-2">{property.title}</h3>
         <div 
-          className="px-2 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
+          className="px-2 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap ml-2 flex-shrink-0"
           style={{ backgroundColor: propertyColor }}
         >
           {propertyType === 'commercial' ? (
@@ -60,7 +61,7 @@ export const TextPropertyCard = ({ property, className }: TextPropertyCardProps)
       </div>
       
       <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="flex items-center text-primary font-bold text-xl">
+        <div className="flex items-center text-[#1e40af] font-bold text-xl">
           {property.price}
         </div>
         
@@ -89,7 +90,7 @@ export const TextPropertyCard = ({ property, className }: TextPropertyCardProps)
       
       <button 
         onClick={handleWhatsAppInquiry}
-        className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-2 rounded-md transition-all duration-300"
+        className="w-full flex items-center justify-center gap-2 bg-[#10B981] hover:bg-[#10B981]/90 text-white py-2 rounded-md transition-all duration-300"
       >
         <MessageCircle className="h-4 w-4" />
         Inquire via WhatsApp

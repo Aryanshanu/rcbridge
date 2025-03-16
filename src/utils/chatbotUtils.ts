@@ -22,8 +22,8 @@ export async function initializeChatModel(): Promise<boolean> {
         'text2text-generation', 
         'onnx-community/distilgpt2', 
         { 
-          // Use maxLength instead of max_new_tokens
-          maxLength: 150 
+          // Use the correct parameter name for this model
+          max_length: 150 
         }
       );
       console.log('Chat model initialized successfully');

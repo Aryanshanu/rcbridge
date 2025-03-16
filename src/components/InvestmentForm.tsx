@@ -48,10 +48,11 @@ export function InvestmentForm({
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="propertyPrice">Property Price (₹)</Label>
+          <Label htmlFor="propertyPrice" className="text-gray-700">Property Price (₹)</Label>
           <Input
             id="propertyPrice"
             type="number"
+            className="border-gray-300 focus:border-[#1e40af] focus:ring-[#1e40af]/20"
             {...form.register("propertyPrice", { 
               valueAsNumber: true,
               onChange: (e) => setPropertyPriceInWords(convertNumberToWords(Number(e.target.value)))
@@ -59,17 +60,18 @@ export function InvestmentForm({
             required
           />
           {propertyPriceInWords && (
-            <p className="text-sm text-muted-foreground italic mt-1">
+            <p className="text-sm text-gray-500 italic mt-1">
               {formatIndianPrice(form.watch("propertyPrice"))} ({propertyPriceInWords})
             </p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="rentalIncome">Monthly Rental (₹)</Label>
+          <Label htmlFor="rentalIncome" className="text-gray-700">Monthly Rental (₹)</Label>
           <Input
             id="rentalIncome"
             type="number"
+            className="border-gray-300 focus:border-[#1e40af] focus:ring-[#1e40af]/20"
             {...form.register("rentalIncome", { 
               valueAsNumber: true,
               onChange: (e) => setRentalIncomeInWords(convertNumberToWords(Number(e.target.value)))
@@ -77,15 +79,15 @@ export function InvestmentForm({
             required
           />
           {rentalIncomeInWords && (
-            <p className="text-sm text-muted-foreground italic mt-1">
+            <p className="text-sm text-gray-500 italic mt-1">
               ₹{form.watch("rentalIncome").toLocaleString('en-IN')} ({rentalIncomeInWords})
             </p>
           )}
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>Price Appreciation Rate (%): {appreciationRate}%</Label>
+      <div className="space-y-2 p-3 bg-gray-50 rounded-md border border-gray-200">
+        <Label className="text-gray-700">Price Appreciation Rate: {appreciationRate}%</Label>
         <Slider
           value={[appreciationRate]}
           min={0}
@@ -97,19 +99,19 @@ export function InvestmentForm({
           }}
           className="mt-2"
         />
-        <p className="text-sm text-muted-foreground italic mt-1">
-          {appreciationRate}% ({appreciationRateInWords} percent)
+        <p className="text-sm text-gray-500 italic mt-1">
+          {appreciationRate}% ({appreciationRateInWords} percent) per year
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="propertyType">Property Type</Label>
+          <Label htmlFor="propertyType" className="text-gray-700">Property Type</Label>
           <Select
             value={form.watch("propertyType")}
             onValueChange={(value) => form.setValue("propertyType", value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="border-gray-300 focus:border-[#1e40af] focus:ring-[#1e40af]/20">
               <SelectValue placeholder="Select property type" />
             </SelectTrigger>
             <SelectContent>
@@ -122,12 +124,12 @@ export function InvestmentForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="location">Location</Label>
+          <Label htmlFor="location" className="text-gray-700">Location</Label>
           <Select
             value={form.watch("location")}
             onValueChange={(value) => form.setValue("location", value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="border-gray-300 focus:border-[#1e40af] focus:ring-[#1e40af]/20">
               <SelectValue placeholder="Select location" />
             </SelectTrigger>
             <SelectContent>
@@ -142,12 +144,12 @@ export function InvestmentForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="timeframe">Time Frame</Label>
+        <Label htmlFor="timeframe" className="text-gray-700">Time Frame</Label>
         <Select
           value={form.watch("timeframe")}
           onValueChange={(value) => form.setValue("timeframe", value)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="border-gray-300 focus:border-[#1e40af] focus:ring-[#1e40af]/20">
             <SelectValue placeholder="Select timeframe" />
           </SelectTrigger>
           <SelectContent>
@@ -161,7 +163,7 @@ export function InvestmentForm({
 
       <Button
         type="submit"
-        className="w-full"
+        className="w-full bg-[#1e40af] hover:bg-[#1e40af]/90 text-white"
         disabled={isCalculating}
       >
         {isCalculating ? "Calculating..." : "Calculate Investment Potential"}
