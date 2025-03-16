@@ -1,7 +1,6 @@
 
 import { Building2, Users, Brain, Shield, Users2, ChartBar, Calculator, Home, Building, Map, Landmark, LineChart, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InvestmentCalculator } from "@/components/InvestmentCalculator";
 
 export const Features = () => {
@@ -203,50 +202,63 @@ export const Features = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="features" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-8">
-          <TabsTrigger value="features">Core Features</TabsTrigger>
-          <TabsTrigger value="detailed">Detailed Breakdown</TabsTrigger>
-          <TabsTrigger value="comparison">Competitive Analysis</TabsTrigger>
-          <TabsTrigger value="calculator">Investment Calculator</TabsTrigger>
-        </TabsList>
+      {/* Section Navigation */}
+      <div className="mb-8 flex flex-wrap justify-center gap-4">
+        <a href="#core-features" className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">Core Features</a>
+        <a href="#detailed-breakdown" className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">Detailed Breakdown</a>
+        <a href="#competitive-analysis" className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">Competitive Analysis</a>
+        <a href="#investment-calculator" className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">Investment Calculator</a>
+      </div>
+      
+      {/* Core Features Section */}
+      <div id="core-features" className="mb-16">
+        <div className="text-center mb-6">
+          <h3 className="text-xl sm:text-2xl font-bold">Core Features</h3>
+          <div className="w-20 h-1 bg-primary mx-auto mt-2 mb-6"></div>
+        </div>
         
-        <TabsContent value="features" className="space-y-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {coreFeatures.map((feature, index) => (
-              <div 
-                key={index} 
-                className="bg-white p-5 sm:p-6 rounded-lg shadow-md border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all"
-              >
-                <div className="inline-flex items-center justify-center w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-primary/10 text-primary mb-4">
-                  {feature.icon}
-                </div>
-                <h3 className="text-lg sm:text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm sm:text-base text-gray-600">{feature.description}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          {coreFeatures.map((feature, index) => (
+            <div 
+              key={index} 
+              className="bg-white p-5 sm:p-6 rounded-lg shadow-md border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all"
+            >
+              <div className="inline-flex items-center justify-center w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-primary/10 text-primary mb-4">
+                {feature.icon}
               </div>
-            ))}
-          </div>
-          
-          <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
-            <h3 className="text-xl font-bold text-center mb-4">Our Impact & Achievements</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white p-4 rounded-lg text-center">
-                <p className="text-primary font-bold text-xl">₹225 Crores+</p>
-                <p className="text-gray-600 text-sm">Saved in Brokerage & Hidden Costs</p>
-              </div>
-              <div className="bg-white p-4 rounded-lg text-center">
-                <p className="text-primary font-bold text-xl">₹750 Crores+</p>
-                <p className="text-gray-600 text-sm">Total Real Estate Transactions</p>
-              </div>
-              <div className="bg-white p-4 rounded-lg text-center">
-                <p className="text-primary font-bold text-xl">₹37.5 Crores+</p>
-                <p className="text-gray-600 text-sm">Retained in Property Value</p>
-              </div>
+              <h3 className="text-lg sm:text-xl font-semibold mb-2">{feature.title}</h3>
+              <p className="text-sm sm:text-base text-gray-600">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+        
+        <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 mt-8">
+          <h3 className="text-xl font-bold text-center mb-4">Our Impact & Achievements</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white p-4 rounded-lg text-center">
+              <p className="text-primary font-bold text-xl">₹225 Crores+</p>
+              <p className="text-gray-600 text-sm">Saved in Brokerage & Hidden Costs</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg text-center">
+              <p className="text-primary font-bold text-xl">₹750 Crores+</p>
+              <p className="text-gray-600 text-sm">Total Real Estate Transactions</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg text-center">
+              <p className="text-primary font-bold text-xl">₹37.5 Crores+</p>
+              <p className="text-gray-600 text-sm">Retained in Property Value</p>
             </div>
           </div>
-        </TabsContent>
+        </div>
+      </div>
+      
+      {/* Detailed Breakdown Section */}
+      <div id="detailed-breakdown" className="mb-16">
+        <div className="text-center mb-6">
+          <h3 className="text-xl sm:text-2xl font-bold">Detailed Breakdown</h3>
+          <div className="w-20 h-1 bg-primary mx-auto mt-2 mb-6"></div>
+        </div>
         
-        <TabsContent value="detailed" className="space-y-8">
+        <div className="space-y-8">
           {detailedFeatures.map((feature, index) => (
             <div key={index} id={feature.id} className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
               <div className="flex items-start gap-4">
@@ -283,79 +295,90 @@ export const Features = () => {
               </div>
             </div>
           ))}
-        </TabsContent>
+        </div>
+      </div>
+      
+      {/* Competitive Analysis Section */}
+      <div id="competitive-analysis" className="mb-16">
+        <div className="text-center mb-6">
+          <h3 className="text-xl sm:text-2xl font-bold">Competitive Analysis</h3>
+          <div className="w-20 h-1 bg-primary mx-auto mt-2 mb-6"></div>
+        </div>
         
-        <TabsContent value="comparison">
-          <div className="overflow-x-auto">
-            <div className="bg-white p-4 rounded-lg shadow-md min-w-[768px]">
-              <h3 className="text-xl font-bold mb-4 text-center">RC Bridge vs. Market Competitors</h3>
-              
-              <div className="mb-4">
-                <div className="grid grid-cols-7 gap-2">
-                  <div className="col-span-1 font-semibold text-gray-700 pl-2">Feature</div>
-                  {competitors.map((competitor, index) => (
-                    <div key={index} className="col-span-1 font-semibold text-center text-sm">
-                      {competitor.name}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {competitiveMatrix.map((row, rowIndex) => (
-                <div key={rowIndex} className="grid grid-cols-7 gap-2 mb-3 items-center hover:bg-gray-50">
-                  <div className="col-span-1 text-gray-700 pl-2 font-medium">{row.feature}</div>
-                  {row.scores.map((score, scoreIndex) => (
-                    <div key={`${rowIndex}-${scoreIndex}`} className="col-span-1 flex flex-col items-center justify-center">
-                      {row.icons[scoreIndex] ? (
-                        <Check className="text-green-500 w-5 h-5 mb-1" />
-                      ) : (
-                        <X className="text-red-500 w-5 h-5 mb-1" />
-                      )}
-                      <div className="mx-auto w-8 h-8 rounded-full flex items-center justify-center text-white font-medium text-sm" 
-                        style={{ backgroundColor: `var(--${competitors[scoreIndex].color.split('-')[1]})` }}>
-                        {score}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ))}
-              
-              <div className="mt-6 bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2">Key Takeaways:</h4>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start">
-                    <span className="text-primary mr-2">•</span>
-                    <span>RC Bridge scores highest in Exclusivity, Personalized Matching, Value Preservation, and Investment Opportunities.</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-primary mr-2">•</span>
-                    <span>Traditional platforms focus on public listings, which expose properties to mass audiences but reduce exclusivity and value.</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-primary mr-2">•</span>
-                    <span>NoBroker is closest to RC Bridge in broker-free transactions, but it still follows a public listing model.</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-primary mr-2">•</span>
-                    <span>RC Bridge outperforms others in startup and business support, development opportunities, and high ROI investments.</span>
-                  </li>
-                </ul>
+        <div className="overflow-x-auto">
+          <div className="bg-white p-4 rounded-lg shadow-md min-w-[768px]">
+            <h3 className="text-xl font-bold mb-4 text-center">RC Bridge vs. Market Competitors</h3>
+            
+            <div className="mb-4">
+              <div className="grid grid-cols-7 gap-2">
+                <div className="col-span-1 font-semibold text-gray-700 pl-2">Feature</div>
+                {competitors.map((competitor, index) => (
+                  <div key={index} className="col-span-1 font-semibold text-center text-sm">
+                    {competitor.name}
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="calculator">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-bold mb-4">Investment ROI Calculator</h3>
-            <p className="text-gray-600 mb-6">
-              Evaluate if a property meets our 12% annual return threshold by calculating combined rental yield and price appreciation.
-            </p>
             
-            <InvestmentCalculator />
+            {competitiveMatrix.map((row, rowIndex) => (
+              <div key={rowIndex} className="grid grid-cols-7 gap-2 mb-3 items-center hover:bg-gray-50">
+                <div className="col-span-1 text-gray-700 pl-2 font-medium">{row.feature}</div>
+                {row.scores.map((score, scoreIndex) => (
+                  <div key={`${rowIndex}-${scoreIndex}`} className="col-span-1 flex flex-col items-center justify-center">
+                    {row.icons[scoreIndex] ? (
+                      <Check className="text-green-500 w-5 h-5 mb-1" />
+                    ) : (
+                      <X className="text-red-500 w-5 h-5 mb-1" />
+                    )}
+                    <div className="mx-auto w-8 h-8 rounded-full flex items-center justify-center text-white font-medium text-sm" 
+                      style={{ backgroundColor: `var(--${competitors[scoreIndex].color.split('-')[1]})` }}>
+                      {score}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+            
+            <div className="mt-6 bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-semibold mb-2">Key Takeaways:</h4>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span>RC Bridge scores highest in Exclusivity, Personalized Matching, Value Preservation, and Investment Opportunities.</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span>Traditional platforms focus on public listings, which expose properties to mass audiences but reduce exclusivity and value.</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span>NoBroker is closest to RC Bridge in broker-free transactions, but it still follows a public listing model.</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-primary mr-2">•</span>
+                  <span>RC Bridge outperforms others in startup and business support, development opportunities, and high ROI investments.</span>
+                </li>
+              </ul>
+            </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
+      
+      {/* Investment Calculator Section */}
+      <div id="investment-calculator" className="mb-16">
+        <div className="text-center mb-6">
+          <h3 className="text-xl sm:text-2xl font-bold">Investment Calculator</h3>
+          <div className="w-20 h-1 bg-primary mx-auto mt-2 mb-6"></div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <p className="text-gray-600 mb-6">
+            Evaluate if a property meets our 12% annual return threshold by calculating combined rental yield and price appreciation.
+          </p>
+          
+          <InvestmentCalculator />
+        </div>
+      </div>
       
       <div className="mt-10 text-center">
         <Button 
