@@ -230,15 +230,15 @@ export const Features = () => {
           <h3 className="text-xl font-bold text-center mb-4">Our Impact & Achievements</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-lg text-center">
-              <p className="text-primary font-bold text-xl">₹225 Crores+</p>
+              <p className="text-primary font-bold text-xl">₹20 Crores+</p>
               <p className="text-gray-600 text-sm">Saved in Brokerage & Hidden Costs</p>
             </div>
             <div className="bg-white p-4 rounded-lg text-center">
-              <p className="text-primary font-bold text-xl">₹750 Crores+</p>
+              <p className="text-primary font-bold text-xl">₹200 Crores+</p>
               <p className="text-gray-600 text-sm">Total Real Estate Transactions</p>
             </div>
             <div className="bg-white p-4 rounded-lg text-center">
-              <p className="text-primary font-bold text-xl">₹37.5 Crores+</p>
+              <p className="text-primary font-bold text-xl">₹4.5 Crores+</p>
               <p className="text-gray-600 text-sm">Retained in Property Value</p>
             </div>
           </div>

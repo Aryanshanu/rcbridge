@@ -95,7 +95,7 @@ export const Hero = () => {
               <span className="text-gray-200 text-sm md:text-base">Years of Service</span>
             </div>
             <div className="flex flex-col items-center text-white">
-              <span className="font-display font-bold text-3xl md:text-4xl">₹750Cr+</span>
+              <span className="font-display font-bold text-3xl md:text-4xl">₹200Cr+</span>
               <span className="text-gray-200 text-sm md:text-base">Transactions</span>
             </div>
             <div className="flex flex-col items-center text-white">
