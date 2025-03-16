@@ -22,8 +22,10 @@ export async function initializeChatModel(): Promise<boolean> {
         'text2text-generation', 
         'onnx-community/distilgpt2', 
         { 
-          // For text generation models
-          max_new_tokens: 150 
+          // Using generate_kwargs to properly pass generation parameters
+          generate_kwargs: {
+            max_new_tokens: 150
+          }
         }
       );
       console.log('Chat model initialized successfully');
