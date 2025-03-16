@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -18,7 +17,6 @@ const Properties = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   
-  // Predefined filters
   const quickFilters = [
     { id: "location", label: "Hyderabad", icon: <MapPin className="h-4 w-4 mr-1 text-primary" />, value: "hyderabad" },
     { id: "type", label: "Apartments", icon: <Building className="h-4 w-4 mr-1 text-primary" />, value: "apartment" },
@@ -36,7 +34,6 @@ const Properties = () => {
       }
     }
 
-    // Check if there's a search query in the URL
     const params = new URLSearchParams(location.search);
     const query = params.get('q');
     if (query) {
@@ -56,13 +53,11 @@ const Properties = () => {
       return;
     }
 
-    // Update URL with search query
     navigate({
       pathname: '/properties',
       search: `?q=${encodeURIComponent(query)}`
     });
 
-    // Apply search filter
     const newFilters = { ...activeFilters, searchQuery: query };
     setActiveFilters(newFilters);
     
@@ -74,11 +69,9 @@ const Properties = () => {
     const newFilters = { ...activeFilters };
     
     if (newFilters[filter.id] === filter.value) {
-      // Remove filter if already active
       delete newFilters[filter.id];
       toast.info(`Removed filter: ${filter.label}`);
     } else {
-      // Add/update filter
       newFilters[filter.id] = filter.value;
       toast.success(`Applied filter: ${filter.label}`);
     }
@@ -101,7 +94,6 @@ const Properties = () => {
       <SEO title="Properties | RC Bridge" description="Explore our selection of premium properties" />
       <Navbar />
       
-      {/* Hero Header with Background */}
       <div className="bg-gradient-to-r from-primary-700 to-primary/90 text-white py-16 lg:py-24 w-full relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-white opacity-10"></div>
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-12 xl:px-16 relative z-10">
@@ -113,7 +105,6 @@ const Properties = () => {
               Browse through our exclusive collection of premium properties in Hyderabad
             </p>
             
-            {/* Search bar */}
             <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl shadow-lg border border-white/20 max-w-2xl mx-auto">
               <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-2">
                 <div className="relative flex-1">
@@ -134,7 +125,6 @@ const Properties = () => {
           </div>
         </div>
         
-        {/* Wave divider */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" fill="#ffffff" preserveAspectRatio="none">
             <path d="M0,64L80,58.7C160,53,320,43,480,48C640,53,800,75,960,74.7C1120,75,1280,53,1360,42.7L1440,32L1440,100L1360,100C1280,100,1120,100,960,100C800,100,640,100,480,100C320,100,160,100,80,100L0,100Z"></path>
@@ -143,99 +133,63 @@ const Properties = () => {
       </div>
       
       <main className="w-full max-w-full px-4 sm:px-6 lg:px-12 xl:px-16 py-8 sm:py-12">
-        {/* Breadcrumb */}
-        <div className="w-full max-w-screen-2xl mx-auto">
-          <Breadcrumb className="mb-8">
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/" className="flex items-center hover:text-primary">
-                  <Home className="h-4 w-4 mr-1" />
-                  Home
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="flex items-center font-medium">
-                  <Building className="h-4 w-4 mr-1 text-primary" />
-                  Properties
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-          
-          {/* Quick filter chips */}
-          <div className="flex flex-wrap gap-3 mb-8">
-            <span className="text-sm font-medium text-gray-600 self-center">Quick filters:</span>
-            {quickFilters.map((filter) => (
-              <Button 
-                key={filter.id}
-                variant="outline" 
-                size="sm" 
-                className={`rounded-full ${
-                  isFilterActive(filter.id, filter.value) 
-                    ? "bg-primary text-white border-primary hover:bg-primary/90" 
-                    : "bg-gray-50 border border-gray-300 hover:bg-gray-100"
-                }`}
-                onClick={() => toggleQuickFilter(filter)}
-              >
-                {filter.icon}
-                {filter.label}
-              </Button>
-            ))}
+        <Breadcrumb className="mb-8">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/" className="flex items-center hover:text-primary">
+                <Home className="h-4 w-4 mr-1" />
+                Home
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="flex items-center font-medium">
+                <Building className="h-4 w-4 mr-1 text-primary" />
+                Properties
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        
+        <div className="flex flex-wrap gap-3 mb-8">
+          <span className="text-sm font-medium text-gray-600 self-center">Quick filters:</span>
+          {quickFilters.map((filter) => (
             <Button 
+              key={filter.id}
               variant="outline" 
               size="sm" 
-              className="rounded-full text-primary bg-primary/5 border border-primary/20 hover:bg-primary/10"
-              onClick={applyAllFilters}
+              className={`rounded-full ${
+                isFilterActive(filter.id, filter.value) 
+                  ? "bg-primary text-white border-primary hover:bg-primary/90" 
+                  : "bg-gray-50 border border-gray-300 hover:bg-gray-100"
+              }`}
+              onClick={() => toggleQuickFilter(filter)}
             >
-              <Filter className="h-4 w-4 mr-1" />
-              More Filters
+              {filter.icon}
+              {filter.label}
             </Button>
-          </div>
-          
-          <section id="properties-section" className="mb-16 w-full bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-display font-semibold text-gray-900 mb-2">
-                  Our Properties
-                </h2>
-                <p className="text-gray-600">
-                  Find your dream property from our carefully curated selection
-                </p>
-                {Object.keys(activeFilters).length > 0 && (
-                  <div className="mt-2 text-sm text-primary">
-                    Active filters: {Object.keys(activeFilters).length}
-                  </div>
-                )}
-              </div>
-              
-              <div className="mt-4 md:mt-0 flex gap-3">
-                <Button variant="outline" className="flex items-center gap-2 border-gray-300">
-                  <ArrowRight className="h-4 w-4" />
-                  <span>Newest First</span>
-                </Button>
-                <Button 
-                  className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90"
-                  onClick={applyAllFilters}
-                >
-                  <Filter className="h-4 w-4" />
-                  <span>All Filters</span>
-                </Button>
-              </div>
-            </div>
-            
-            <PropertiesTab selectedPropertyId={selectedPropertyId} filters={activeFilters} />
-          </section>
-          
-          <section className="mb-16 w-full">
-            <CallToAction />
-          </section>
+          ))}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="rounded-full text-primary bg-primary/5 border border-primary/20 hover:bg-primary/10"
+            onClick={applyAllFilters}
+          >
+            <Filter className="h-4 w-4 mr-1" />
+            More Filters
+          </Button>
         </div>
-      </main>
-      
-      <Footer />
-    </div>
-  );
-};
+        
+        <section id="properties-section" className="mb-16 w-full bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-display font-semibold text-gray-900 mb-2">
+                Our Properties
+              </h2>
+              <p className="text-gray-600">
+                Find your dream property from our carefully curated selection
+              </p>
+              {Object.keys(activeFilters).length > 0 && (
+                <div className="mt-2 text-sm text-primary">
+                  Active
 
-export default Properties;

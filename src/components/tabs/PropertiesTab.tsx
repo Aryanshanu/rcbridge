@@ -32,9 +32,10 @@ interface Property {
 
 interface PropertiesTabProps {
   selectedPropertyId?: string;
+  filters?: Record<string, any>;
 }
 
-export const PropertiesTab = ({ selectedPropertyId }: PropertiesTabProps) => {
+export const PropertiesTab = ({ selectedPropertyId, filters = {} }: PropertiesTabProps) => {
   const [showFilters, setShowFilters] = useState(false);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
@@ -614,7 +615,12 @@ export const PropertiesTab = ({ selectedPropertyId }: PropertiesTabProps) => {
         });
       }
     }
-  }, [selectedPropertyId]);
+
+    // Apply filters passed from parent component
+    if (filters && Object.keys(filters).length > 0) {
+      applyFilters(filters);
+    }
+  }, [selectedPropertyId, filters]);
 
   const handleInquirySubmit = () => {
     toast({
@@ -657,6 +663,17 @@ export const PropertiesTab = ({ selectedPropertyId }: PropertiesTabProps) => {
       results = results.filter(property => 
         property.location.toLowerCase().includes(locationQuery) ||
         property.title.toLowerCase().includes(locationQuery)
+      );
+    }
+
+    // Apply search query filter
+    if (filters.searchQuery && filters.searchQuery.trim() !== '') {
+      const searchQuery = filters.searchQuery.toLowerCase();
+      results = results.filter(property => 
+        property.location.toLowerCase().includes(searchQuery) ||
+        property.title.toLowerCase().includes(searchQuery) ||
+        property.description.toLowerCase().includes(searchQuery) ||
+        (property.type && property.type.toLowerCase().includes(searchQuery))
       );
     }
     
