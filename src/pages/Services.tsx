@@ -6,9 +6,110 @@ import { WhyChooseUs } from "@/components/sections/WhyChooseUs";
 import { Features } from "@/components/sections/Features";
 import { CallToAction } from "@/components/sections/CallToAction";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Home } from "lucide-react";
+import { Home, Building, Shield, Users, ChartBar, MapPin, Clock, Check, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
 const Services = () => {
+  // Service Process steps
+  const serviceProcess = [
+    {
+      step: 1,
+      title: "Initial Consultation",
+      description: "We begin with a thorough consultation to understand your specific real estate goals, requirements, and preferences.",
+      icon: <Users className="h-8 w-8 text-primary" />
+    },
+    {
+      step: 2,
+      title: "Personalized Matching",
+      description: "Our team analyzes your requirements and matches you with exclusive off-market properties tailored to your needs.",
+      icon: <MapPin className="h-8 w-8 text-primary" />
+    },
+    {
+      step: 3,
+      title: "Private Viewings",
+      description: "We arrange private viewings of selected properties, ensuring a personalized and pressure-free experience.",
+      icon: <Building className="h-8 w-8 text-primary" />
+    },
+    {
+      step: 4,
+      title: "Value Analysis",
+      description: "Our experts provide a detailed value analysis to help you make informed decisions about potential investments.",
+      icon: <ChartBar className="h-8 w-8 text-primary" />
+    },
+    {
+      step: 5,
+      title: "Transaction Support",
+      description: "We guide you through the entire transaction process, ensuring a smooth and hassle-free experience.",
+      icon: <Shield className="h-8 w-8 text-primary" />
+    }
+  ];
+
+  // Additional service categories
+  const serviceCategories = [
+    {
+      title: "Residential Services",
+      description: "Comprehensive solutions for buying, selling, and renting residential properties",
+      items: [
+        "Premium Home Buying & Selling",
+        "Luxury Apartment Leasing",
+        "Villa & Bungalow Transactions",
+        "Plot & Land Acquisition",
+        "Gated Community Properties"
+      ],
+      icon: <Home className="h-10 w-10 text-primary" />
+    },
+    {
+      title: "Commercial Services",
+      description: "Specialized solutions for businesses seeking office spaces and commercial properties",
+      items: [
+        "Office Space Acquisition",
+        "Retail Space Leasing",
+        "Industrial Property Transactions",
+        "Warehouse & Storage Solutions",
+        "Multi-use Commercial Complexes"
+      ],
+      icon: <Building className="h-10 w-10 text-primary" />
+    },
+    {
+      title: "Investment Advisory",
+      description: "Strategic guidance for maximizing returns on real estate investments",
+      items: [
+        "High-ROI Property Identification",
+        "Investment Portfolio Diversification",
+        "Market Trend Analysis",
+        "Risk Assessment & Mitigation",
+        "Capital Growth Strategies"
+      ],
+      icon: <ChartBar className="h-10 w-10 text-primary" />
+    }
+  ];
+
+  // Client benefits
+  const clientBenefits = [
+    {
+      title: "Time Efficiency",
+      description: "Save valuable time with our curated property recommendations that match your exact requirements.",
+      icon: <Clock className="h-8 w-8 text-primary" />
+    },
+    {
+      title: "Value Preservation",
+      description: "Maintain property value through controlled exposure and direct transactions without public listings.",
+      icon: <Shield className="h-8 w-8 text-primary" />
+    },
+    {
+      title: "Expert Guidance",
+      description: "Benefit from our decade of industry expertise and deep market knowledge throughout your journey.",
+      icon: <Users className="h-8 w-8 text-primary" />
+    },
+    {
+      title: "Zero Brokerage",
+      description: "Eliminate unnecessary brokerage fees through our direct buyer-seller connection platform.",
+      icon: <Check className="h-8 w-8 text-primary" />
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       <SEO title="Our Services | RC Bridge" description="Discover our comprehensive real estate services" />
@@ -38,12 +139,154 @@ const Services = () => {
           </p>
         </div>
         
+        {/* Service Process Section */}
+        <section className="mb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Our Service Process</h2>
+            <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-3xl mx-auto">
+              A streamlined approach to meet your real estate needs with maximum efficiency
+            </p>
+          </div>
+          
+          <div className="relative">
+            {/* Process steps with connecting line */}
+            <div className="hidden md:block absolute left-1/2 top-24 bottom-24 w-0.5 bg-primary/30 -translate-x-1/2 z-0"></div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+              {serviceProcess.map((process, index) => (
+                <div key={index} className="relative z-10">
+                  <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 h-full flex flex-col items-center text-center hover:border-primary/30 hover:shadow-lg transition-all">
+                    <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+                      {process.icon}
+                    </div>
+                    <div className="bg-primary text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-3">
+                      {process.step}
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">{process.title}</h3>
+                    <p className="text-gray-600 text-sm">{process.description}</p>
+                  </div>
+                  {index < serviceProcess.length - 1 && (
+                    <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2">
+                      <ArrowRight className="h-6 w-6 text-primary" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+        
+        {/* Service Categories Section */}
+        <section className="mb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Our Service Categories</h2>
+            <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-3xl mx-auto">
+              Specialized solutions across various real estate segments
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {serviceCategories.map((category, index) => (
+              <Card key={index} className="p-6 hover:shadow-lg transition-all border-gray-200">
+                <div className="flex flex-col h-full">
+                  <div className="mb-4">
+                    {category.icon}
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">{category.title}</h3>
+                  <p className="text-gray-600 mb-4">{category.description}</p>
+                  <ul className="space-y-2 mb-6 flex-grow">
+                    {category.items.map((item, i) => (
+                      <li key={i} className="flex items-start">
+                        <span className="text-primary mr-2">•</span>
+                        <span className="text-gray-700">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button variant="outline" className="mt-auto">
+                    Learn More
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
+        
+        {/* Client Benefits Section */}
+        <section className="mb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Client Benefits</h2>
+            <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-3xl mx-auto">
+              Why clients choose RC Bridge for their real estate needs
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {clientBenefits.map((benefit, index) => (
+              <div key={index} className="bg-white p-5 rounded-lg shadow-md border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
+                  {benefit.icon}
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{benefit.title}</h3>
+                <p className="text-gray-600 text-sm">{benefit.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+        
         <section className="mb-16">
           <WhyChooseUs />
         </section>
         
         <section className="mb-16">
           <Features />
+        </section>
+        
+        {/* FAQ Section */}
+        <section className="mb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Frequently Asked Questions</h2>
+            <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-3xl mx-auto">
+              Answers to common questions about our services
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold mb-2">How is RC Bridge different from other real estate platforms?</h3>
+              <p className="text-gray-600">
+                Unlike traditional platforms that rely on public listings, RC Bridge operates on a personalized matching model that preserves property value through controlled exposure and direct connections between buyers and sellers, eliminating intermediaries and unnecessary fees.
+              </p>
+            </div>
+            
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold mb-2">What types of properties does RC Bridge handle?</h3>
+              <p className="text-gray-600">
+                We handle a wide range of properties including residential homes, apartments, commercial spaces, office buildings, lands, and industrial properties across various price ranges to meet diverse client needs.
+              </p>
+            </div>
+            
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold mb-2">How do I get started with RC Bridge services?</h3>
+              <p className="text-gray-600">
+                Getting started is simple: Create an account, submit your property requirements or listing details, and our team will begin the personalized matching process immediately, connecting you with relevant opportunities.
+              </p>
+            </div>
+            
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold mb-2">What are the fees associated with using RC Bridge?</h3>
+              <p className="text-gray-600">
+                RC Bridge operates on a zero-brokerage model for basic services. We eliminate traditional brokerage fees by directly connecting buyers and sellers, resulting in significant cost savings for all parties involved.
+              </p>
+            </div>
+          </div>
+          
+          <div className="text-center mt-8">
+            <Link to="/calculator">
+              <Button>
+                Try Our Investment Calculator
+              </Button>
+            </Link>
+          </div>
         </section>
         
         <section className="mb-16">
