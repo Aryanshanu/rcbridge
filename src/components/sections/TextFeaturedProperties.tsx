@@ -36,20 +36,20 @@ export const TextFeaturedProperties = () => {
         }
         
         if (data && data.length > 0) {
-          console.log("Fetched properties:", data);
+          console.log("Fetched properties for TextFeaturedProperties:", data);
           
           // Format the properties for display
           const formattedProperties = data.map(property => ({
             id: property.id,
-            title: property.title,
-            location: property.location,
-            price: formatPrice(property.price, property.listing_type),
-            bedrooms: property.bedrooms,
-            bathrooms: property.bathrooms,
-            area: `${property.area} sq.ft`,
-            description: property.description,
-            propertyType: property.property_type,
-            listingType: property.listing_type
+            title: property.title || "Untitled Property",
+            location: property.location || "Unknown Location",
+            price: formatPrice(property.price, property.listing_type || 'sale'),
+            bedrooms: property.bedrooms || 0,
+            bathrooms: property.bathrooms || 0,
+            area: property.area ? `${property.area} sq.ft` : "Area not specified",
+            description: property.description || "No description available",
+            propertyType: property.property_type || "residential",
+            listingType: property.listing_type || "sale"
           }));
           
           setProperties(formattedProperties);
@@ -70,15 +70,22 @@ export const TextFeaturedProperties = () => {
           });
           setTrendingProperties(trending.slice(0, 6));
         } else {
-          console.log("No properties found");
+          console.log("No properties found for TextFeaturedProperties");
           // Set empty arrays if no data
           setProperties([]);
           setFilteredProperties([]);
           setRecommendedProperties([]);
           setTrendingProperties([]);
+          
+          // Show toast about missing properties
+          toast({
+            title: "No Properties Found",
+            description: "There are currently no properties to display. Please check back later.",
+            variant: "destructive",
+          });
         }
       } catch (error) {
-        console.error('Error fetching properties:', error);
+        console.error('Error fetching properties for TextFeaturedProperties:', error);
         toast({
           title: "Error",
           description: "Failed to load properties. Please try again.",
@@ -93,6 +100,8 @@ export const TextFeaturedProperties = () => {
   }, [toast, showAllProperties]);
   
   const formatPrice = (price: number, listingType: string) => {
+    if (!price) return "Price not available";
+    
     if (listingType === 'rent') {
       return `₹${price.toLocaleString('en-IN')}/month`;
     }
@@ -108,8 +117,9 @@ export const TextFeaturedProperties = () => {
   
   const extractPriceValue = (priceString: string) => {
     // Extract numeric value from price strings like "₹2.5Cr" or "₹25000/month"
+    if (!priceString || priceString === "Price not available") return 0;
     const numericPart = priceString.replace(/[^\d.]/g, '');
-    return parseFloat(numericPart);
+    return parseFloat(numericPart) || 0;
   };
   
   const handleViewAllToggle = () => {

@@ -1,6 +1,8 @@
 
-import { Building, MapPin, Bed, Bath, Square, MessageCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, BedDouble, Bath, Home, ArrowRight, Building, Ruler } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface PropertyType {
   id: string;
@@ -9,107 +11,98 @@ interface PropertyType {
   price: string;
   bedrooms?: number;
   bathrooms?: number;
-  area: string;
+  area?: string;
+  description?: string;
   propertyType?: string;
   listingType?: string;
 }
 
-interface TextPropertyCardProps {
-  property: PropertyType;
-  className?: string;
-}
-
-export const TextPropertyCard = ({ property, className }: TextPropertyCardProps) => {
-  // Determine property type based on property.propertyType or bedrooms
-  const propertyType = property.propertyType || 
-                      (property.bedrooms === 0 ? 'commercial' : 
-                      property.bedrooms && property.bedrooms > 3 ? 'luxury' : 'residential');
-  
-  // Set color based on property type
-  const propertyColor = propertyType === 'commercial' ? '#3B82F6' : // Commercial (blue)
-                       propertyType === 'luxury' || propertyType === 'agricultural' ? '#8B5CF6' : // Luxury/Agricultural (purple)
-                       propertyType === 'undeveloped' ? '#F59E0B' : // Undeveloped (amber)
-                       '#10B981'; // Residential (green)
-  
-  // Determine listing type label
-  const listingTypeLabel = property.listingType === 'rent' ? 'For Rent' :
-                          property.listingType === 'development_partnership' ? 'Development' :
-                          'For Sale';
-  
-  const handleWhatsAppInquiry = () => {
-    const message = encodeURIComponent(`Hi, I'm interested in the property: ${property.title} in ${property.location}. Could you provide more information?`);
-    window.open(`https://wa.me/917893871223?text=${message}`, '_blank');
+export const TextPropertyCard = ({ property }: { property: PropertyType }) => {
+  const getPropertyTypeIcon = () => {
+    switch (property.propertyType) {
+      case 'commercial':
+        return <Building className="h-4 w-4" />;
+      case 'undeveloped':
+        return <Ruler className="h-4 w-4" />;
+      default:
+        return <Home className="h-4 w-4" />;
+    }
   };
   
+  const getListingTypeColor = () => {
+    switch (property.listingType) {
+      case 'rent':
+        return "bg-blue-100 text-blue-800";
+      case 'development_partnership':
+        return "bg-purple-100 text-purple-800";
+      default:
+        return "bg-green-100 text-green-800";
+    }
+  };
+  
+  const getListingTypeLabel = () => {
+    switch (property.listingType) {
+      case 'rent':
+        return "For Rent";
+      case 'development_partnership':
+        return "Development";
+      default:
+        return "For Sale";
+    }
+  };
+
   return (
-    <div 
-      className={cn(
-        "bg-white rounded-lg shadow-md border border-gray-200 p-4 hover:shadow-lg transition-shadow duration-300",
-        className
-      )}
-    >
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="text-lg font-bold text-gray-900 line-clamp-2">{property.title}</h3>
-        <div className="flex flex-col items-end gap-1">
-          <div 
-            className="px-2 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap ml-2 flex-shrink-0"
-            style={{ backgroundColor: propertyColor }}
-          >
-            <span className="flex items-center">
-              <Building className="w-3 h-3 mr-1" /> 
-              {propertyType.charAt(0).toUpperCase() + propertyType.slice(1)}
+    <Card className="overflow-hidden hover:shadow-md transition-shadow bg-white">
+      <div className="p-4">
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{property.title}</h3>
+          
+          <Badge className={getListingTypeColor()}>
+            <span className="flex items-center gap-1">
+              {getPropertyTypeIcon()}
+              {getListingTypeLabel()}
             </span>
-          </div>
-          {property.listingType && (
-            <div 
-              className="px-2 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap ml-2 flex-shrink-0 bg-gray-600"
-            >
-              {listingTypeLabel}
-            </div>
-          )}
-        </div>
-      </div>
-      
-      <div className="flex items-start mb-3">
-        <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
-        <p className="ml-2 text-gray-600 text-sm">{property.location}</p>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="flex items-center text-[#1e40af] font-bold text-xl">
-          {property.price}
+          </Badge>
         </div>
         
-        <div className="flex items-center justify-end text-sm text-gray-500">
-          <Square className="h-4 w-4 mr-1 text-gray-400" />
-          {property.area}
+        <div className="flex items-start gap-1 mb-2 text-gray-600">
+          <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <p className="text-sm line-clamp-1">{property.location}</p>
         </div>
-      </div>
-      
-      {/* Property Specs */}
-      {property.bedrooms !== undefined && property.bedrooms > 0 && (
-        <div className="flex justify-between pt-3 border-t border-gray-100 mb-4">
-          <div className="flex items-center">
-            <Bed className="h-4 w-4 mr-1 text-gray-400" />
-            <span className="text-sm">{property.bedrooms} {property.bedrooms === 1 ? 'Bed' : 'Beds'}</span>
-          </div>
+        
+        <div className="grid grid-cols-3 gap-3 mb-3">
+          {property.bedrooms !== undefined && property.bedrooms > 0 && (
+            <div className="flex items-center gap-1">
+              <BedDouble className="h-4 w-4 text-gray-400" />
+              <span className="text-sm">{property.bedrooms} {property.bedrooms === 1 ? 'Bed' : 'Beds'}</span>
+            </div>
+          )}
           
-          {property.bathrooms && (
-            <div className="flex items-center">
-              <Bath className="h-4 w-4 mr-1 text-gray-400" />
+          {property.bathrooms !== undefined && property.bathrooms > 0 && (
+            <div className="flex items-center gap-1">
+              <Bath className="h-4 w-4 text-gray-400" />
               <span className="text-sm">{property.bathrooms} {property.bathrooms === 1 ? 'Bath' : 'Baths'}</span>
             </div>
           )}
+          
+          {property.area && (
+            <div className="flex items-center gap-1">
+              <Ruler className="h-4 w-4 text-gray-400" />
+              <span className="text-sm">{property.area}</span>
+            </div>
+          )}
         </div>
-      )}
-      
-      <button 
-        onClick={handleWhatsAppInquiry}
-        className="w-full flex items-center justify-center gap-2 bg-[#10B981] hover:bg-[#10B981]/90 text-white py-2 rounded-md transition-all duration-300"
-      >
-        <MessageCircle className="h-4 w-4" />
-        Inquire via WhatsApp
-      </button>
-    </div>
+        
+        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{property.description}</p>
+        
+        <div className="flex justify-between items-center">
+          <p className="text-lg font-bold text-[#1e40af]">{property.price}</p>
+          
+          <Link to={`/property/${property.id}`} className="text-sm text-[#1e40af] hover:underline flex items-center">
+            View Details <ArrowRight className="ml-1 h-3 w-3" />
+          </Link>
+        </div>
+      </div>
+    </Card>
   );
 };

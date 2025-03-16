@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { PropertyCard } from "@/components/PropertyCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
@@ -21,26 +21,25 @@ export const PropertyRecommendations = () => {
         const { data, error } = await supabase
           .from('properties')
           .select('*')
-          .order('created_at', { ascending: false })
-          .limit(12);
+          .order('created_at', { ascending: false });
           
         if (error) {
           throw error;
         }
         
-        if (data) {
-          console.log("Fetched properties:", data);
+        if (data && data.length > 0) {
+          console.log("Fetched properties for recommendations:", data);
           
           // Format the properties for display
           const formattedProperties = data.map(property => ({
             id: property.id,
-            title: property.title,
-            location: property.location,
-            price: formatPrice(property.price, property.listing_type),
+            title: property.title || "Untitled Property",
+            location: property.location || "Unknown Location",
+            price: formatPrice(property.price, property.listing_type || 'sale'),
             bedrooms: property.bedrooms || 0,
             bathrooms: property.bathrooms || 0,
-            area: `${property.area} sq.ft`,
-            image: "/placeholder.svg", // Default image to be replaced by the getPropertyImage function
+            area: property.area ? `${property.area} sq.ft` : "Area not specified",
+            image: "/placeholder.svg", // Default image
           }));
           
           // Get recommended properties - random 3
@@ -55,16 +54,16 @@ export const PropertyRecommendations = () => {
           });
           setTrendingProperties(trending.slice(0, 3));
         } else {
-          console.log("No properties found");
+          console.log("No properties found for recommendations");
           // Set empty arrays if no data
           setRecommendedProperties([]);
           setTrendingProperties([]);
         }
       } catch (error) {
-        console.error('Error fetching properties:', error);
+        console.error('Error fetching properties for recommendations:', error);
         toast({
           title: "Error",
-          description: "Failed to load properties. Please try again.",
+          description: "Failed to load property recommendations. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -76,6 +75,8 @@ export const PropertyRecommendations = () => {
   }, [toast]);
   
   const formatPrice = (price: number, listingType: string) => {
+    if (!price) return "Price not available";
+    
     if (listingType === 'rent') {
       return `₹${price.toLocaleString('en-IN')}/month`;
     }
@@ -91,8 +92,9 @@ export const PropertyRecommendations = () => {
   
   const extractPriceValue = (priceString: string) => {
     // Extract numeric value from price strings like "₹2.5Cr" or "₹25000/month"
+    if (!priceString || priceString === "Price not available") return 0;
     const numericPart = priceString.replace(/[^\d.]/g, '');
-    return parseFloat(numericPart);
+    return parseFloat(numericPart) || 0;
   };
 
   return (

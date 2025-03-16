@@ -45,24 +45,31 @@ const Properties = () => {
           // Format the properties for display
           const formattedProperties = data.map(property => ({
             id: property.id,
-            title: property.title,
-            location: property.location,
-            price: formatPrice(property.price, property.listing_type),
+            title: property.title || "Untitled Property",
+            location: property.location || "Unknown Location",
+            price: formatPrice(property.price, property.listing_type || 'sale'),
             numericPrice: property.price, // Keep original price for sorting
-            bedrooms: property.bedrooms,
-            bathrooms: property.bathrooms,
-            area: `${property.area} sq.ft`,
-            description: property.description,
-            propertyType: property.property_type,
-            listingType: property.listing_type
+            bedrooms: property.bedrooms || 0,
+            bathrooms: property.bathrooms || 0,
+            area: property.area ? `${property.area} sq.ft` : "Area not specified",
+            description: property.description || "No description available",
+            propertyType: property.property_type || "residential",
+            listingType: property.listing_type || "sale"
           }));
           
           setProperties(formattedProperties);
           setFilteredProperties(formattedProperties);
         } else {
-          console.log("No properties found");
+          console.log("No properties found or empty data array received:", data);
           setProperties([]);
           setFilteredProperties([]);
+          
+          // Show a toast notification about the empty properties
+          toast({
+            title: "No Properties Found",
+            description: "There are currently no properties in the database. Please try again later.",
+            variant: "destructive",
+          });
         }
       } catch (error) {
         console.error('Error fetching properties:', error);
@@ -115,6 +122,8 @@ const Properties = () => {
   }, [searchTerm, propertyType, listingType, priceSort, properties]);
   
   const formatPrice = (price: number, listingType: string) => {
+    if (!price) return "Price not available";
+    
     if (listingType === 'rent') {
       return `₹${price.toLocaleString('en-IN')}/month`;
     }
@@ -237,7 +246,7 @@ const Properties = () => {
           <div className="bg-white p-8 rounded-lg shadow-sm text-center">
             <Home className="h-12 w-12 mx-auto text-gray-400 mb-3" />
             <h3 className="text-xl font-semibold text-gray-800 mb-2">No properties found</h3>
-            <p className="text-gray-600 mb-4">No properties match your current filter criteria.</p>
+            <p className="text-gray-600 mb-4">No properties match your current filter criteria or the database is empty.</p>
             <Button onClick={resetFilters}>Clear Filters</Button>
           </div>
         )}
