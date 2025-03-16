@@ -58,7 +58,7 @@ export default {
           foreground: "#1E3A8A",
         },
         accent: {
-          DEFAULT: "#10B981",
+          DEFAULT: "#9b87f5", // New purple accent color
           foreground: "#FFFFFF",
         },
         background: "#FFFFFF",
@@ -67,6 +67,7 @@ export default {
       fontFamily: {
         sans: ["Inter", "sans-serif"],
         body: ["Open Sans", "sans-serif"],
+        display: ["Playfair Display", "serif"], // Added display font
       },
       spacing: {
         "navbar-height": "70px",
@@ -75,6 +76,26 @@ export default {
       gridTemplateColumns: {
         "auto-fill-card": "repeat(auto-fill, minmax(280px, 1fr))",
         "auto-fill-card-lg": "repeat(auto-fill, minmax(320px, 1fr))",
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'hero-pattern': 'linear-gradient(to right, #1E3A8A 0%, #3B82F6 100%)',
+        'cta-pattern': 'linear-gradient(90deg, hsla(224, 78%, 29%, 0.9) 0%, hsla(221, 45%, 73%, 0.8) 100%)',
+      },
+      animation: {
+        'fade-in': 'fade-in 0.5s ease-out forwards',
+        'slide-up': 'slide-up 0.5s ease-out forwards',
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'slide-up': {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
       },
     },
   },
