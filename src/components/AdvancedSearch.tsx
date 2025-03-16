@@ -105,7 +105,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md mb-8 animate-in fade-in slide-in-from-top duration-300">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-lg">Filter Properties</h3>
+        <h3 className="font-semibold text-lg text-purple-700">Find Your Dream Property</h3>
         <Button 
           variant="ghost" 
           size="sm" 
@@ -124,7 +124,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
             value={propertyType} 
             onValueChange={setPropertyType}
           >
-            <SelectTrigger>
+            <SelectTrigger className="bg-gray-50 border-gray-200">
               <SelectValue placeholder="Select property type" />
             </SelectTrigger>
             <SelectContent>
@@ -145,6 +145,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
             placeholder="Enter location" 
             value={location}
             onChange={(e) => setLocation(e.target.value)}
+            className="bg-gray-50 border-gray-200"
           />
         </div>
 
@@ -154,7 +155,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
             value={propertyStatus}
             onValueChange={setPropertyStatus}
           >
-            <SelectTrigger>
+            <SelectTrigger className="bg-gray-50 border-gray-200">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
@@ -204,7 +205,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
             value={bedrooms}
             onValueChange={setBedrooms}
           >
-            <SelectTrigger>
+            <SelectTrigger className="bg-gray-50 border-gray-200">
               <SelectValue placeholder="Bedrooms" />
             </SelectTrigger>
             <SelectContent>
@@ -221,7 +222,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
             value={bathrooms}
             onValueChange={setBathrooms}
           >
-            <SelectTrigger>
+            <SelectTrigger className="bg-gray-50 border-gray-200">
               <SelectValue placeholder="Bathrooms" />
             </SelectTrigger>
             <SelectContent>
@@ -237,7 +238,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
             value={propertyAge}
             onValueChange={setPropertyAge}
           >
-            <SelectTrigger>
+            <SelectTrigger className="bg-gray-50 border-gray-200">
               <SelectValue placeholder="Age" />
             </SelectTrigger>
             <SelectContent>
@@ -252,7 +253,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
       </div>
 
       <div className="mb-6">
-        <Label className="text-gray-700 mb-2 block">Amenities</Label>
+        <Label className="text-gray-700 mb-2 block">Popular Amenities</Label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {amenities.map((amenity) => (
             <div key={amenity.id} className="flex items-center space-x-2">
@@ -262,6 +263,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
                 onCheckedChange={(checked) => 
                   handleAmenityChange(amenity.id, checked as boolean)
                 }
+                className="border-gray-300 text-purple-600"
               />
               <label
                 htmlFor={amenity.id}
@@ -276,7 +278,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
 
       <div className="flex justify-end">
         <Button 
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
           onClick={handleSearch}
         >
           <Search className="h-4 w-4" />

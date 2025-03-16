@@ -2,10 +2,10 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/sections/Footer";
 import { SEO } from "@/components/SEO";
-import { TextFeaturedProperties } from "@/components/sections/TextFeaturedProperties";
 import { CallToAction } from "@/components/sections/CallToAction";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Home } from "lucide-react";
+import { PropertiesTab } from "@/components/tabs/PropertiesTab";
+import { Home, Buildings } from "lucide-react";
 
 const Properties = () => {
   return (
@@ -31,14 +31,17 @@ const Properties = () => {
         </Breadcrumb>
         
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-2">Our Properties</h1>
+          <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-2 flex items-center justify-center">
+            <Buildings className="h-8 w-8 mr-2 text-purple-500" />
+            Our Properties
+          </h1>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
             Explore our curated selection of premium properties designed to meet your investment needs
           </p>
         </div>
         
         <section className="mb-16">
-          <TextFeaturedProperties />
+          <PropertiesTab />
         </section>
         
         <section className="mb-16">
