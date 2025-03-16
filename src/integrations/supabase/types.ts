@@ -141,6 +141,45 @@ export type Database = {
         }
         Relationships: []
       }
+      investment_calculations: {
+        Row: {
+          appreciation_rate: number
+          calculation_result: Json
+          created_at: string
+          id: string
+          location: string
+          property_price: number
+          property_type: string
+          rental_income: number
+          timeframe: string
+          user_id: string | null
+        }
+        Insert: {
+          appreciation_rate: number
+          calculation_result: Json
+          created_at?: string
+          id?: string
+          location: string
+          property_price: number
+          property_type: string
+          rental_income: number
+          timeframe: string
+          user_id?: string | null
+        }
+        Update: {
+          appreciation_rate?: number
+          calculation_result?: Json
+          created_at?: string
+          id?: string
+          location?: string
+          property_price?: number
+          property_type?: string
+          rental_income?: number
+          timeframe?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

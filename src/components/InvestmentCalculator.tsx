@@ -55,12 +55,17 @@ export function InvestmentCalculator() {
       const priceAppreciation = marketData?.priceAppreciation || appreciationRate;
       const totalReturn = rentalYield + priceAppreciation;
       
-      const result = {
+      const investmentStatus: 'good' | 'moderate' | 'poor' = 
+        totalReturn >= 12 ? 'good' : 
+        totalReturn >= 8 ? 'moderate' : 
+        'poor';
+      
+      const result: CalculationResult = {
         rentalYield,
         priceAppreciation,
         totalReturn,
         rsi: marketData?.rsi || 65,
-        investmentStatus: totalReturn >= 12 ? 'good' : totalReturn >= 8 ? 'moderate' : 'poor'
+        investmentStatus
       };
       
       setCalculationResult(result);
@@ -68,6 +73,7 @@ export function InvestmentCalculator() {
       // Save calculation to database if user is logged in
       if (user) {
         try {
+          // Using the table we created in Supabase
           await supabase.from('investment_calculations').insert({
             user_id: user.id,
             property_price: data.propertyPrice,
