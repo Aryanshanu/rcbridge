@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu, 
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { ChevronDown, Home, Building, Landmark, Calculator, MapPin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 interface DesktopMenuProps {
   className?: string;
@@ -29,6 +30,7 @@ interface DesktopMenuProps {
 export const DesktopMenu: React.FC<DesktopMenuProps> = ({ className, scrollToPropertyForm, handleContactClick }) => {
   const { user, signOut } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const location = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -38,27 +40,55 @@ export const DesktopMenu: React.FC<DesktopMenuProps> = ({ className, scrollToPro
     }
   };
 
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
     <div className={`hidden lg:flex items-center space-x-6 ${className}`}>
       <NavigationMenu>
         <NavigationMenuList>
           <NavigationMenuItem>
-            <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link 
+              to="/" 
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary",
+                isActive("/") && "text-primary font-semibold"
+              )}
+            >
               Home
             </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <Link to="/properties" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link 
+              to="/properties" 
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary",
+                isActive("/properties") && "text-primary font-semibold"
+              )}
+            >
               Properties
             </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <Link to="/services" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link 
+              to="/services" 
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary",
+                isActive("/services") && "text-primary font-semibold"
+              )}
+            >
               Services
             </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <Link to="/calculator" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link 
+              to="/calculator" 
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary",
+                isActive("/calculator") && "text-primary font-semibold"
+              )}
+            >
               Calculator
             </Link>
           </NavigationMenuItem>
@@ -95,6 +125,12 @@ export const DesktopMenu: React.FC<DesktopMenuProps> = ({ className, scrollToPro
           <DropdownMenuContent className="w-56">
             <DropdownMenuItem>
               <Link to="/profile" className="w-full">Profile</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link to="/my-properties" className="w-full">My Properties</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link to="/saved-searches" className="w-full">Saved Searches</Link>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
