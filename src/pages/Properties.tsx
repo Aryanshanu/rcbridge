@@ -5,7 +5,7 @@ import { SEO } from "@/components/SEO";
 import { CallToAction } from "@/components/sections/CallToAction";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { PropertiesTab } from "@/components/tabs/PropertiesTab";
-import { Home, Buildings } from "lucide-react";
+import { Home, Building } from "lucide-react";
 
 const Properties = () => {
   return (
@@ -32,7 +32,7 @@ const Properties = () => {
         
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-2 flex items-center justify-center">
-            <Buildings className="h-8 w-8 mr-2 text-purple-500" />
+            <Building className="h-8 w-8 mr-2 text-purple-500" />
             Our Properties
           </h1>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
