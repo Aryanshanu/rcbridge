@@ -6,46 +6,12 @@ import { WhyChooseUs } from "@/components/sections/WhyChooseUs";
 import { Features } from "@/components/sections/Features";
 import { CallToAction } from "@/components/sections/CallToAction";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Home, Building, Shield, Users, ChartBar, MapPin, Clock, Check, ArrowRight } from "lucide-react";
+import { Home, Building, Shield, Users, ChartBar, MapPin, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 
 const Services = () => {
-  // Service Process steps
-  const serviceProcess = [
-    {
-      step: 1,
-      title: "Initial Consultation",
-      description: "We begin with a thorough consultation to understand your specific real estate goals, requirements, and preferences.",
-      icon: <Users className="h-8 w-8 text-primary" />
-    },
-    {
-      step: 2,
-      title: "Personalized Matching",
-      description: "Our team analyzes your requirements and matches you with exclusive off-market properties tailored to your needs.",
-      icon: <MapPin className="h-8 w-8 text-primary" />
-    },
-    {
-      step: 3,
-      title: "Private Viewings",
-      description: "We arrange private viewings of selected properties, ensuring a personalized and pressure-free experience.",
-      icon: <Building className="h-8 w-8 text-primary" />
-    },
-    {
-      step: 4,
-      title: "Value Analysis",
-      description: "Our experts provide a detailed value analysis to help you make informed decisions about potential investments.",
-      icon: <ChartBar className="h-8 w-8 text-primary" />
-    },
-    {
-      step: 5,
-      title: "Transaction Support",
-      description: "We guide you through the entire transaction process, ensuring a smooth and hassle-free experience.",
-      icon: <Shield className="h-8 w-8 text-primary" />
-    }
-  ];
-
   // Additional service categories
   const serviceCategories = [
     {
@@ -134,47 +100,7 @@ const Services = () => {
         
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-2">Our Core Services</h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Comprehensive real estate solutions tailored to your needs
-          </p>
         </div>
-        
-        {/* Service Process Section */}
-        <section className="mb-16">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Our Service Process</h2>
-            <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-3xl mx-auto">
-              A streamlined approach to meet your real estate needs with maximum efficiency
-            </p>
-          </div>
-          
-          <div className="relative">
-            {/* Process steps with connecting line */}
-            <div className="hidden md:block absolute left-1/2 top-24 bottom-24 w-0.5 bg-primary/30 -translate-x-1/2 z-0"></div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-              {serviceProcess.map((process, index) => (
-                <div key={index} className="relative z-10">
-                  <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 h-full flex flex-col items-center text-center hover:border-primary/30 hover:shadow-lg transition-all">
-                    <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                      {process.icon}
-                    </div>
-                    <div className="bg-primary text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-3">
-                      {process.step}
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">{process.title}</h3>
-                    <p className="text-gray-600 text-sm">{process.description}</p>
-                  </div>
-                  {index < serviceProcess.length - 1 && (
-                    <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2">
-                      <ArrowRight className="h-6 w-6 text-primary" />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
         
         {/* Service Categories Section */}
         <section className="mb-16">

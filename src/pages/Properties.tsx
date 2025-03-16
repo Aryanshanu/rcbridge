@@ -1,6 +1,6 @@
 
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/sections/Footer";
 import { SEO } from "@/components/SEO";
@@ -9,11 +9,23 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { PropertiesTab } from "@/components/tabs/PropertiesTab";
 import { Home, Building, Filter, Search, MapPin, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const Properties = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const selectedPropertyId = location.state?.selectedPropertyId;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   
+  // Predefined filters
+  const quickFilters = [
+    { id: "location", label: "Hyderabad", icon: <MapPin className="h-4 w-4 mr-1 text-primary" />, value: "hyderabad" },
+    { id: "type", label: "Apartments", icon: <Building className="h-4 w-4 mr-1 text-primary" />, value: "apartment" },
+    { id: "price", label: "₹50L - ₹1Cr", value: "50L-1Cr" },
+    { id: "bedrooms", label: "3+ Bedrooms", value: "3+" },
+  ];
+
   useEffect(() => {
     if (selectedPropertyId) {
       console.log("Selected property ID:", selectedPropertyId);
@@ -23,7 +35,66 @@ const Properties = () => {
         propertiesSection.scrollIntoView({ behavior: 'smooth' });
       }
     }
-  }, [selectedPropertyId]);
+
+    // Check if there's a search query in the URL
+    const params = new URLSearchParams(location.search);
+    const query = params.get('q');
+    if (query) {
+      setSearchQuery(query);
+      applySearch(query);
+    }
+  }, [selectedPropertyId, location.search]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    applySearch(searchQuery);
+  };
+
+  const applySearch = (query: string) => {
+    if (!query.trim()) {
+      toast.error("Please enter a search term");
+      return;
+    }
+
+    // Update URL with search query
+    navigate({
+      pathname: '/properties',
+      search: `?q=${encodeURIComponent(query)}`
+    });
+
+    // Apply search filter
+    const newFilters = { ...activeFilters, searchQuery: query };
+    setActiveFilters(newFilters);
+    
+    toast.success(`Searching for "${query}"`);
+    console.log("Applying search filter:", newFilters);
+  };
+
+  const toggleQuickFilter = (filter: typeof quickFilters[0]) => {
+    const newFilters = { ...activeFilters };
+    
+    if (newFilters[filter.id] === filter.value) {
+      // Remove filter if already active
+      delete newFilters[filter.id];
+      toast.info(`Removed filter: ${filter.label}`);
+    } else {
+      // Add/update filter
+      newFilters[filter.id] = filter.value;
+      toast.success(`Applied filter: ${filter.label}`);
+    }
+    
+    setActiveFilters(newFilters);
+    console.log("Updated filters:", newFilters);
+  };
+
+  const applyAllFilters = () => {
+    toast.success("All filters applied");
+    console.log("Applying all filters:", activeFilters);
+  };
+
+  const isFilterActive = (filterId: string, value: string) => {
+    return activeFilters[filterId] === value;
+  };
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white w-full max-w-full">
@@ -44,19 +115,21 @@ const Properties = () => {
             
             {/* Search bar */}
             <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl shadow-lg border border-white/20 max-w-2xl mx-auto">
-              <div className="flex flex-col md:flex-row gap-2">
+              <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                   <input 
                     type="text" 
                     placeholder="Search by location, type, amenities..." 
                     className="w-full pl-10 pr-4 py-3 bg-white rounded-lg border-0 focus:ring-2 focus:ring-primary-700 text-gray-800"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Button className="bg-primary-700 hover:bg-primary-800 text-white py-3 px-6">
+                <Button type="submit" className="bg-primary-700 hover:bg-primary-800 text-white py-3 px-6">
                   Search
                 </Button>
-              </div>
+              </form>
             </div>
           </div>
         </div>
@@ -93,21 +166,28 @@ const Properties = () => {
           {/* Quick filter chips */}
           <div className="flex flex-wrap gap-3 mb-8">
             <span className="text-sm font-medium text-gray-600 self-center">Quick filters:</span>
-            <Button variant="outline" size="sm" className="rounded-full bg-gray-50 border border-gray-300 hover:bg-gray-100">
-              <MapPin className="h-4 w-4 mr-1 text-primary" />
-              Hyderabad
-            </Button>
-            <Button variant="outline" size="sm" className="rounded-full bg-gray-50 border border-gray-300 hover:bg-gray-100">
-              <Building className="h-4 w-4 mr-1 text-primary" />
-              Apartments
-            </Button>
-            <Button variant="outline" size="sm" className="rounded-full bg-gray-50 border border-gray-300 hover:bg-gray-100">
-              Price: ₹50L - ₹1Cr
-            </Button>
-            <Button variant="outline" size="sm" className="rounded-full bg-gray-50 border border-gray-300 hover:bg-gray-100">
-              3+ Bedrooms
-            </Button>
-            <Button variant="outline" size="sm" className="rounded-full text-primary bg-primary/5 border border-primary/20 hover:bg-primary/10">
+            {quickFilters.map((filter) => (
+              <Button 
+                key={filter.id}
+                variant="outline" 
+                size="sm" 
+                className={`rounded-full ${
+                  isFilterActive(filter.id, filter.value) 
+                    ? "bg-primary text-white border-primary hover:bg-primary/90" 
+                    : "bg-gray-50 border border-gray-300 hover:bg-gray-100"
+                }`}
+                onClick={() => toggleQuickFilter(filter)}
+              >
+                {filter.icon}
+                {filter.label}
+              </Button>
+            ))}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="rounded-full text-primary bg-primary/5 border border-primary/20 hover:bg-primary/10"
+              onClick={applyAllFilters}
+            >
               <Filter className="h-4 w-4 mr-1" />
               More Filters
             </Button>
@@ -122,6 +202,11 @@ const Properties = () => {
                 <p className="text-gray-600">
                   Find your dream property from our carefully curated selection
                 </p>
+                {Object.keys(activeFilters).length > 0 && (
+                  <div className="mt-2 text-sm text-primary">
+                    Active filters: {Object.keys(activeFilters).length}
+                  </div>
+                )}
               </div>
               
               <div className="mt-4 md:mt-0 flex gap-3">
@@ -129,14 +214,17 @@ const Properties = () => {
                   <ArrowRight className="h-4 w-4" />
                   <span>Newest First</span>
                 </Button>
-                <Button className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90">
+                <Button 
+                  className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90"
+                  onClick={applyAllFilters}
+                >
                   <Filter className="h-4 w-4" />
                   <span>All Filters</span>
                 </Button>
               </div>
             </div>
             
-            <PropertiesTab selectedPropertyId={selectedPropertyId} />
+            <PropertiesTab selectedPropertyId={selectedPropertyId} filters={activeFilters} />
           </section>
           
           <section className="mb-16 w-full">

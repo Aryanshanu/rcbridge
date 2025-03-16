@@ -13,22 +13,35 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Search, X } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 
 interface AdvancedSearchProps {
   onFilterChange?: (filters: Record<string, any>) => void;
 }
 
 export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [priceRange, setPriceRange] = useState([1000000, 10000000]); // ₹10L to ₹1Cr
   const [areaRange, setAreaRange] = useState([500, 5000]); // 500 sq.ft to 5000 sq.ft
   const [propertyType, setPropertyType] = useState("all");
-  const [location, setLocation] = useState("");
+  const [searchLocation, setSearchLocation] = useState("");
   const [propertyStatus, setPropertyStatus] = useState("all");
   const [bedrooms, setBedrooms] = useState("any");
   const [bathrooms, setBathrooms] = useState("any");
   const [propertyAge, setPropertyAge] = useState("any");
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   
+  // Initialize search from URL if available
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const query = params.get('q');
+    if (query) {
+      setSearchLocation(query);
+    }
+  }, [location.search]);
+
   const formatPrice = (price: number): string => {
     if (price >= 10000000) {
       return `₹${(price / 10000000).toFixed(1)}Cr`;
@@ -59,48 +72,84 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
   };
   
   const handleSearch = () => {
+    // Build the filter object
+    const filters = {
+      propertyType,
+      location: searchLocation,
+      propertyStatus,
+      priceRange,
+      areaRange,
+      bedrooms,
+      bathrooms,
+      propertyAge,
+      amenities: selectedAmenities
+    };
+    
+    // Update URL with search parameters
+    const searchParams = new URLSearchParams();
+    if (searchLocation) searchParams.set('q', searchLocation);
+    if (propertyType !== 'all') searchParams.set('type', propertyType);
+    if (propertyStatus !== 'all') searchParams.set('status', propertyStatus);
+    if (bedrooms !== 'any') searchParams.set('beds', bedrooms);
+    if (bathrooms !== 'any') searchParams.set('baths', bathrooms);
+    
+    navigate({
+      pathname: '/properties',
+      search: searchParams.toString()
+    });
+    
     if (onFilterChange) {
-      onFilterChange({
-        propertyType,
-        location,
-        propertyStatus,
-        priceRange,
-        areaRange,
-        bedrooms,
-        bathrooms,
-        propertyAge,
-        amenities: selectedAmenities
-      });
+      onFilterChange(filters);
     }
+    
+    toast.success("Search filters applied");
+    console.log("Applied search filters:", filters);
   };
   
   const clearFilters = () => {
     setPriceRange([1000000, 10000000]);
     setAreaRange([500, 5000]);
     setPropertyType("all");
-    setLocation("");
+    setSearchLocation("");
     setPropertyStatus("all");
     setBedrooms("any");
     setBathrooms("any");
     setPropertyAge("any");
     setSelectedAmenities([]);
     
+    // Clear URL parameters
+    navigate('/properties');
+    
     if (onFilterChange) {
       onFilterChange({});
     }
+    
+    toast.info("All filters cleared");
   };
   
   // Apply filters when form values change
   useEffect(() => {
     // Using a debounce to avoid too many filter operations
     const handler = setTimeout(() => {
-      handleSearch();
+      if (onFilterChange) {
+        onFilterChange({
+          propertyType,
+          location: searchLocation,
+          propertyStatus,
+          priceRange,
+          areaRange,
+          bedrooms,
+          bathrooms,
+          propertyAge,
+          amenities: selectedAmenities
+        });
+      }
     }, 500);
     
     return () => {
       clearTimeout(handler);
     };
-  }, [propertyType, location, propertyStatus, priceRange, areaRange, bedrooms, bathrooms, propertyAge, selectedAmenities]);
+  }, [propertyType, searchLocation, propertyStatus, priceRange, areaRange, bedrooms, bathrooms, propertyAge, selectedAmenities, onFilterChange]);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md mb-8 animate-in fade-in slide-in-from-top duration-300">
@@ -143,8 +192,8 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
           <Label className="text-gray-700 mb-2 block">Location</Label>
           <Input 
             placeholder="Enter location" 
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            value={searchLocation}
+            onChange={(e) => setSearchLocation(e.target.value)}
             className="bg-gray-50 border-gray-200"
           />
         </div>

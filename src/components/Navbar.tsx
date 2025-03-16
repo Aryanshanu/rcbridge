@@ -5,13 +5,15 @@ import { DesktopMenu } from "./navbar/DesktopMenu";
 import { MobileMenu } from "./navbar/MobileMenu";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -41,6 +43,17 @@ export const Navbar = () => {
 
   const toggleSearch = () => {
     setShowSearch(!showSearch);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate({
+        pathname: '/properties',
+        search: `?q=${encodeURIComponent(searchQuery)}`
+      });
+      setShowSearch(false);
+    }
   };
 
   return (
@@ -98,19 +111,24 @@ export const Navbar = () => {
       {showSearch && (
         <div className="absolute top-16 left-0 w-full bg-white shadow-md p-4 md:px-6 animate-in fade-in slide-in-from-top duration-300">
           <div className="relative max-w-3xl mx-auto">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search for properties, locations, or amenities..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              autoFocus
-            />
-            <button
-              onClick={toggleSearch}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <form onSubmit={handleSearchSubmit}>
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search for properties, locations, or amenities..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={toggleSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </form>
           </div>
         </div>
       )}

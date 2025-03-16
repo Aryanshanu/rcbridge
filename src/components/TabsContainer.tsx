@@ -2,18 +2,37 @@
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Building, Sparkles, Calculator } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface TabsContainerProps {
   children: React.ReactNode;
 }
 
 export const TabsContainer = ({ children }: TabsContainerProps) => {
-  const [activeTab, setActiveTab] = useState("properties");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const defaultTab = location.pathname === "/services" ? "services" : 
+                     location.pathname === "/calculator" ? "calculator" : "properties";
+  
+  const [activeTab, setActiveTab] = useState(defaultTab);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    
+    // Navigate to the corresponding page
+    if (value === "properties" && location.pathname !== "/properties") {
+      navigate("/properties");
+    } else if (value === "services" && location.pathname !== "/services") {
+      navigate("/services");
+    } else if (value === "calculator" && location.pathname !== "/calculator") {
+      navigate("/calculator");
+    }
+  };
 
   return (
     <div className="full-width bg-gray-50">
       <div className="content-container py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <div className="flex justify-center mb-8">
             <TabsList className="grid w-full max-w-3xl grid-cols-3 bg-white rounded-full p-1 shadow-md border border-gray-100">
               <TabsTrigger 
