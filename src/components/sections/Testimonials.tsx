@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Quote } from "lucide-react";
 
 type Testimonial = {
@@ -13,8 +13,6 @@ type Testimonial = {
 
 export const Testimonials = () => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   const testimonials: Testimonial[] = [
     {
@@ -42,98 +40,59 @@ export const Testimonials = () => {
   ];
 
   useEffect(() => {
-    timerRef.current = setInterval(() => {
-      nextTestimonial();
+    const interval = setInterval(() => {
+      setActiveIndex((current) => (current === testimonials.length - 1 ? 0 : current + 1));
     }, 8000);
     
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, []);
+    return () => clearInterval(interval);
+  }, [testimonials.length]);
 
   const nextTestimonial = () => {
-    if (isAnimating) return;
-    
-    setIsAnimating(true);
     setActiveIndex((current) => (current === testimonials.length - 1 ? 0 : current + 1));
-    
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 500);
   };
 
   const prevTestimonial = () => {
-    if (isAnimating) return;
-    
-    setIsAnimating(true);
     setActiveIndex((current) => (current === 0 ? testimonials.length - 1 : current - 1));
-    
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 500);
-  };
-
-  const handleDotClick = (index: number) => {
-    if (isAnimating || index === activeIndex) return;
-    
-    setIsAnimating(true);
-    setActiveIndex(index);
-    
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 500);
-    
-    // Reset the timer
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = setInterval(() => {
-        nextTestimonial();
-      }, 8000);
-    }
   };
 
   return (
-    <section className="mb-16 sm:mb-20 overflow-hidden bg-gray-50 py-12 rounded-xl">
-      <div className="text-center mb-8 sm:mb-10">
-        <h2 className="text-3xl font-display font-bold text-gray-900">What Our Users Say</h2>
-        <div className="w-20 h-1 bg-accent mx-auto mt-3 mb-4 rounded-full"></div>
-        <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-xl mx-auto">
+    <section className="mb-12 sm:mb-16 overflow-hidden">
+      <div className="text-center mb-6 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">What Our Users Say</h2>
+        <p className="mt-2 text-base sm:text-lg text-gray-600">
           Real experiences from our community members
         </p>
       </div>
       
       <div className="relative max-w-4xl mx-auto px-4">
-        <div className="relative bg-white rounded-xl shadow-lg p-6 sm:p-10 overflow-hidden">
-          {/* Background design elements */}
-          <div className="absolute top-6 left-6 text-primary opacity-10">
-            <Quote size={80} />
-          </div>
-          <div className="absolute bottom-6 right-6 text-primary opacity-10">
-            <Quote size={80} className="rotate-180" />
+        <div className="relative bg-white rounded-xl shadow-lg p-6 sm:p-10">
+          <div className="absolute top-6 left-6 text-primary opacity-30">
+            <Quote size={48} />
           </div>
           
-          <div className="relative z-10 min-h-[200px]">
+          <div className="relative z-10">
             {testimonials.map((testimonial, index) => (
               <div 
                 key={testimonial.id}
-                className={`transition-all duration-500 ${
-                  index === activeIndex 
-                    ? "opacity-100 transform translate-x-0" 
-                    : "opacity-0 absolute inset-0 transform translate-x-8"
+                className={`transition-opacity duration-500 ${
+                  index === activeIndex ? "opacity-100" : "opacity-0 absolute inset-0"
                 }`}
               >
                 <blockquote className="text-lg sm:text-xl italic text-gray-700 mb-6 pt-8">
                   "{testimonial.content}"
                 </blockquote>
                 
-                <div className="flex items-center mt-6">
-                  <div className="mr-4">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-r from-primary to-accent text-white flex items-center justify-center text-lg font-bold">
-                      {testimonial.name.charAt(0)}
+                <div className="flex items-center mt-4">
+                  {testimonial.image && (
+                    <div className="mr-4">
+                      <img
+                        src={testimonial.image}
+                        alt={testimonial.name}
+                        className="h-12 w-12 rounded-full object-cover"
+                        loading="lazy"
+                      />
                     </div>
-                  </div>
+                  )}
                   
                   <div>
                     <p className="font-semibold text-gray-900">{testimonial.name}</p>
@@ -149,12 +108,11 @@ export const Testimonials = () => {
         </div>
         
         {/* Navigation controls */}
-        <div className="flex justify-center mt-8 space-x-4">
+        <div className="flex justify-center mt-6 space-x-2">
           <button
             onClick={prevTestimonial}
-            className="p-3 rounded-full bg-white shadow-md hover:bg-gray-50 transition-colors text-primary"
+            className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
             aria-label="Previous testimonial"
-            disabled={isAnimating}
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -163,23 +121,19 @@ export const Testimonials = () => {
             {testimonials.map((_, index) => (
               <button
                 key={index}
-                onClick={() => handleDotClick(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  index === activeIndex 
-                    ? "bg-accent w-6" 
-                    : "bg-gray-300 hover:bg-gray-400"
+                onClick={() => setActiveIndex(index)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  index === activeIndex ? "bg-primary w-4" : "bg-gray-300"
                 }`}
                 aria-label={`Go to testimonial ${index + 1}`}
-                aria-current={index === activeIndex ? "true" : "false"}
               />
             ))}
           </div>
           
           <button
             onClick={nextTestimonial}
-            className="p-3 rounded-full bg-white shadow-md hover:bg-gray-50 transition-colors text-primary"
+            className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
             aria-label="Next testimonial"
-            disabled={isAnimating}
           >
             <ChevronRight className="h-5 w-5" />
           </button>
