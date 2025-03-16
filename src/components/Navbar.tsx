@@ -52,17 +52,14 @@ export const Navbar = () => {
     )}>
       <div className="content-container flex justify-between h-16 md:h-20">
         <div className="flex items-center">
-          <Link to="/" className="flex-shrink-0 flex items-center gap-2">
+          <Link to="/" className="flex-shrink-0 flex items-center">
             <div className="flex items-center">
               <img
-                className="h-10 w-auto md:h-12"
+                className="h-12 w-auto md:h-14"
                 src="/lovable-uploads/5fd561ff-5bbd-449c-94a3-d39d0a8b4f03.png"
                 alt="RC Bridge"
               />
-              <div className="ml-2 flex flex-col items-start">
-                <span className="text-primary font-heading text-lg md:text-xl font-bold leading-tight">RC Bridge</span>
-                <span className="text-gray-500 text-xs md:text-sm leading-tight">Real Estate Solutions</span>
-              </div>
+              <span className="ml-2 text-primary font-heading text-xl md:text-2xl font-bold leading-tight">RC Bridge</span>
             </div>
           </Link>
         </div>
