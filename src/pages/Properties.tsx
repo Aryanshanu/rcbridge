@@ -7,9 +7,11 @@ import { SEO } from "@/components/SEO";
 import { CallToAction } from "@/components/sections/CallToAction";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { PropertiesTab } from "@/components/tabs/PropertiesTab";
-import { Home, Building, Filter, Search, MapPin, ArrowRight } from "lucide-react";
+import { Home, Building, Filter, Search, MapPin, ArrowRight, Moon, Sun, Grid, LayoutList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 
 const Properties = () => {
   const location = useLocation();
@@ -17,6 +19,14 @@ const Properties = () => {
   const selectedPropertyId = location.state?.selectedPropertyId;
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check if user previously selected dark mode
+    return localStorage.getItem('darkMode') === 'true';
+  });
+  const [viewMode, setViewMode] = useState<"grid" | "table">(() => {
+    // Check user's preferred view mode
+    return localStorage.getItem('viewMode') as "grid" | "table" || "grid";
+  });
   
   const quickFilters = [
     { id: "location", label: "Hyderabad", icon: <MapPin className="h-4 w-4 mr-1 text-primary" />, value: "hyderabad" },
@@ -24,6 +34,15 @@ const Properties = () => {
     { id: "price", label: "₹50L - ₹1Cr", value: "50L-1Cr" },
     { id: "bedrooms", label: "3+ Bedrooms", value: "3+" },
   ];
+
+  useEffect(() => {
+    // Apply dark mode class to document
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   useEffect(() => {
     if (selectedPropertyId) {
@@ -42,6 +61,26 @@ const Properties = () => {
       applySearch(query);
     }
   }, [selectedPropertyId, location.search]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => {
+      const newMode = !prev;
+      localStorage.setItem('darkMode', String(newMode));
+      return newMode;
+    });
+    
+    toast.success(isDarkMode ? "Light mode activated" : "Dark mode activated");
+  };
+
+  const toggleViewMode = () => {
+    setViewMode(prev => {
+      const newMode = prev === "grid" ? "table" : "grid";
+      localStorage.setItem('viewMode', newMode);
+      return newMode;
+    });
+    
+    toast.success(`Switched to ${viewMode === "grid" ? "table" : "grid"} view`);
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,14 +130,41 @@ const Properties = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white w-full max-w-full">
+    <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gradient-to-b from-gray-50 to-white'} w-full max-w-full transition-colors duration-300`}>
       <SEO title="Properties | RC Bridge" description="Explore our selection of premium properties" />
       <Navbar />
       
-      <div className="bg-gradient-to-r from-primary-700 to-primary/90 text-white py-16 lg:py-24 w-full relative overflow-hidden">
+      <div className={`${isDarkMode ? 'bg-gradient-to-r from-blue-900 to-indigo-900' : 'bg-gradient-to-r from-primary-700 to-primary/90'} text-white py-16 lg:py-24 w-full relative overflow-hidden`}>
         <div className="absolute inset-0 bg-grid-white opacity-10"></div>
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-12 xl:px-16 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
+          <div className="flex justify-end mb-4">
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleDarkMode}
+                className="bg-white/10 text-white hover:bg-white/20 rounded-full"
+              >
+                {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleViewMode}
+                className="bg-white/10 text-white hover:bg-white/20 rounded-full"
+              >
+                {viewMode === "grid" ? <LayoutList className="h-5 w-5" /> : <Grid className="h-5 w-5" />}
+              </Button>
+            </div>
+          </div>
+          
+          <motion.div 
+            className="max-w-3xl mx-auto text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6 text-gradient">
               Discover Your Perfect Property
             </h1>
@@ -123,17 +189,17 @@ const Properties = () => {
                 </Button>
               </form>
             </div>
-          </div>
+          </motion.div>
         </div>
         
         <div className="absolute bottom-0 left-0 right-0">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" fill="#ffffff" preserveAspectRatio="none">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" fill={isDarkMode ? "#111827" : "#ffffff"} preserveAspectRatio="none">
             <path d="M0,64L80,58.7C160,53,320,43,480,48C640,53,800,75,960,74.7C1120,75,1280,53,1360,42.7L1440,32L1440,100L1360,100C1280,100,1120,100,960,100C800,100,640,100,480,100C320,100,160,100,80,100L0,100Z"></path>
           </svg>
         </div>
       </div>
       
-      <main className="w-full max-w-full px-4 sm:px-6 lg:px-12 xl:px-16 py-8 sm:py-12">
+      <main className={`w-full max-w-full px-4 sm:px-6 lg:px-12 xl:px-16 py-8 sm:py-12 ${isDarkMode ? 'text-gray-200' : ''}`}>
         <Breadcrumb className="mb-8">
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -152,8 +218,13 @@ const Properties = () => {
           </BreadcrumbList>
         </Breadcrumb>
         
-        <div className="flex flex-wrap gap-3 mb-8">
-          <span className="text-sm font-medium text-gray-600 self-center">Quick filters:</span>
+        <motion.div 
+          className="flex flex-wrap gap-3 mb-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} self-center`}>Quick filters:</span>
           {quickFilters.map((filter) => (
             <Button 
               key={filter.id}
@@ -162,7 +233,9 @@ const Properties = () => {
               className={`rounded-full ${
                 isFilterActive(filter.id, filter.value) 
                   ? "bg-primary text-white border-primary hover:bg-primary/90" 
-                  : "bg-gray-50 border border-gray-300 hover:bg-gray-100"
+                  : isDarkMode 
+                    ? "bg-gray-800 border border-gray-700 hover:bg-gray-700 text-gray-200" 
+                    : "bg-gray-50 border border-gray-300 hover:bg-gray-100"
               }`}
               onClick={() => toggleQuickFilter(filter)}
             >
@@ -173,37 +246,81 @@ const Properties = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            className="rounded-full text-primary bg-primary/5 border border-primary/20 hover:bg-primary/10"
+            className={`rounded-full ${
+              isDarkMode 
+                ? "text-blue-400 bg-blue-900/30 border border-blue-800/50 hover:bg-blue-900/50" 
+                : "text-primary bg-primary/5 border border-primary/20 hover:bg-primary/10"
+            }`}
             onClick={applyAllFilters}
           >
             <Filter className="h-4 w-4 mr-1" />
             More Filters
           </Button>
-        </div>
+        </motion.div>
         
-        <section id="properties-section" className="mb-16 w-full bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
+        <motion.section 
+          id="properties-section" 
+          className={`mb-16 w-full ${
+            isDarkMode 
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white border-gray-100'
+          } rounded-xl shadow-sm border p-6 md:p-8`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
             <div>
-              <h2 className="text-2xl md:text-3xl font-display font-semibold text-gray-900 mb-2">
+              <h2 className={`text-2xl md:text-3xl font-display font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
                 Our Properties
               </h2>
-              <p className="text-gray-600">
+              <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
                 Find your dream property from our carefully curated selection
               </p>
               {Object.keys(activeFilters).length > 0 && (
-                <div className="mt-2 text-sm text-primary">
-                  Active filters: {Object.entries(activeFilters).map(([key, value]) => (
-                    <span key={key} className="inline-flex items-center bg-primary/10 text-primary rounded-full px-2 py-1 text-xs mr-2">
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {Object.entries(activeFilters).map(([key, value]) => (
+                    <Badge 
+                      key={key} 
+                      variant={isDarkMode ? "outline" : "secondary"}
+                      className={isDarkMode ? "bg-blue-900/50 text-blue-200 border-blue-700" : ""} 
+                    >
                       {key}: {value}
-                    </span>
+                    </Badge>
                   ))}
                 </div>
               )}
             </div>
+            
+            <div className="mt-4 md:mt-0 flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={`${isDarkMode ? 'border-gray-600 text-gray-300' : ''} ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : ''}`}
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid className="h-4 w-4 mr-2" />
+                Grid
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={`${isDarkMode ? 'border-gray-600 text-gray-300' : ''} ${viewMode === 'table' ? 'bg-primary/10 text-primary' : ''}`}
+                onClick={() => setViewMode('table')}
+              >
+                <LayoutList className="h-4 w-4 mr-2" />
+                Table
+              </Button>
+            </div>
           </div>
           
-          <PropertiesTab selectedPropertyId={selectedPropertyId} filters={activeFilters} />
-        </section>
+          <PropertiesTab 
+            selectedPropertyId={selectedPropertyId} 
+            filters={activeFilters} 
+            viewMode={viewMode}
+            isDarkMode={isDarkMode}
+          />
+        </motion.section>
       </main>
       
       <CallToAction />
