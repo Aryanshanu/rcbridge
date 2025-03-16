@@ -12,11 +12,10 @@ import { NotificationButton } from "@/components/ui/NotificationButton";
 import { ChatBot } from "@/components/ChatBot";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { TextFeaturedProperties } from "@/components/sections/TextFeaturedProperties";
 
 const Testimonials = lazy(() => import("@/components/sections/Testimonials").then(module => ({ default: module.Testimonials })));
-const FeaturedProperties = lazy(() => import("@/components/sections/FeaturedProperties").then(module => ({ default: module.FeaturedProperties })));
 const Features = lazy(() => import("@/components/sections/Features").then(module => ({ default: module.Features })));
-const PropertyVisualizations = lazy(() => import("@/components/sections/PropertyVisualizations").then(module => ({ default: module.PropertyVisualizations })));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center p-8">
@@ -188,18 +187,9 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Featured Properties Section */}
+        {/* Featured Properties Section - Text Only */}
         <section className="mb-16">
-          <Suspense fallback={<LoadingSpinner />}>
-            <FeaturedProperties />
-          </Suspense>
-        </section>
-        
-        {/* Property Visualizations */}
-        <section className="mb-16">
-          <Suspense fallback={<LoadingSpinner />}>
-            <PropertyVisualizations />
-          </Suspense>
+          <TextFeaturedProperties />
         </section>
         
         <section className="mb-16">

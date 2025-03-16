@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -21,15 +22,17 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface DesktopMenuProps {
   className?: string;
+  scrollToPropertyForm?: () => void;
+  handleContactClick?: () => void;
 }
 
-export const DesktopMenu: React.FC<DesktopMenuProps> = ({ className }) => {
-  const { user, logout } = useAuth();
+export const DesktopMenu: React.FC<DesktopMenuProps> = ({ className, scrollToPropertyForm, handleContactClick }) => {
+  const { user, signOut } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut();
     } catch (error) {
       console.error("Logout failed:", error);
     }
