@@ -23,7 +23,7 @@ export const Footer = () => {
             <h4 className="text-white font-semibold mb-4">Resources</h4>
             <ul className="space-y-2 text-sm">
               <li><a href="#" className="hover:text-white">Market Insights</a></li>
-              <li><a href="#" className="hover:text-white">Blog</a></li>
+              <li><a href="/blog" className="hover:text-white">Blog</a></li>
               <li><a href="#" className="hover:text-white">FAQ</a></li>
               <li><a href="#" className="hover:text-white">Terms of Service</a></li>
             </ul>
@@ -32,7 +32,7 @@ export const Footer = () => {
             <h4 className="text-white font-semibold mb-4">Contact Us</h4>
             <ul className="space-y-2 text-sm">
               <li>Hyderabad</li>
-              <li>info@rcbridge.com</li>
+              <li>aryan@rcbridge.co</li>
             </ul>
           </div>
         </div>

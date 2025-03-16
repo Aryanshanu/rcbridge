@@ -175,7 +175,7 @@ const Contact = () => {
                 <Mail className="h-6 w-6 text-primary mr-4 mt-1" />
                 <div>
                   <h3 className="font-semibold text-lg">Email</h3>
-                  <p className="text-gray-600">info@rcbridge.com</p>
+                  <p className="text-gray-600">aryan@rcbridge.co</p>
                 </div>
               </div>
             </div>

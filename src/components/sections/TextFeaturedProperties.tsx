@@ -32,6 +32,26 @@ export const TextFeaturedProperties = () => {
       bathrooms: 8,
       area: "12000 sq. ft.",
       description: "Prime commercial building suitable for offices with ample parking space."
+    },
+    {
+      id: "4",
+      title: "Residential Plot",
+      location: "Kokapet, Hyderabad",
+      price: "₹1.5 Cr",
+      bedrooms: null,
+      bathrooms: null,
+      area: "500 sq. yards",
+      description: "HMDA approved residential plot in a gated community with excellent connectivity."
+    },
+    {
+      id: "5",
+      title: "Luxury Penthouse",
+      location: "Film Nagar, Hyderabad",
+      price: "₹5.2 Cr",
+      bedrooms: 4,
+      bathrooms: 5,
+      area: "4200 sq. ft.",
+      description: "Exclusive penthouse with private terrace, city views and premium interiors."
     }
   ];
 
@@ -57,9 +77,11 @@ export const TextFeaturedProperties = () => {
                 <span className="font-medium">{property.bedrooms}</span> Bedrooms
               </div>
             )}
-            <div className="text-gray-600">
-              <span className="font-medium">{property.bathrooms}</span> Bathrooms
-            </div>
+            {property.bathrooms && (
+              <div className="text-gray-600">
+                <span className="font-medium">{property.bathrooms}</span> Bathrooms
+              </div>
+            )}
             <div className="text-gray-600">
               <span className="font-medium">{property.area}</span>
             </div>
