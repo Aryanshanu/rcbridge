@@ -5,19 +5,19 @@ import { useToast } from "@/hooks/use-toast";
 // This function checks if a table exists in the Supabase database
 export const checkTableExists = async (tableName: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
+    // Use type assertion to bypass TypeScript's strict checking for system tables
+    const { data, error } = await (supabase as any)
       .from('information_schema.tables')
       .select('table_name')
       .eq('table_schema', 'public')
-      .eq('table_name', tableName)
-      .single();
+      .eq('table_name', tableName);
     
     if (error) {
       console.error(`Error checking if table ${tableName} exists:`, error);
       return false;
     }
     
-    return !!data;
+    return data && data.length > 0;
   } catch (error) {
     console.error(`Error checking if table ${tableName} exists:`, error);
     return false;
