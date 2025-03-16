@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Building, MapPin, Home, IndianRupee, SlidersHorizontal, MessageCircle } from 'lucide-react';
+import { Building, MapPin, Home, IndianRupee, SlidersHorizontal, MessageCircle, Heart, Bookmark, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LazyImage } from '@/components/ui/LazyImage';
 import { getPropertyImage, createImagePrompt } from '@/utils/imageGeneration';
@@ -26,6 +26,8 @@ interface AbstractPropertyCardProps {
 export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCardProps) => {
   const [propertyImage, setPropertyImage] = useState<string>(property.image || '/placeholder.svg');
   const [imageLoading, setImageLoading] = useState(true);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const { toast } = useToast();
   
   // Determine property type based on bedrooms
@@ -69,6 +71,39 @@ export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCa
   const handleWhatsAppInquiry = () => {
     const message = encodeURIComponent(`Hi, I'm interested in the property: ${property.title} in ${property.location}. Could you provide more information?`);
     window.open(`https://wa.me/917893871223?text=${message}`, '_blank');
+    
+    toast({
+      title: "WhatsApp Inquiry",
+      description: "Opening WhatsApp with your inquiry message",
+      duration: 3000,
+    });
+  };
+  
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    toast({
+      title: isLiked ? "Removed from likes" : "Added to likes",
+      description: isLiked ? "Property removed from your liked properties" : "Property added to your liked properties",
+      duration: 3000,
+    });
+  };
+  
+  const handleSave = () => {
+    setIsSaved(!isSaved);
+    toast({
+      title: isSaved ? "Removed from saved" : "Saved property",
+      description: isSaved ? "Property removed from your saved list" : "Property saved for future reference",
+      duration: 3000,
+    });
+  };
+  
+  const handleCall = () => {
+    window.location.href = "tel:+917893871223";
+    toast({
+      title: "Call Agent",
+      description: "Connecting you with our property agent",
+      duration: 3000,
+    });
   };
   
   return (
@@ -103,6 +138,41 @@ export const AbstractPropertyCard = ({ property, className }: AbstractPropertyCa
           ) : (
             <span className="flex items-center"><Home className="w-3 h-3 mr-1" /> Residential</span>
           )}
+        </div>
+        
+        {/* Action Buttons Overlay */}
+        <div className="absolute bottom-2 left-2 right-2 flex space-x-2">
+          <button 
+            onClick={handleLike}
+            className={cn(
+              "flex items-center justify-center p-1.5 rounded-full backdrop-blur-sm transition-colors duration-200",
+              isLiked ? "bg-red-500/80 text-white" : "bg-white/70 text-gray-700 hover:bg-white/90"
+            )}
+            aria-label="Like property"
+          >
+            <Heart className={cn("h-4 w-4", isLiked && "fill-white")} />
+          </button>
+          
+          <button 
+            onClick={handleSave}
+            className={cn(
+              "flex items-center justify-center p-1.5 rounded-full backdrop-blur-sm transition-colors duration-200",
+              isSaved ? "bg-blue-500/80 text-white" : "bg-white/70 text-gray-700 hover:bg-white/90"
+            )}
+            aria-label="Save property"
+          >
+            <Bookmark className={cn("h-4 w-4", isSaved && "fill-white")} />
+          </button>
+          
+          <div className="flex-grow"></div>
+          
+          <button 
+            onClick={handleCall}
+            className="flex items-center justify-center p-1.5 rounded-full bg-white/70 text-gray-700 hover:bg-white/90 backdrop-blur-sm transition-colors duration-200"
+            aria-label="Call agent"
+          >
+            <Phone className="h-4 w-4" />
+          </button>
         </div>
       </div>
       

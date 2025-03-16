@@ -1,6 +1,8 @@
 
-import { Building, MapPin, Bed, Bath, Square, MessageCircle } from "lucide-react";
+import { useState } from "react";
+import { Building, MapPin, Bed, Bath, Square, MessageCircle, Heart, Bookmark, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface PropertyType {
   id: string;
@@ -18,6 +20,10 @@ interface TextPropertyCardProps {
 }
 
 export const TextPropertyCard = ({ property, className }: TextPropertyCardProps) => {
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const { toast } = useToast();
+  
   // Determine property type based on bedrooms
   const propertyType = property.bedrooms === 0 ? 'commercial' : 
                       property.bedrooms && property.bedrooms > 3 ? 'luxury' : 'residential';
@@ -30,6 +36,39 @@ export const TextPropertyCard = ({ property, className }: TextPropertyCardProps)
   const handleWhatsAppInquiry = () => {
     const message = encodeURIComponent(`Hi, I'm interested in the property: ${property.title} in ${property.location}. Could you provide more information?`);
     window.open(`https://wa.me/917893871223?text=${message}`, '_blank');
+    
+    toast({
+      title: "WhatsApp Inquiry",
+      description: "Opening WhatsApp with your inquiry message",
+      duration: 3000,
+    });
+  };
+  
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    toast({
+      title: isLiked ? "Removed from likes" : "Added to likes",
+      description: isLiked ? "Property removed from your liked properties" : "Property added to your liked properties",
+      duration: 3000,
+    });
+  };
+  
+  const handleSave = () => {
+    setIsSaved(!isSaved);
+    toast({
+      title: isSaved ? "Removed from saved" : "Saved property",
+      description: isSaved ? "Property removed from your saved list" : "Property saved for future reference",
+      duration: 3000,
+    });
+  };
+  
+  const handleCall = () => {
+    window.location.href = "tel:+917893871223";
+    toast({
+      title: "Call Agent",
+      description: "Connecting you with our property agent",
+      duration: 3000,
+    });
   };
   
   return (
@@ -87,6 +126,47 @@ export const TextPropertyCard = ({ property, className }: TextPropertyCardProps)
           )}
         </div>
       )}
+      
+      {/* Action Buttons */}
+      <div className="grid grid-cols-4 gap-2 mb-3">
+        <button 
+          onClick={handleLike}
+          className={cn(
+            "flex flex-col items-center justify-center p-2 rounded-md transition-colors duration-200",
+            isLiked ? "bg-red-50 text-red-500" : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+          )}
+        >
+          <Heart className={cn("h-4 w-4", isLiked && "fill-red-500")} />
+          <span className="text-xs mt-1">Like</span>
+        </button>
+        
+        <button 
+          onClick={handleSave}
+          className={cn(
+            "flex flex-col items-center justify-center p-2 rounded-md transition-colors duration-200",
+            isSaved ? "bg-blue-50 text-blue-500" : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+          )}
+        >
+          <Bookmark className={cn("h-4 w-4", isSaved && "fill-blue-500")} />
+          <span className="text-xs mt-1">Save</span>
+        </button>
+        
+        <button 
+          onClick={handleCall}
+          className="flex flex-col items-center justify-center p-2 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors duration-200"
+        >
+          <Phone className="h-4 w-4" />
+          <span className="text-xs mt-1">Call</span>
+        </button>
+        
+        <button 
+          onClick={handleWhatsAppInquiry}
+          className="flex flex-col items-center justify-center p-2 rounded-md bg-green-50 text-green-600 hover:bg-green-100 transition-colors duration-200"
+        >
+          <MessageCircle className="h-4 w-4" />
+          <span className="text-xs mt-1">Chat</span>
+        </button>
+      </div>
       
       <button 
         onClick={handleWhatsAppInquiry}
