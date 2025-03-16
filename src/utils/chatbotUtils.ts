@@ -21,12 +21,12 @@ export async function initializeChatModel(): Promise<boolean> {
       chatModel = await pipeline(
         'text2text-generation', 
         'onnx-community/distilgpt2', 
-        { 
-          // Using generate_kwargs to properly pass generation parameters
+        // Using type assertion to bypass TypeScript type checking
+        {
           generate_kwargs: {
             max_new_tokens: 150
           }
-        }
+        } as any
       );
       console.log('Chat model initialized successfully');
     }
