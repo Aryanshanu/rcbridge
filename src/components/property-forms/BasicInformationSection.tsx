@@ -1,6 +1,7 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { FormSectionProps } from "./types";
 
 export const BasicInformationSection = ({ form }: FormSectionProps) => {
@@ -35,6 +36,23 @@ export const BasicInformationSection = ({ form }: FormSectionProps) => {
           )}
         />
       </div>
+      <FormField
+        control={form.control}
+        name="description"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Property Description</FormLabel>
+            <FormControl>
+              <Textarea 
+                placeholder="Provide a detailed description of the property" 
+                className="min-h-[120px]" 
+                {...field} 
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 };

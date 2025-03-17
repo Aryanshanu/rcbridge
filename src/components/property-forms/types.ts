@@ -29,8 +29,8 @@ export interface SellerPropertyFormData {
 
 export interface PropertyDetailsProps {
   form: UseFormReturn<SellerPropertyFormData>;
-  propertyType: string;
-  listingType: string;
+  propertyType: PropertyType | string;
+  listingType: ListingType | string;
 }
 
 export interface PropertyImage {
@@ -54,4 +54,19 @@ export interface BuyerFormData {
   location: string;
   bedrooms?: number;
   bathrooms?: number;
+}
+
+export interface ServiceCategory {
+  title: string;
+  description: string;
+  items: string[];
+  icon: JSX.Element;
+  color: string;
+}
+
+export interface ClientBenefit {
+  title: string;
+  description: string;
+  icon: JSX.Element;
+  color: string;
 }
