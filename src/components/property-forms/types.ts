@@ -44,6 +44,11 @@ export interface FormSectionProps {
   form: UseFormReturn<SellerPropertyFormData>;
 }
 
+export interface AuthRequiredComponentProps {
+  fallbackMessage?: string;
+  redirectPath?: string;
+}
+
 export interface BuyerFormData {
   propertyType: PropertyType;
   listingType: ListingType;

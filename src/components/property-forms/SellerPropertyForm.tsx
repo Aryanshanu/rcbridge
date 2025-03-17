@@ -1,7 +1,6 @@
 
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -16,8 +15,9 @@ import { FeaturesAmenitiesSection } from "./FeaturesAmenitiesSection";
 import { SellerPropertyFormData } from "./types";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertCircle, LockIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertCircle, LockIcon, UserIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const SellerPropertyForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,6 +25,7 @@ export const SellerPropertyForm = () => {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const form = useForm<SellerPropertyFormData>({
     defaultValues: {
@@ -39,7 +40,8 @@ export const SellerPropertyForm = () => {
   const listingType = form.watch("listingType");
 
   const redirectToAuth = () => {
-    window.location.href = "/login";
+    setShowAuthDialog(false);
+    navigate("/login", { state: { returnTo: window.location.pathname } });
   };
 
   const onSubmit = async (data: SellerPropertyFormData) => {
@@ -84,9 +86,6 @@ export const SellerPropertyForm = () => {
 
       setPropertyId(newProperty.id);
 
-      // We're removing the user analytics tracking since the table doesn't exist
-      // This can be added back when the table is created
-
       toast({
         title: "Success!",
         description: "Your property has been listed successfully. You can now add images.",
@@ -104,14 +103,6 @@ export const SellerPropertyForm = () => {
     }
   };
 
-  const handleImageUpload = (imageUrl: string) => {
-    console.log('Image uploaded:', imageUrl);
-    toast({
-      title: "Image Uploaded",
-      description: "Your property image has been uploaded successfully.",
-    });
-  };
-
   return (
     <>
       {/* Authentication Required Dialog */}
@@ -125,31 +116,53 @@ export const SellerPropertyForm = () => {
               You need to sign in or create an account to list a property.
             </DialogDescription>
           </DialogHeader>
-          <div className="p-4 flex flex-col gap-4">
-            <p className="text-sm text-gray-600">
-              Creating an account allows you to manage your property listings and track potential buyer inquiries.
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowAuthDialog(false)}>
-                Cancel
-              </Button>
-              <Button onClick={redirectToAuth}>
-                Sign In / Sign Up
-              </Button>
+          <div className="flex flex-col gap-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
+              <div className="flex items-start">
+                <UserIcon className="h-5 w-5 text-amber-500 mt-0.5 mr-2" />
+                <div>
+                  <p className="text-sm text-amber-800">
+                    Creating an account allows you to:
+                  </p>
+                  <ul className="list-disc ml-5 mt-1 text-sm text-amber-700">
+                    <li>Save and manage your property listings</li>
+                    <li>Receive inquiries from potential buyers</li>
+                    <li>Track property views and interest</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
+          <DialogFooter className="flex justify-end gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setShowAuthDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={redirectToAuth}>
+              Sign In / Sign Up
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {!user && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Authentication Required</AlertTitle>
-              <AlertDescription>
+            <Alert variant="warning" className="mb-4 bg-amber-50 border-amber-200">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-amber-800">Authentication Required</AlertTitle>
+              <AlertDescription className="text-amber-700">
                 You'll need to sign in before listing a property. Your form data will be preserved.
               </AlertDescription>
+              <div className="mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200"
+                  onClick={redirectToAuth}
+                >
+                  Sign In Now
+                </Button>
+              </div>
             </Alert>
           )}
           
@@ -164,33 +177,18 @@ export const SellerPropertyForm = () => {
           <PropertyDetailsSection form={form} propertyType={propertyType} listingType={listingType} />
           <FeaturesAmenitiesSection form={form} />
 
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900">Additional Information</h3>
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Property Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Enter detailed property description"
-                      className="min-h-[150px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
           {propertyId && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">Property Images</h3>
               <PropertyImageUpload
                 propertyId={propertyId}
-                onUploadComplete={handleImageUpload}
+                onUploadComplete={(imageUrl) => {
+                  console.log('Image uploaded:', imageUrl);
+                  toast({
+                    title: "Image Uploaded",
+                    description: "Your property image has been uploaded successfully.",
+                  });
+                }}
               />
               <PropertyImageGallery propertyId={propertyId} />
             </div>
