@@ -1,7 +1,42 @@
 
 import { Link } from "react-router-dom";
 
+interface FooterLink {
+  text: string;
+  href: string;
+}
+
+interface FooterSection {
+  title: string;
+  links: FooterLink[];
+}
+
 export const Footer = () => {
+  const quickLinks: FooterSection = {
+    title: "Quick Links",
+    links: [
+      { text: "About Us", href: "/" },
+      { text: "Properties", href: "/properties" },
+      { text: "Services", href: "/services" },
+      { text: "Contact", href: "/contact" },
+    ]
+  };
+
+  const resourceLinks: FooterSection = {
+    title: "Resources",
+    links: [
+      { text: "Market Insights", href: "/" },
+      { text: "Blog", href: "/blog" },
+      { text: "FAQ", href: "/faq" },
+      { text: "Terms of Service", href: "/login" },
+    ]
+  };
+
+  const contactInfo = [
+    "Hyderabad",
+    "aryan@rcbridge.co",
+  ];
+
   return (
     <footer className="bg-gray-900 text-gray-300 py-8 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -12,32 +47,43 @@ export const Footer = () => {
               Connecting landowners, buyers, and startups in Hyderabad's property market since 2013.
             </p>
           </div>
+          
           <div>
-            <h4 className="text-white font-semibold mb-4">Quick Links</h4>
+            <h4 className="text-white font-semibold mb-4">{quickLinks.title}</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/" className="hover:text-white">About Us</Link></li>
-              <li><Link to="/properties" className="hover:text-white">Properties</Link></li>
-              <li><Link to="/services" className="hover:text-white">Services</Link></li>
-              <li><Link to="/contact" className="hover:text-white">Contact</Link></li>
+              {quickLinks.links.map((link, index) => (
+                <li key={`quick-${index}`}>
+                  <Link to={link.href} className="hover:text-white transition-colors">
+                    {link.text}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
+          
           <div>
-            <h4 className="text-white font-semibold mb-4">Resources</h4>
+            <h4 className="text-white font-semibold mb-4">{resourceLinks.title}</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/" className="hover:text-white">Market Insights</Link></li>
-              <li><Link to="/blog" className="hover:text-white">Blog</Link></li>
-              <li><Link to="/faq" className="hover:text-white">FAQ</Link></li>
-              <li><Link to="/login" className="hover:text-white">Terms of Service</Link></li>
+              {resourceLinks.links.map((link, index) => (
+                <li key={`resource-${index}`}>
+                  <Link to={link.href} className="hover:text-white transition-colors">
+                    {link.text}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
+          
           <div>
             <h4 className="text-white font-semibold mb-4">Contact Us</h4>
             <ul className="space-y-2 text-sm">
-              <li>Hyderabad</li>
-              <li>aryan@rcbridge.co</li>
+              {contactInfo.map((info, index) => (
+                <li key={`contact-${index}`}>{info}</li>
+              ))}
             </ul>
           </div>
         </div>
+        
         <div className="border-t border-gray-800 mt-8 pt-8 text-sm text-center">
           © 2013-2025 RCBridge. All rights reserved.
         </div>

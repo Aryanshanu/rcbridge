@@ -9,8 +9,14 @@ interface FeaturesAmenitiesSectionProps {
   form: UseFormReturn<SellerPropertyFormData>;
 }
 
+interface Amenity {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+}
+
 export const FeaturesAmenitiesSection = ({ form }: FeaturesAmenitiesSectionProps) => {
-  const commonAmenities = [
+  const commonAmenities: Amenity[] = [
     { key: "parking", label: "Parking", icon: <Car className="h-5 w-5 text-gray-600" /> },
     { key: "security", label: "24/7 Security", icon: <Shield className="h-5 w-5 text-gray-600" /> },
     { key: "gym", label: "Gym", icon: <Dumbbell className="h-5 w-5 text-gray-600" /> },

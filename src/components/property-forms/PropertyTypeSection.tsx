@@ -2,13 +2,26 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { UseFormReturn } from "react-hook-form";
-import { SellerPropertyFormData } from "./types";
+import { SellerPropertyFormData, PropertyType } from "./types";
 
 interface PropertyTypeSectionProps {
   form: UseFormReturn<SellerPropertyFormData>;
 }
 
+interface PropertyTypeOption {
+  value: PropertyType;
+  id: string;
+  label: string;
+}
+
 export const PropertyTypeSection = ({ form }: PropertyTypeSectionProps) => {
+  const propertyTypeOptions: PropertyTypeOption[] = [
+    { value: "residential", id: "s-residential", label: "Residential" },
+    { value: "commercial", id: "s-commercial", label: "Commercial" },
+    { value: "agricultural", id: "s-agricultural", label: "Agricultural" },
+    { value: "undeveloped", id: "s-undeveloped", label: "Undeveloped Land" },
+  ];
+
   return (
     <FormField
       control={form.control}
@@ -22,22 +35,12 @@ export const PropertyTypeSection = ({ form }: PropertyTypeSectionProps) => {
               defaultValue={field.value}
               className="flex flex-col space-y-1"
             >
-              <div className="flex items-center space-x-3">
-                <RadioGroupItem value="residential" id="s-residential" />
-                <label htmlFor="s-residential">Residential</label>
-              </div>
-              <div className="flex items-center space-x-3">
-                <RadioGroupItem value="commercial" id="s-commercial" />
-                <label htmlFor="s-commercial">Commercial</label>
-              </div>
-              <div className="flex items-center space-x-3">
-                <RadioGroupItem value="agricultural" id="s-agricultural" />
-                <label htmlFor="s-agricultural">Agricultural</label>
-              </div>
-              <div className="flex items-center space-x-3">
-                <RadioGroupItem value="undeveloped" id="s-undeveloped" />
-                <label htmlFor="s-undeveloped">Undeveloped Land</label>
-              </div>
+              {propertyTypeOptions.map((option) => (
+                <div key={option.id} className="flex items-center space-x-3">
+                  <RadioGroupItem value={option.value} id={option.id} />
+                  <label htmlFor={option.id}>{option.label}</label>
+                </div>
+              ))}
             </RadioGroup>
           </FormControl>
           <FormMessage />

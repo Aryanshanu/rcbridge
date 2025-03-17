@@ -2,7 +2,11 @@
 export type PropertyType = "residential" | "commercial" | "agricultural" | "undeveloped";
 export type ListingType = "sale" | "rent" | "development_partnership";
 
-export type SellerPropertyFormData = {
+export interface PropertyAmenities {
+  [key: string]: boolean;
+}
+
+export interface SellerPropertyFormData {
   title: string;
   description: string;
   location: string;
@@ -18,5 +22,18 @@ export type SellerPropertyFormData = {
   rentalDuration?: string;
   rentalTerms?: string;
   features: string[];
-  amenities: Record<string, boolean>;
-};
+  amenities: PropertyAmenities;
+}
+
+export interface PropertyDetailsProps {
+  form: any;
+  propertyType: string;
+  listingType: string;
+}
+
+export interface PropertyImage {
+  id: string;
+  url: string;
+  property_id: string;
+  created_at: string;
+}
