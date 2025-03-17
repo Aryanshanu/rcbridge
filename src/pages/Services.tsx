@@ -1,4 +1,3 @@
-
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/sections/Footer";
 import { SEO } from "@/components/SEO";
@@ -9,9 +8,12 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Home, Building, Shield, Users, ChartBar, MapPin, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { PropertyForm } from "@/components/PropertyForm";
 
 const Services = () => {
+  const navigate = useNavigate();
+  
   // Additional service categories
   const serviceCategories = [
     {
@@ -75,6 +77,10 @@ const Services = () => {
       icon: <Check className="h-8 w-8 text-primary" />
     }
   ];
+
+  const scrollToPropertyForm = () => {
+    document.getElementById('property-form')?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -207,11 +213,20 @@ const Services = () => {
           </div>
           
           <div className="text-center mt-8">
-            <Link to="/calculator">
-              <Button>
-                Try Our Investment Calculator
-              </Button>
-            </Link>
+            <Button onClick={scrollToPropertyForm}>
+              Get Personalized Assistance
+            </Button>
+          </div>
+        </section>
+        
+        {/* Property Form Section */}
+        <section className="mb-16">
+          <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+            <h2 className="text-2xl font-bold text-center mb-6">Tell Us Your Requirements</h2>
+            <p className="text-center text-gray-600 mb-8">
+              Whether you're looking to buy, sell, or rent, we'll help you find the perfect match.
+            </p>
+            <PropertyForm />
           </div>
         </section>
         

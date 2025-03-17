@@ -1,6 +1,5 @@
 import { Building2, Users, Brain, Shield, Users2, ChartBar, Calculator, Home, Building, Map, Landmark, LineChart, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { InvestmentCalculator } from "@/components/InvestmentCalculator";
 
 export const Features = () => {
   const coreFeatures = [
@@ -202,7 +201,6 @@ export const Features = () => {
         <a href="#core-features" className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">Core Features</a>
         <a href="#detailed-breakdown" className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">Detailed Breakdown</a>
         <a href="#competitive-analysis" className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">Competitive Analysis</a>
-        <a href="#investment-calculator" className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">Investment Calculator</a>
       </div>
       
       <div id="core-features" className="mb-16">
@@ -353,21 +351,6 @@ export const Features = () => {
               </ul>
             </div>
           </div>
-        </div>
-      </div>
-      
-      <div id="investment-calculator" className="mb-16">
-        <div className="text-center mb-6">
-          <h3 className="text-xl sm:text-2xl font-bold">Investment Calculator</h3>
-          <div className="w-20 h-1 bg-primary mx-auto mt-2 mb-6"></div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <p className="text-gray-600 mb-6">
-            Evaluate if a property meets our 12% annual return threshold by calculating combined rental yield and price appreciation.
-          </p>
-          
-          <InvestmentCalculator />
         </div>
       </div>
       
