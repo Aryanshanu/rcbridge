@@ -12,36 +12,25 @@ import {
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/components/ui/use-toast";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { NumberDisplay } from "@/components/NumberDisplay";
-import { shouldShowWords } from "@/utils/numberFormatting";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertCircle, LockIcon, UserIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { NumberInput } from "@/components/ui/NumberInput";
-
-type BuyerPropertyFormData = {
-  propertyType: "residential" | "commercial" | "agricultural" | "undeveloped";
-  listingType: "sale" | "rent" | "development_partnership";
-  minPrice?: number;
-  maxPrice?: number;
-  minSize?: number;
-  maxSize?: number;
-  location: string;
-  bedrooms?: number;
-  bathrooms?: number;
-};
+import { BuyerFormData } from "./types";
+import { useNavigate } from "react-router-dom";
 
 export const BuyerPropertyForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   
-  const form = useForm<BuyerPropertyFormData>({
+  const form = useForm<BuyerFormData>({
     defaultValues: {
       propertyType: "residential",
       listingType: "sale",
@@ -50,14 +39,13 @@ export const BuyerPropertyForm = () => {
 
   const propertyType = form.watch("propertyType");
   const listingType = form.watch("listingType");
-  const minPrice = form.watch("minPrice");
-  const maxPrice = form.watch("maxPrice");
 
   const redirectToAuth = () => {
-    window.location.href = "/login";
+    setShowAuthDialog(false);
+    navigate("/login", { state: { returnTo: window.location.pathname } });
   };
 
-  const onSubmit = async (data: BuyerPropertyFormData) => {
+  const onSubmit = async (data: BuyerFormData) => {
     // Check if user is authenticated
     if (!user) {
       setShowAuthDialog(true);
@@ -111,37 +99,59 @@ export const BuyerPropertyForm = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" /> Authentication Required
+              <LockIcon className="h-5 w-5" /> Authentication Required
             </DialogTitle>
             <DialogDescription>
               You need to sign in or create an account to save your property requirements.
             </DialogDescription>
           </DialogHeader>
-          <div className="p-4 flex flex-col gap-4">
-            <p className="text-sm text-gray-600">
-              Creating an account allows you to receive notifications when matching properties become available.
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowAuthDialog(false)}>
-                Cancel
-              </Button>
-              <Button onClick={redirectToAuth}>
-                Sign In / Sign Up
-              </Button>
+          <div className="flex flex-col gap-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
+              <div className="flex items-start">
+                <UserIcon className="h-5 w-5 text-amber-500 mt-0.5 mr-2" />
+                <div>
+                  <p className="text-sm text-amber-800">
+                    Creating an account allows you to:
+                  </p>
+                  <ul className="list-disc ml-5 mt-1 text-sm text-amber-700">
+                    <li>Receive notifications when matching properties are listed</li>
+                    <li>Save multiple property requirement profiles</li>
+                    <li>Contact sellers directly through the platform</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
+          <DialogFooter className="flex justify-end gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setShowAuthDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={redirectToAuth}>
+              Sign In / Sign Up
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {!user && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Authentication Required</AlertTitle>
-              <AlertDescription>
+            <Alert variant="destructive" className="mb-4 bg-amber-50 border-amber-200">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-amber-800">Authentication Required</AlertTitle>
+              <AlertDescription className="text-amber-700">
                 You'll need to sign in before saving your property requirements. Your form data will be preserved.
               </AlertDescription>
+              <div className="mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200"
+                  onClick={redirectToAuth}
+                >
+                  Sign In Now
+                </Button>
+              </div>
             </Alert>
           )}
           

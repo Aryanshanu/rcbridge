@@ -147,7 +147,7 @@ export const SellerPropertyForm = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {!user && (
-            <Alert variant="warning" className="mb-4 bg-amber-50 border-amber-200">
+            <Alert variant="destructive" className="mb-4 bg-amber-50 border-amber-200">
               <AlertCircle className="h-4 w-4 text-amber-600" />
               <AlertTitle className="text-amber-800">Authentication Required</AlertTitle>
               <AlertDescription className="text-amber-700">
