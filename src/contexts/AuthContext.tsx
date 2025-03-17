@@ -7,6 +7,8 @@ import { useToast } from "@/components/ui/use-toast";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  showWelcome: boolean;
+  setShowWelcome: (show: boolean) => void;
   signInWithGoogle: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, metadata?: { [key: string]: any }) => Promise<void>;
@@ -18,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -27,11 +30,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const previousUser = user;
+      const currentUser = session?.user ?? null;
+      
+      setUser(currentUser);
+      
+      // If user wasn't logged in before and now is, show welcome animation
+      if (!previousUser && currentUser) {
+        setShowWelcome(true);
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [user]);
 
   const signInWithGoogle = async () => {
     try {
@@ -160,6 +171,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     loading,
+    showWelcome,
+    setShowWelcome,
     signInWithGoogle,
     signIn,
     signUp,

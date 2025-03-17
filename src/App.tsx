@@ -9,9 +9,9 @@ import Index from "./pages/Index";
 import Properties from "./pages/Properties";
 import Services from "./pages/Services";
 import Calculator from "./pages/Calculator";
-import { AuthProvider } from "./contexts/AuthContext";
-import { useAuth } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Suspense, lazy, useEffect } from "react";
+import { WelcomeAnimation } from "./components/auth/WelcomeAnimation";
 
 // Lazy-loaded pages for better performance
 const Blog = lazy(() => import("./pages/Blog"));
@@ -44,6 +44,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const WelcomeWrapper = ({ children }: { children: React.ReactNode }) => {
+  const { showWelcome, setShowWelcome } = useAuth();
+  
+  return (
+    <>
+      {showWelcome && <WelcomeAnimation onComplete={() => setShowWelcome(false)} />}
+      {children}
+    </>
+  )
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -73,28 +84,30 @@ const App = () => {
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                <Suspense fallback={<PageLoading />}>
-                  <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<Index />} />
-                    <Route path="/properties" element={<Properties />} />
-                    <Route path="/services" element={<Services />} />
-                    <Route path="/calculator" element={<Calculator />} />
-                    <Route path="/blog" element={<Blog />} />
-                    <Route path="/faq" element={<FAQ />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    
-                    {/* Protected Routes */}
-                    <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                    <Route path="/my-properties" element={<ProtectedRoute><MyProperties /></ProtectedRoute>} />
-                    <Route path="/saved-searches" element={<ProtectedRoute><SavedSearches /></ProtectedRoute>} />
-                    
-                    {/* Catch-all route */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </Suspense>
+                <WelcomeWrapper>
+                  <Suspense fallback={<PageLoading />}>
+                    <Routes>
+                      {/* Public Routes */}
+                      <Route path="/" element={<Index />} />
+                      <Route path="/properties" element={<Properties />} />
+                      <Route path="/services" element={<Services />} />
+                      <Route path="/calculator" element={<Calculator />} />
+                      <Route path="/blog" element={<Blog />} />
+                      <Route path="/faq" element={<FAQ />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      
+                      {/* Protected Routes */}
+                      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                      <Route path="/my-properties" element={<ProtectedRoute><MyProperties /></ProtectedRoute>} />
+                      <Route path="/saved-searches" element={<ProtectedRoute><SavedSearches /></ProtectedRoute>} />
+                      
+                      {/* Catch-all route */}
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                  </Suspense>
+                </WelcomeWrapper>
               </BrowserRouter>
             </TooltipProvider>
           </AuthProvider>

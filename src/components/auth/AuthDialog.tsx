@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useState } from "react";
 
 interface AuthDialogProps {
   isSignUp: boolean;
@@ -15,6 +16,21 @@ interface AuthDialogProps {
 
 export const AuthDialog = ({ isSignUp, setIsSignUp }: AuthDialogProps) => {
   const { signInWithGoogle } = useAuth();
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error("Google login error:", error);
+    } finally {
+      // In case OAuth redirect doesn't happen right away
+      setTimeout(() => {
+        setIsGoogleLoading(false);
+      }, 3000);
+    }
+  };
 
   return (
     <DialogContent className="sm:max-w-md">
@@ -33,10 +49,12 @@ export const AuthDialog = ({ isSignUp, setIsSignUp }: AuthDialogProps) => {
         <Button 
           type="button" 
           variant="outline" 
-          onClick={signInWithGoogle}
-          className="flex items-center justify-center space-x-2 py-6 transition-all hover:shadow-md w-full"
+          onClick={handleGoogleSignIn}
+          disabled={isGoogleLoading}
+          className="flex items-center justify-center space-x-2 py-6 transition-all hover:shadow-md w-full relative overflow-hidden group"
         >
-          <svg viewBox="0 0 48 48" width="20" height="20">
+          <div className="absolute inset-0 w-0 bg-gradient-to-r from-blue-50 to-indigo-50 transition-all duration-[400ms] ease-out group-hover:w-full"></div>
+          <svg viewBox="0 0 48 48" width="20" height="20" className="relative z-10">
             <path
               fill="#EA4335"
               d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
@@ -54,7 +72,13 @@ export const AuthDialog = ({ isSignUp, setIsSignUp }: AuthDialogProps) => {
               d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
             />
           </svg>
-          <span className="font-medium">Continue with Google</span>
+          <span className="font-medium relative z-10">
+            {isGoogleLoading ? "Connecting..." : "Continue with Google"}
+          </span>
+          
+          {isGoogleLoading && (
+            <div className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent relative z-10"></div>
+          )}
         </Button>
         
         <div className="relative">
