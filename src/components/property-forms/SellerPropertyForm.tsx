@@ -84,16 +84,8 @@ export const SellerPropertyForm = () => {
 
       setPropertyId(newProperty.id);
 
-      // Track this action as property listing
-      await supabase.from('user_analytics').insert({
-        user_id: user.id,
-        event_type: 'property_listing',
-        property_id: newProperty.id,
-        details: {
-          property_type: data.propertyType,
-          listing_type: data.listingType
-        }
-      });
+      // We're removing the user analytics tracking since the table doesn't exist
+      // This can be added back when the table is created
 
       toast({
         title: "Success!",
@@ -152,7 +144,7 @@ export const SellerPropertyForm = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {!user && (
-            <Alert variant="warning" className="mb-4">
+            <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Authentication Required</AlertTitle>
               <AlertDescription>

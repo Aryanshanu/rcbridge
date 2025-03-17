@@ -4,7 +4,6 @@ import { Bell } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -156,16 +155,8 @@ export const NotificationButton = () => {
         }
       }
       
-      // Track this action
-      await supabase.from('user_analytics').insert({
-        user_id: user.id,
-        event_type: 'alert_created',
-        details: {
-          property_types: propertyTypes,
-          listing_type: listingType,
-          location: location
-        }
-      });
+      // We're removing the user analytics tracking since the table doesn't exist
+      // This can be added back when the table is created
       
       toast({
         title: "Notification preferences saved",
@@ -256,7 +247,7 @@ export const NotificationButton = () => {
           </DialogHeader>
           
           {!user && (
-            <Alert variant="warning" className="mb-4">
+            <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Authentication Required</AlertTitle>
               <AlertDescription>

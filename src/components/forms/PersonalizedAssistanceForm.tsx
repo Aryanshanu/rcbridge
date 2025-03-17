@@ -59,7 +59,8 @@ export const PersonalizedAssistanceForm = ({ onSuccess, onCancel }: Personalized
           
         if (data && !error) {
           if (data.full_name) setValue("name", data.full_name);
-          if (data.phone) setValue("phone", data.phone);
+          // Since phone doesn't exist on profiles, we won't try to set it
+          // We'll need to collect phone from the form input instead
         }
       };
       
@@ -167,7 +168,7 @@ export const PersonalizedAssistanceForm = ({ onSuccess, onCancel }: Personalized
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
         {!user && (
-          <Alert variant="warning" className="mb-4">
+          <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Authentication Required</AlertTitle>
             <AlertDescription>
@@ -318,7 +319,7 @@ export const PersonalizedAssistanceForm = ({ onSuccess, onCancel }: Personalized
           >
             {isSubmitting ? "Submitting..." : "Submit Request"}
             {!user && (
-              <Badge variant="warning" className="absolute -top-2 -right-2 text-xs">
+              <Badge variant="destructive" className="absolute -top-2 -right-2 text-xs">
                 Login Required
               </Badge>
             )}
