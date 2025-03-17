@@ -2,24 +2,20 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-// This function checks if a table exists in the Supabase database
+// This function provides a simpler way to check if data exists in a table
+// without using information_schema queries which are causing errors
 export const checkTableExists = async (tableName: string): Promise<boolean> => {
   try {
-    // Use type assertion to bypass TypeScript's strict checking for system tables
-    const { data, error } = await (supabase as any)
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_schema', 'public')
-      .eq('table_name', tableName);
+    // Instead of checking if table exists (which requires admin privileges),
+    // we'll check if we can query the table without errors
+    const { count, error } = await supabase
+      .from(tableName)
+      .select('*', { count: 'exact', head: true });
     
-    if (error) {
-      console.error(`Error checking if table ${tableName} exists:`, error);
-      return false;
-    }
-    
-    return data && data.length > 0;
+    // If there's no error, the table exists
+    return !error;
   } catch (error) {
-    console.error(`Error checking if table ${tableName} exists:`, error);
+    console.error(`Error checking table ${tableName}:`, error);
     return false;
   }
 };
@@ -33,9 +29,9 @@ export const useTableCheck = () => {
     
     if (!exists && errorMessage) {
       toast({
-        title: "Database Error",
-        description: errorMessage || `The required table '${tableName}' doesn't exist in the database.`,
-        variant: "destructive"
+        title: "Database Information",
+        description: errorMessage || `The table '${tableName}' may not be accessible.`,
+        variant: "default"
       });
     }
     
