@@ -1,12 +1,7 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { UseFormReturn } from "react-hook-form";
-import { SellerPropertyFormData, ListingType } from "./types";
-
-interface ListingTypeSectionProps {
-  form: UseFormReturn<SellerPropertyFormData>;
-}
+import { FormSectionProps, ListingType } from "./types";
 
 interface ListingTypeOption {
   value: ListingType;
@@ -14,7 +9,7 @@ interface ListingTypeOption {
   label: string;
 }
 
-export const ListingTypeSection = ({ form }: ListingTypeSectionProps) => {
+export const ListingTypeSection = ({ form }: FormSectionProps) => {
   const listingTypeOptions: ListingTypeOption[] = [
     { value: "sale", id: "s-sale", label: "For Sale" },
     { value: "rent", id: "s-rent", label: "For Rent" },

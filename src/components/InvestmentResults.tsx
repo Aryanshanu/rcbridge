@@ -1,20 +1,27 @@
 
 import { ArrowUp, TrendingUp, Gauge } from "lucide-react";
 
+export type InvestmentStatus = 'good' | 'moderate' | 'poor';
+
 export type CalculationResult = {
   rentalYield: number;
   priceAppreciation: number;
   totalReturn: number;
   rsi: number;
-  investmentStatus: 'good' | 'moderate' | 'poor';
+  investmentStatus: InvestmentStatus;
 };
 
 interface InvestmentResultsProps {
   result: CalculationResult;
 }
 
+interface StatusColor {
+  text: string;
+  color: string;
+}
+
 export function InvestmentResults({ result }: InvestmentResultsProps) {
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: InvestmentStatus) => {
     switch (status) {
       case 'good': return 'bg-[#10B981]'; // green
       case 'moderate': return 'bg-amber-500'; // amber
@@ -23,7 +30,7 @@ export function InvestmentResults({ result }: InvestmentResultsProps) {
     }
   };
 
-  const getRSIStatus = (rsi: number) => {
+  const getRSIStatus = (rsi: number): StatusColor => {
     if (rsi > 70) return { text: 'Overbought', color: 'text-red-600' };
     if (rsi < 30) return { text: 'Oversold', color: 'text-green-600' };
     return { text: 'Neutral', color: 'text-amber-600' };

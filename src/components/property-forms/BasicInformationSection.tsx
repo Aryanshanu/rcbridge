@@ -1,14 +1,9 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { UseFormReturn } from "react-hook-form";
-import { SellerPropertyFormData } from "./types";
+import { FormSectionProps } from "./types";
 
-interface BasicInformationSectionProps {
-  form: UseFormReturn<SellerPropertyFormData>;
-}
-
-export const BasicInformationSection = ({ form }: BasicInformationSectionProps) => {
+export const BasicInformationSection = ({ form }: FormSectionProps) => {
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>

@@ -1,4 +1,6 @@
 
+import { UseFormReturn } from "react-hook-form";
+
 export type PropertyType = "residential" | "commercial" | "agricultural" | "undeveloped";
 export type ListingType = "sale" | "rent" | "development_partnership";
 
@@ -26,7 +28,7 @@ export interface SellerPropertyFormData {
 }
 
 export interface PropertyDetailsProps {
-  form: any;
+  form: UseFormReturn<SellerPropertyFormData>;
   propertyType: string;
   listingType: string;
 }
@@ -36,4 +38,20 @@ export interface PropertyImage {
   url: string;
   property_id: string;
   created_at: string;
+}
+
+export interface FormSectionProps {
+  form: UseFormReturn<SellerPropertyFormData>;
+}
+
+export interface BuyerFormData {
+  propertyType: PropertyType;
+  listingType: ListingType;
+  minPrice?: number;
+  maxPrice?: number;
+  minSize?: number;
+  maxSize?: number;
+  location: string;
+  bedrooms?: number;
+  bathrooms?: number;
 }

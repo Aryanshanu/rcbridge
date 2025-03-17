@@ -1,13 +1,8 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { UseFormReturn } from "react-hook-form";
-import { SellerPropertyFormData } from "./types";
+import { FormSectionProps } from "./types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Car, Shield, Dumbbell, Bath, LandPlot, ArrowUpFromDot, Wifi, Wind } from "lucide-react";
-
-interface FeaturesAmenitiesSectionProps {
-  form: UseFormReturn<SellerPropertyFormData>;
-}
 
 interface Amenity {
   key: string;
@@ -15,7 +10,7 @@ interface Amenity {
   icon: React.ReactNode;
 }
 
-export const FeaturesAmenitiesSection = ({ form }: FeaturesAmenitiesSectionProps) => {
+export const FeaturesAmenitiesSection = ({ form }: FormSectionProps) => {
   const commonAmenities: Amenity[] = [
     { key: "parking", label: "Parking", icon: <Car className="h-5 w-5 text-gray-600" /> },
     { key: "security", label: "24/7 Security", icon: <Shield className="h-5 w-5 text-gray-600" /> },

@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 // Define a type that lists all valid table names in our database
 export type ValidTableName = 
@@ -73,26 +73,38 @@ export const checkTableExists = async (
   }
 };
 
-// Custom hook to provide table existence checking with toast functionality
-export const useTableCheck = () => {
-  const { toast } = useToast();
+// Function to provide feedback for table existence
+export const checkTableWithFeedback = async (
+  tableName: string, 
+  feedbackMessage?: string,
+  options: TableCheckOptions = {}
+): Promise<boolean> => {
+  const exists = await checkTableExists(tableName, { ...options, silent: true });
   
+  if (!exists && !options.silent) {
+    const message = feedbackMessage || options.customErrorMessage || 
+      `The table '${tableName}' may not be accessible.`;
+    
+    toast({
+      title: "Database Information",
+      description: message,
+      variant: "default"
+    });
+    
+    console.warn(message);
+  }
+  
+  return exists;
+};
+
+// Custom hook for component-level table checking
+export const useTableCheck = () => {
   const checkTable = async (
     tableName: string, 
     errorMessage?: string, 
     options: TableCheckOptions = {}
   ): Promise<boolean> => {
-    const exists = await checkTableExists(tableName, options);
-    
-    if (!exists && errorMessage && !options.silent) {
-      toast({
-        title: "Database Information",
-        description: errorMessage || `The table '${tableName}' may not be accessible.`,
-        variant: "default"
-      });
-    }
-    
-    return exists;
+    return checkTableWithFeedback(tableName, errorMessage, options);
   };
   
   return { checkTable };
