@@ -26,13 +26,82 @@ export const WelcomeAnimation = ({
   };
 
   useEffect(() => {
+    // Create particles for celebration effect
+    const createCelebration = () => {
+      const container = document.querySelector('.celebration-container');
+      if (!container) return;
+      
+      // Clear any existing particles
+      container.innerHTML = '';
+      
+      // Define particle types and characters
+      const particles = [
+        { char: '★', color: '#fbbc04' }, // Star - yellow
+        { char: '✿', color: '#4285f4' }, // Flower - blue
+        { char: '❀', color: '#ea4335' }, // Flower - red
+        { char: '✾', color: '#0f9d58' }  // Flower - green
+      ];
+      
+      // Create 60 particles
+      for (let i = 0; i < 60; i++) {
+        setTimeout(() => {
+          if (!container) return;
+          
+          const particle = document.createElement('div');
+          const randomParticle = particles[Math.floor(Math.random() * particles.length)];
+          
+          // Set styling
+          particle.style.position = 'absolute';
+          particle.style.color = randomParticle.color;
+          particle.style.fontSize = `${Math.random() * 16 + 12}px`;
+          particle.style.userSelect = 'none';
+          particle.style.pointerEvents = 'none';
+          particle.style.zIndex = '5';
+          particle.style.opacity = '0';
+          particle.style.top = `${50 + (Math.random() - 0.5) * 20}%`;
+          particle.style.left = `${50 + (Math.random() - 0.5) * 20}%`;
+          
+          // Set content
+          particle.textContent = randomParticle.char;
+          
+          // Create animation
+          const moveX = (Math.random() - 0.5) * 300;
+          const moveY = (Math.random() - 0.5) * 300;
+          const rotate = Math.random() * 360;
+          const duration = 2 + Math.random() * 3; // 2-5 seconds
+          
+          particle.style.transition = `transform ${duration}s ease-out, opacity ${duration}s ease-out`;
+          
+          // Add to container
+          container.appendChild(particle);
+          
+          // Start animation after a short delay (for browser to process)
+          setTimeout(() => {
+            particle.style.opacity = '1';
+            particle.style.transform = `translate(${moveX}px, ${moveY}px) rotate(${rotate}deg)`;
+            
+            // Remove after animation completes
+            setTimeout(() => {
+              particle.style.opacity = '0';
+              setTimeout(() => particle.remove(), 1000);
+            }, (duration - 1) * 1000);
+          }, 10);
+        }, i * 50); // Stagger the creation
+      }
+    };
+    
+    // Start celebration animation
+    if (visible) {
+      createCelebration();
+    }
+    
     const timer = setTimeout(() => {
       setVisible(false);
       if (onComplete) onComplete();
-    }, 5000); // Increased to 5 seconds
+    }, 5000); // 5 seconds total duration
     
     return () => clearTimeout(timer);
-  }, [onComplete]);
+  }, [onComplete, visible]);
 
   return (
     <AnimatePresence>
@@ -41,9 +110,17 @@ export const WelcomeAnimation = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 flex items-center justify-center z-50 bg-white/90 backdrop-blur-sm overflow-hidden"
+          className="fixed inset-0 flex items-center justify-center z-50 overflow-hidden"
+          style={{ backgroundColor: 'rgba(248, 249, 250, 0.9)' }}
         >
-          <div className="relative z-10 p-8 bg-white/90 rounded-lg shadow-md text-center max-w-md">
+          <div className="celebration-container absolute inset-0 overflow-hidden pointer-events-none" />
+          
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="relative z-10 p-8 bg-white/90 rounded-lg shadow-md text-center max-w-md"
+          >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -80,53 +157,7 @@ export const WelcomeAnimation = ({
             >
               Go to Home
             </motion.button>
-            
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none" style={{ zIndex: -1 }}>
-              {/* Celebration effect */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="absolute inset-0"
-              >
-                {[...Array(60)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ 
-                      x: Math.random() * window.innerWidth / 2 + window.innerWidth / 4, 
-                      y: Math.random() * window.innerHeight / 2 + window.innerHeight / 4, 
-                      opacity: 0,
-                      scale: Math.random() * 0.5 + 0.5,
-                      rotate: 0
-                    }}
-                    animate={{ 
-                      x: Math.random() * window.innerWidth,
-                      y: Math.random() * window.innerHeight,
-                      opacity: [0, 1, 1, 0],
-                      rotate: Math.random() * 360
-                    }}
-                    transition={{ 
-                      duration: 2 + Math.random() * 3, // 2-5 seconds
-                      delay: Math.random() * 2, // Staggered start
-                      ease: "easeOut"
-                    }}
-                    className="absolute"
-                    style={{ zIndex: 5 }}
-                  >
-                    {i % 4 === 0 ? (
-                      <div className="text-[#fbbc04]">★</div> // Star - yellow
-                    ) : i % 4 === 1 ? (
-                      <div className="text-[#4285f4]">✿</div> // Flower - blue
-                    ) : i % 4 === 2 ? (
-                      <div className="text-[#ea4335]">❀</div> // Flower - red
-                    ) : (
-                      <div className="text-[#0f9d58]">✾</div> // Flower - green
-                    )}
-                  </motion.div>
-                ))}
-              </motion.div>
-            </div>
-          </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

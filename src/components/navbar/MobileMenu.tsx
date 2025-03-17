@@ -24,6 +24,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -31,10 +32,24 @@ interface MobileMenuProps {
   handleContactClick: () => void;
 }
 
+// Helper function to get initials from name
+const getInitials = (name: string) => {
+  return name
+    .split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
+};
+
 export const MobileMenu = ({ isOpen, scrollToPropertyForm, handleContactClick }: MobileMenuProps) => {
   const { user, signOut } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isResourcesOpen, setIsResourcesOpen] = useState(false);
+  
+  // Get user display name and initials
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
+  const initials = getInitials(displayName);
 
   if (!isOpen) return null;
 
@@ -124,7 +139,12 @@ export const MobileMenu = ({ isOpen, scrollToPropertyForm, handleContactClick }:
         
         {user ? (
           <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="px-3 text-sm text-gray-600">Signed in as: {user.email}</p>
+            <div className="px-3 flex items-center gap-2">
+              <Avatar className="h-8 w-8 bg-primary text-white">
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+              <p className="text-sm text-gray-600">Signed in as: <span className="font-medium">{displayName}</span></p>
+            </div>
             <Link
               to="/profile"
               className="w-full block text-left text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium mt-2"

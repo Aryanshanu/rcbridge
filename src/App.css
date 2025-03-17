@@ -1,4 +1,3 @@
-
 #root {
   width: 100%;
   max-width: 100vw;
@@ -199,6 +198,20 @@
     transform: translate(var(--x), var(--y)) rotate(var(--r));
     opacity: 0;
   }
+}
+
+/* Celebration animations for welcome screen */
+.celebration-container {
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 5;
+}
+
+.celebration-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+  user-select: none;
 }
 
 .animate-float {
