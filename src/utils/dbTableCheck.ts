@@ -2,17 +2,54 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-// This function provides a simpler way to check if data exists in a table
-// without using information_schema queries which are causing errors
+// Define a type that lists all valid table names in our database
+type ValidTableName = 
+  | "assistance_requests" 
+  | "community_posts" 
+  | "contact_messages" 
+  | "demo_requests" 
+  | "investment_calculations" 
+  | "profiles" 
+  | "properties" 
+  | "property_alerts" 
+  | "property_images" 
+  | "search_queries" 
+  | "user_rewards";
+
+// This function validates if the provided string is a valid table name
+const isValidTableName = (tableName: string): tableName is ValidTableName => {
+  const validTables: ValidTableName[] = [
+    "assistance_requests",
+    "community_posts",
+    "contact_messages",
+    "demo_requests",
+    "investment_calculations",
+    "profiles",
+    "properties",
+    "property_alerts",
+    "property_images",
+    "search_queries",
+    "user_rewards"
+  ];
+  
+  return validTables.includes(tableName as ValidTableName);
+};
+
+// This function provides a simpler way to check if a table can be accessed
 export const checkTableExists = async (tableName: string): Promise<boolean> => {
   try {
-    // Instead of checking if table exists (which requires admin privileges),
-    // we'll check if we can query the table without errors
-    const { count, error } = await supabase
+    // First, validate if the tableName is valid
+    if (!isValidTableName(tableName)) {
+      console.error(`Invalid table name: ${tableName}`);
+      return false;
+    }
+
+    // Now that we've validated the table name, we can safely query it
+    const { error } = await supabase
       .from(tableName)
       .select('*', { count: 'exact', head: true });
     
-    // If there's no error, the table exists
+    // If there's no error, the table exists and is accessible
     return !error;
   } catch (error) {
     console.error(`Error checking table ${tableName}:`, error);
