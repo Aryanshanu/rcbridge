@@ -1,9 +1,11 @@
 
 import { useState } from "react";
-import { Building, MapPin, Bed, Bath, Square, Heart, Bookmark, Phone, Info } from "lucide-react";
+import { Building, MapPin, Bed, Bath, Square, Heart, Bookmark, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface PropertyType {
   id: string;
@@ -30,7 +32,9 @@ export const TextPropertyCard = ({
 }: TextPropertyCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // Determine property type based on bedrooms
   const propertyType = property.bedrooms === 0 ? 'commercial' : 
@@ -41,41 +45,45 @@ export const TextPropertyCard = ({
                        propertyType === 'luxury' ? '#8B5CF6' : // Luxury (purple)
                        '#10B981'; // Residential (green)
   
+  const requireAuth = (callback: () => void) => {
+    if (user) {
+      callback();
+    } else {
+      setShowAuthDialog(true);
+    }
+  };
+  
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering parent click
-    setIsLiked(!isLiked);
-    toast({
-      title: isLiked ? "Removed from likes" : "Added to likes",
-      description: isLiked ? "Property removed from your liked properties" : "Property added to your liked properties",
-      duration: 3000,
+    requireAuth(() => {
+      setIsLiked(!isLiked);
+      toast({
+        title: isLiked ? "Removed from likes" : "Added to likes",
+        description: isLiked ? "Property removed from your liked properties" : "Property added to your liked properties",
+        duration: 3000,
+      });
     });
   };
   
   const handleSave = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering parent click
-    setIsSaved(!isSaved);
-    toast({
-      title: isSaved ? "Removed from saved" : "Saved property",
-      description: isSaved ? "Property removed from your saved list" : "Property saved for future reference",
-      duration: 3000,
-    });
-  };
-  
-  const handleCall = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering parent click
-    window.location.href = "tel:+917893871223";
-    toast({
-      title: "Call Agent",
-      description: "Connecting you with our property agent",
-      duration: 3000,
+    requireAuth(() => {
+      setIsSaved(!isSaved);
+      toast({
+        title: isSaved ? "Removed from saved" : "Saved property",
+        description: isSaved ? "Property removed from your saved list" : "Property saved for future reference",
+        duration: 3000,
+      });
     });
   };
   
   const handleWantToKnowMore = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering parent click
-    if (onWantToKnowMore) {
-      onWantToKnowMore(property);
-    }
+    requireAuth(() => {
+      if (onWantToKnowMore) {
+        onWantToKnowMore(property);
+      }
+    });
   };
   
   return (
@@ -161,11 +169,11 @@ export const TextPropertyCard = ({
             </button>
             
             <button 
-              onClick={handleCall}
               className="flex flex-col items-center justify-center p-2 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors duration-200"
+              onClick={handleWantToKnowMore}
             >
-              <Phone className="h-4 w-4" />
-              <span className="text-xs mt-1">Call</span>
+              <Info className="h-4 w-4" />
+              <span className="text-xs mt-1">More Info</span>
             </button>
           </div>
           
@@ -176,6 +184,28 @@ export const TextPropertyCard = ({
             <Info className="h-4 w-4" />
             Want to Know More
           </Button>
+          
+          {/* Authentication Dialog */}
+          <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Authentication Required</DialogTitle>
+                <DialogDescription>
+                  You need to be signed in to perform this action.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex justify-end space-x-2 mt-4">
+                <Button variant="outline" onClick={() => setShowAuthDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
+                  window.location.href = "/login";
+                }}>
+                  Sign In
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </div>
