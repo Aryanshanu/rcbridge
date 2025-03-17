@@ -12,6 +12,11 @@ interface PropertyDetailsSectionProps {
 }
 
 export const PropertyDetailsSection = ({ form, propertyType, listingType }: PropertyDetailsSectionProps) => {
+  // Helper function to determine size unit
+  const getSizeUnit = () => {
+    return propertyType === 'agricultural' ? 'acres' : 'sq.ft';
+  };
+
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-900">Property Details</h3>
@@ -34,9 +39,9 @@ export const PropertyDetailsSection = ({ form, propertyType, listingType }: Prop
           name="size"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Built-up Area (sq.ft)</FormLabel>
+              <FormLabel>Built-up Area ({getSizeUnit()})</FormLabel>
               <FormControl>
-                <Input type="number" placeholder="Enter built-up area" {...field} />
+                <Input type="number" placeholder={`Enter built-up area (${getSizeUnit()})`} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -47,9 +52,9 @@ export const PropertyDetailsSection = ({ form, propertyType, listingType }: Prop
           name="landSize"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Land Size (sq.ft)</FormLabel>
+              <FormLabel>Land Size ({getSizeUnit()})</FormLabel>
               <FormControl>
-                <Input type="number" placeholder="Enter land size" {...field} />
+                <Input type="number" placeholder={`Enter land size (${getSizeUnit()})`} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -1,4 +1,6 @@
 
+import { Link } from "react-router-dom";
+
 export const Footer = () => {
   return (
     <footer className="bg-gray-900 text-gray-300 py-8 sm:py-12">
@@ -13,19 +15,19 @@ export const Footer = () => {
           <div>
             <h4 className="text-white font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-white">About Us</a></li>
-              <li><a href="/properties" className="hover:text-white">Properties</a></li>
-              <li><a href="/services" className="hover:text-white">Services</a></li>
-              <li><a href="/contact" className="hover:text-white">Contact</a></li>
+              <li><Link to="/" className="hover:text-white">About Us</Link></li>
+              <li><Link to="/properties" className="hover:text-white">Properties</Link></li>
+              <li><Link to="/services" className="hover:text-white">Services</Link></li>
+              <li><Link to="/contact" className="hover:text-white">Contact</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="text-white font-semibold mb-4">Resources</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-white">Market Insights</a></li>
-              <li><a href="/blog" className="hover:text-white">Blog</a></li>
-              <li><a href="#" className="hover:text-white">FAQ</a></li>
-              <li><a href="#" className="hover:text-white">Terms of Service</a></li>
+              <li><Link to="/" className="hover:text-white">Market Insights</Link></li>
+              <li><Link to="/blog" className="hover:text-white">Blog</Link></li>
+              <li><Link to="/faq" className="hover:text-white">FAQ</Link></li>
+              <li><Link to="/login" className="hover:text-white">Terms of Service</Link></li>
             </ul>
           </div>
           <div>

@@ -99,6 +99,11 @@ export const BuyerPropertyForm = () => {
     }
   };
 
+  // Helper function to determine if we should display acres (for agricultural land) or sq.ft
+  const getSizeUnit = () => {
+    return propertyType === "agricultural" ? "acres" : "sq.ft";
+  };
+
   return (
     <>
       {/* Authentication Required Dialog */}
@@ -276,12 +281,12 @@ export const BuyerPropertyForm = () => {
                 name="minSize"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Minimum Size (sq.ft)</FormLabel>
+                    <FormLabel>Minimum Size ({getSizeUnit()})</FormLabel>
                     <FormControl>
                       <NumberInput
                         value={field.value}
                         onChange={field.onChange}
-                        placeholder="Enter minimum size"
+                        placeholder={`Enter minimum size (${getSizeUnit()})`}
                         displayType="number"
                       />
                     </FormControl>
@@ -294,12 +299,12 @@ export const BuyerPropertyForm = () => {
                 name="maxSize"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Maximum Size (sq.ft)</FormLabel>
+                    <FormLabel>Maximum Size ({getSizeUnit()})</FormLabel>
                     <FormControl>
                       <NumberInput
                         value={field.value}
                         onChange={field.onChange}
-                        placeholder="Enter maximum size"
+                        placeholder={`Enter maximum size (${getSizeUnit()})`}
                         displayType="number"
                       />
                     </FormControl>
