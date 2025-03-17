@@ -9,11 +9,11 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 
 const Calculator = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <SEO title="Investment Calculator | RC Bridge" description="Calculate your potential real estate investment returns" />
       <Navbar />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <main className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Breadcrumb */}
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
@@ -31,14 +31,14 @@ const Calculator = () => {
         </Breadcrumb>
         
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-2">Investment Calculator</h1>
+          <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">Investment Calculator</h1>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
             Estimate returns and evaluate potential investments with our advanced calculator
           </p>
         </div>
         
         <section className="max-w-4xl mx-auto mb-16">
-          <Card className="p-4 sm:p-6 bg-white border border-gray-200">
+          <Card className="p-4 sm:p-6 bg-white border border-gray-200 shadow-sm">
             <div className="flex items-center mb-6">
               <CalculatorIcon className="h-6 w-6 mr-3 text-[#1e40af]" />
               <h2 className="text-2xl font-bold">Investment Calculator</h2>

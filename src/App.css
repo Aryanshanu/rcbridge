@@ -42,3 +42,107 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Z-index utility classes */
+.z-underneath {
+  z-index: 0;
+}
+
+.z-default {
+  z-index: 1;
+}
+
+.z-dropdown {
+  z-index: 10;
+}
+
+.z-sticky {
+  z-index: 20;
+}
+
+.z-drawer {
+  z-index: 30;
+}
+
+.z-modal {
+  z-index: 40;
+}
+
+.z-popover {
+  z-index: 50;
+}
+
+.z-tooltip {
+  z-index: 60;
+}
+
+/* Positioned element classes */
+.positioned-relative {
+  position: relative;
+}
+
+.positioned-absolute {
+  position: absolute;
+}
+
+/* Badge positioning classes */
+.badge-top-right {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+}
+
+.badge-bottom-right {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+}
+
+/* Fix for button with badges */
+.button-with-badge {
+  position: relative;
+  padding-right: 2.5rem;
+}
+
+/* Spacing utilities */
+.mt-safe {
+  margin-top: 0.75rem !important;
+}
+
+.mb-safe {
+  margin-bottom: 0.75rem !important;
+}
+
+.mx-safe {
+  margin-left: 0.75rem !important;
+  margin-right: 0.75rem !important;
+}
+
+.my-safe {
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+/* Padding utilities */
+.pt-safe {
+  padding-top: 0.75rem !important;
+}
+
+.pb-safe {
+  padding-bottom: 0.75rem !important;
+}
+
+.px-safe {
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}
+
+.py-safe {
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+}
+
+/* Fix for overlapping elements */
+.no-overlap {
+  isolation: isolate;
+}

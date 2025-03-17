@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { NumberInput } from "@/components/ui/NumberInput";
 
 type BuyerPropertyFormData = {
   propertyType: "residential" | "commercial" | "agricultural" | "undeveloped";
@@ -218,25 +220,13 @@ export const BuyerPropertyForm = () => {
                   <FormItem>
                     <FormLabel>Minimum Price (₹)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="Enter minimum price" 
-                        {...field} 
-                        onChange={(e) => {
-                          field.onChange(e.target.valueAsNumber || undefined);
-                        }}
+                      <NumberInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Enter minimum price"
+                        displayType="currency"
                       />
                     </FormControl>
-                    {field.value && shouldShowWords(field.value) && (
-                      <div className="mt-1">
-                        <NumberDisplay 
-                          value={field.value} 
-                          type="currency" 
-                          className="text-xs" 
-                          wordClassName="italic text-muted-foreground"
-                        />
-                      </div>
-                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -248,25 +238,13 @@ export const BuyerPropertyForm = () => {
                   <FormItem>
                     <FormLabel>Maximum Price (₹)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="Enter maximum price" 
-                        {...field} 
-                        onChange={(e) => {
-                          field.onChange(e.target.valueAsNumber || undefined);
-                        }}
+                      <NumberInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Enter maximum price"
+                        displayType="currency"
                       />
                     </FormControl>
-                    {field.value && shouldShowWords(field.value) && (
-                      <div className="mt-1">
-                        <NumberDisplay 
-                          value={field.value} 
-                          type="currency" 
-                          className="text-xs" 
-                          wordClassName="italic text-muted-foreground"
-                        />
-                      </div>
-                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -300,25 +278,13 @@ export const BuyerPropertyForm = () => {
                   <FormItem>
                     <FormLabel>Minimum Size (sq.ft)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="Enter minimum size" 
-                        {...field} 
-                        onChange={(e) => {
-                          field.onChange(e.target.valueAsNumber || undefined);
-                        }}
+                      <NumberInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Enter minimum size"
+                        displayType="number"
                       />
                     </FormControl>
-                    {field.value && shouldShowWords(field.value) && (
-                      <div className="mt-1">
-                        <NumberDisplay 
-                          value={field.value} 
-                          type="number" 
-                          className="text-xs" 
-                          wordClassName="italic text-muted-foreground"
-                        />
-                      </div>
-                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -330,25 +296,13 @@ export const BuyerPropertyForm = () => {
                   <FormItem>
                     <FormLabel>Maximum Size (sq.ft)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="Enter maximum size" 
-                        {...field} 
-                        onChange={(e) => {
-                          field.onChange(e.target.valueAsNumber || undefined);
-                        }}
+                      <NumberInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Enter maximum size"
+                        displayType="number"
                       />
                     </FormControl>
-                    {field.value && shouldShowWords(field.value) && (
-                      <div className="mt-1">
-                        <NumberDisplay 
-                          value={field.value} 
-                          type="number" 
-                          className="text-xs" 
-                          wordClassName="italic text-muted-foreground"
-                        />
-                      </div>
-                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -356,18 +310,23 @@ export const BuyerPropertyForm = () => {
             </div>
           </div>
 
-          <Button
-            type="submit"
-            className="w-full md:w-auto relative"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Submitting..." : "Save Requirements"}
+          <div className="flex flex-col space-y-4">
+            <Button
+              type="submit"
+              className="w-full md:w-auto"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Save Requirements"}
+            </Button>
+            
             {!user && (
-              <Badge variant="destructive" className="absolute -top-2 -right-2 text-xs">
-                Login Required
-              </Badge>
+              <div className="mt-2 text-center md:text-left">
+                <Badge variant="destructive" className="text-xs">
+                  Login Required
+                </Badge>
+              </div>
             )}
-          </Button>
+          </div>
         </form>
       </Form>
     </>

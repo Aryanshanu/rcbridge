@@ -15,7 +15,7 @@ export function NumberInput({
   value, 
   onChange, 
   displayType = 'number',
-  wordClassName = "text-muted-foreground italic text-xs mt-1",
+  wordClassName = "text-muted-foreground italic text-xs mt-2",
   ...props 
 }: NumberInputProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,7 +24,7 @@ export function NumberInput({
   };
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       <Input
         type="number"
         value={value === undefined ? '' : value}
