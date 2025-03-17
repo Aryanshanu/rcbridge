@@ -4,9 +4,8 @@ import { Footer } from "@/components/sections/Footer";
 import { SEO } from "@/components/SEO";
 import { InvestmentCalculator } from "@/components/InvestmentCalculator";
 import { Card } from "@/components/ui/card";
-import { Calculator as CalculatorIcon } from "lucide-react";
+import { Calculator as CalculatorIcon, Home } from "lucide-react";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Home } from "lucide-react";
 
 const Calculator = () => {
   return (

@@ -62,3 +62,8 @@ export const formatIndianPrice = (price: number): string => {
     return `₹${price.toLocaleString('en-IN')}`;
   }
 };
+
+// New utility function to determine if we should show words
+export const shouldShowWords = (num: number): boolean => {
+  return num >= 10000; // Show words for numbers with 5 or more digits
+};

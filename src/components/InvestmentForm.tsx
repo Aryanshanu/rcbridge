@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { convertNumberToWords, formatIndianPrice } from "@/utils/numberFormatting";
+import { NumberDisplay } from "@/components/NumberDisplay";
+import { shouldShowWords } from "@/utils/numberFormatting";
 
 export type CalculatorFormData = {
   propertyPrice: number;
@@ -31,19 +31,6 @@ export function InvestmentForm({
   onSubmit, 
   isCalculating 
 }: InvestmentFormProps) {
-  const [propertyPriceInWords, setPropertyPriceInWords] = useState<string>('');
-  const [rentalIncomeInWords, setRentalIncomeInWords] = useState<string>('');
-  const [appreciationRateInWords, setAppreciationRateInWords] = useState<string>('');
-
-  useEffect(() => {
-    const propertyPrice = form.watch("propertyPrice");
-    const rentalIncome = form.watch("rentalIncome");
-    
-    setPropertyPriceInWords(convertNumberToWords(propertyPrice));
-    setRentalIncomeInWords(convertNumberToWords(rentalIncome));
-    setAppreciationRateInWords(convertNumberToWords(appreciationRate));
-  }, [form.watch("propertyPrice"), form.watch("rentalIncome"), appreciationRate, form]);
-
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -54,15 +41,18 @@ export function InvestmentForm({
             type="number"
             className="border-gray-300 focus:border-[#1e40af] focus:ring-[#1e40af]/20"
             {...form.register("propertyPrice", { 
-              valueAsNumber: true,
-              onChange: (e) => setPropertyPriceInWords(convertNumberToWords(Number(e.target.value)))
+              valueAsNumber: true
             })}
             required
           />
-          {propertyPriceInWords && (
-            <p className="text-sm text-gray-500 italic mt-1">
-              {formatIndianPrice(form.watch("propertyPrice"))} ({propertyPriceInWords})
-            </p>
+          {shouldShowWords(form.watch("propertyPrice")) && (
+            <div className="mt-1">
+              <NumberDisplay 
+                value={form.watch("propertyPrice")} 
+                type="currency"
+                className="text-sm text-gray-500"
+              />
+            </div>
           )}
         </div>
 
@@ -73,15 +63,18 @@ export function InvestmentForm({
             type="number"
             className="border-gray-300 focus:border-[#1e40af] focus:ring-[#1e40af]/20"
             {...form.register("rentalIncome", { 
-              valueAsNumber: true,
-              onChange: (e) => setRentalIncomeInWords(convertNumberToWords(Number(e.target.value)))
+              valueAsNumber: true
             })}
             required
           />
-          {rentalIncomeInWords && (
-            <p className="text-sm text-gray-500 italic mt-1">
-              ₹{form.watch("rentalIncome").toLocaleString('en-IN')} ({rentalIncomeInWords})
-            </p>
+          {shouldShowWords(form.watch("rentalIncome")) && (
+            <div className="mt-1">
+              <NumberDisplay 
+                value={form.watch("rentalIncome")} 
+                type="currency"
+                className="text-sm text-gray-500" 
+              />
+            </div>
           )}
         </div>
       </div>
@@ -95,13 +88,16 @@ export function InvestmentForm({
           step={0.5}
           onValueChange={(value) => {
             setAppreciationRate(value[0]);
-            setAppreciationRateInWords(convertNumberToWords(value[0]));
           }}
           className="mt-2"
         />
-        <p className="text-sm text-gray-500 italic mt-1">
-          {appreciationRate}% ({appreciationRateInWords} percent) per year
-        </p>
+        <div className="mt-1 text-sm text-gray-500">
+          <NumberDisplay 
+            value={appreciationRate} 
+            type="percentage" 
+            className="text-sm" 
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

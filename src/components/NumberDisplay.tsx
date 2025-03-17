@@ -1,34 +1,52 @@
 
-import { formatIndianPrice, convertNumberToWords } from "@/utils/numberFormatting";
+import { formatIndianPrice, convertNumberToWords, shouldShowWords } from "@/utils/numberFormatting";
 
 interface NumberDisplayProps {
   value: number;
-  type: 'currency' | 'percentage';
+  type: 'currency' | 'percentage' | 'number';
   showWords?: boolean;
+  className?: string;
+  wordClassName?: string;
 }
 
-export function NumberDisplay({ value, type, showWords = true }: NumberDisplayProps) {
+export function NumberDisplay({ 
+  value, 
+  type, 
+  showWords = true, 
+  className = "text-sm",
+  wordClassName = "text-muted-foreground italic ml-1 text-xs"
+}: NumberDisplayProps) {
+  // Determine if we should show words based on the value
+  const displayWords = showWords && shouldShowWords(value);
+  
+  let formattedValue: string;
+  let valueInWords: string | null = null;
+  
   if (type === 'currency') {
-    return (
-      <div className="text-sm">
-        <span>{formatIndianPrice(value)}</span>
-        {showWords && value >= 1000 && (
-          <span className="text-muted-foreground italic ml-1">
-            ({convertNumberToWords(value)})
-          </span>
-        )}
-      </div>
-    );
+    formattedValue = formatIndianPrice(value);
+    if (displayWords) {
+      valueInWords = convertNumberToWords(value);
+    }
+  } else if (type === 'percentage') {
+    formattedValue = `${value.toFixed(2)}%`;
+    if (displayWords) {
+      valueInWords = convertNumberToWords(parseFloat(value.toFixed(2)));
+    }
   } else {
-    return (
-      <div className="text-sm">
-        <span>{value.toFixed(2)}%</span>
-        {showWords && (
-          <span className="text-xs ml-1">
-            ({convertNumberToWords(parseFloat(value.toFixed(2)))})
-          </span>
-        )}
-      </div>
-    );
+    formattedValue = value.toLocaleString('en-IN');
+    if (displayWords) {
+      valueInWords = convertNumberToWords(value);
+    }
   }
+
+  return (
+    <div className={className}>
+      <span>{formattedValue}</span>
+      {displayWords && valueInWords && (
+        <span className={wordClassName}>
+          ({valueInWords})
+        </span>
+      )}
+    </div>
+  );
 }
