@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 type PropertyType = 'residential' | 'commercial' | 'agricultural' | 'undeveloped';
 type ListingType = 'sale' | 'rent' | 'development_partnership';
@@ -21,7 +23,8 @@ export const NotificationButton = () => {
   const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
   const [listingType, setListingType] = useState<ListingType | "">("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [alertCount, setAlertCount] = useState(3); // Default count, will be updated
+  const [alertCount, setAlertCount] = useState(0); 
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -40,10 +43,15 @@ export const NotificationButton = () => {
     }
   };
 
+  // Redirect to authentication page
+  const redirectToAuth = () => {
+    window.location.href = "/login";
+  };
+
   // Fetch user's existing alerts count if logged in
   useEffect(() => {
-    if (user) {
-      const fetchAlertCount = async () => {
+    const fetchAlertCount = async () => {
+      if (user) {
         const { data, error } = await supabase
           .from('property_alerts')
           .select('*')
@@ -54,22 +62,30 @@ export const NotificationButton = () => {
           return;
         }
         
-        setAlertCount(data.length);
+        setAlertCount(data?.length || 0);
         
         // Pre-fill email if user is logged in
+        if (user.email) {
+          setEmail(user.email);
+        }
+        
+        // Try to get profile data
         const { data: profiles } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
           
-        if (profiles && user.email) {
-          setEmail(user.email);
+        if (profiles) {
+          // Use any saved preferences if available
         }
-      };
-      
-      fetchAlertCount();
-    }
+      } else {
+        // Reset alert count for non-logged in users
+        setAlertCount(0);
+      }
+    };
+    
+    fetchAlertCount();
   }, [user]);
 
   const validateForm = () => {
@@ -106,6 +122,12 @@ export const NotificationButton = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check if user is logged in
+    if (!user) {
+      setShowAuthDialog(true);
+      return;
+    }
+    
     if (!validateForm()) return;
     
     setIsSubmitting(true);
@@ -114,13 +136,14 @@ export const NotificationButton = () => {
       // For each property type, create an alert
       for (const propertyType of propertyTypes) {
         const alertData = {
-          user_id: user?.id ?? null,
+          user_id: user.id,
           location,
           property_type: propertyType,
           listing_type: listingType || null,
           min_price: minPrice ? parseFloat(minPrice) : null,
           max_price: maxPrice ? parseFloat(maxPrice) : null,
           is_active: true,
+          created_at: new Date().toISOString()
         };
 
         console.log("Saving alert:", alertData);
@@ -132,6 +155,17 @@ export const NotificationButton = () => {
           throw new Error(error.message);
         }
       }
+      
+      // Track this action
+      await supabase.from('user_analytics').insert({
+        user_id: user.id,
+        event_type: 'alert_created',
+        details: {
+          property_types: propertyTypes,
+          listing_type: listingType,
+          location: location
+        }
+      });
       
       toast({
         title: "Notification preferences saved",
@@ -147,15 +181,13 @@ export const NotificationButton = () => {
       setListingType("");
       
       // Update alert count
-      if (user) {
-        const { data } = await supabase
-          .from('property_alerts')
-          .select('*')
-          .eq('user_id', user.id);
-          
-        if (data) {
-          setAlertCount(data.length);
-        }
+      const { data } = await supabase
+        .from('property_alerts')
+        .select('*')
+        .eq('user_id', user.id);
+        
+      if (data) {
+        setAlertCount(data.length);
       }
     } catch (error: any) {
       console.error('Error:', error);
@@ -177,13 +209,42 @@ export const NotificationButton = () => {
         aria-label="Get property notifications"
       >
         <Bell className="h-6 w-6" />
-        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-          {alertCount}
-        </span>
+        {alertCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            {alertCount}
+          </span>
+        )}
         <span className="absolute left-0 -ml-28 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
           Property Alerts
         </span>
       </button>
+
+      {/* Authentication Required Dialog */}
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5" /> Authentication Required
+            </DialogTitle>
+            <DialogDescription>
+              You need to sign in or create an account to set up property alerts.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4 flex flex-col gap-4">
+            <p className="text-sm text-gray-600">
+              Creating an account helps us personalize your property alerts and send notifications directly to you.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAuthDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={redirectToAuth}>
+                Sign In / Sign Up
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md">
@@ -193,6 +254,16 @@ export const NotificationButton = () => {
               Stay updated with new properties that match your criteria. We'll notify you when something perfect comes along.
             </DialogDescription>
           </DialogHeader>
+          
+          {!user && (
+            <Alert variant="warning" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Authentication Required</AlertTitle>
+              <AlertDescription>
+                You'll need to sign in before setting up property alerts. All your preferences will be preserved.
+              </AlertDescription>
+            </Alert>
+          )}
           
           <form onSubmit={handleSubmit} className="space-y-4 py-4">
             <div className="space-y-2">
@@ -208,6 +279,7 @@ export const NotificationButton = () => {
                 required
                 disabled={Boolean(user)}
               />
+              {user && <p className="text-xs text-gray-500">Email from your account</p>}
             </div>
             
             <div className="space-y-2">

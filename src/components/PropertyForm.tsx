@@ -6,6 +6,8 @@ import { SellerPropertyForm } from "./property-forms/SellerPropertyForm";
 import { Check, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
 
 const steps = [
   { id: "intent", label: "Purpose" },
@@ -15,6 +17,27 @@ const steps = [
 export const PropertyForm = () => {
   const [userIntent, setUserIntent] = useState<"buy" | "sell">("buy");
   const [currentStep, setCurrentStep] = useState<number>(0);
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  
+  // Handle direct navigation with query parameters
+  useEffect(() => {
+    const intentParam = searchParams.get("intent");
+    if (intentParam === "buy" || intentParam === "sell") {
+      setUserIntent(intentParam);
+      // Auto-advance to step 2 if we have an intent parameter
+      setCurrentStep(1);
+    }
+    
+    // Check for hash in URL to jump to specific section
+    if (location.hash === "#property-form") {
+      // Smooth scroll to the form
+      const formElement = document.getElementById("property-form");
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, [location, searchParams]);
 
   const handleNext = () => {
     setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
