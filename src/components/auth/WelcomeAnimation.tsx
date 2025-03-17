@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { Sparkles, Confetti, PartyPopper, Check } from "lucide-react";
+import { Sparkles, PartyPopper, Star, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -93,7 +93,7 @@ export const WelcomeAnimation = ({ onComplete }: WelcomeAnimationProps) => {
                     ) : i % 3 === 1 ? (
                       <PartyPopper className="text-green-500" />
                     ) : (
-                      <Confetti className="text-blue-500" />
+                      <Star className="text-blue-500" />
                     )}
                   </motion.div>
                 ))}
