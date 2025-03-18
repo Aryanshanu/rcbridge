@@ -114,15 +114,15 @@ export const Hero = () => {
           
           {/* Trust Indicators - Updated with revised numbers */}
           <div className="mt-12 flex flex-wrap justify-center gap-8 md:gap-16 animate-fade-in delay-600">
-            <div className="flex flex-col items-center text-white bg-white/10 px-6 py-4 rounded-lg backdrop-blur-sm shadow-lg hover:bg-white/15 transition-all duration-300 hover:scale-105">
+            <div className="flex flex-col items-center text-white bg-white/10 px-6 py-4 rounded-lg backdrop-blur-sm shadow-lg">
               <span className="font-display font-bold text-3xl md:text-4xl">10+</span>
               <span className="text-gray-200 text-sm md:text-base">Years of Service</span>
             </div>
-            <div className="flex flex-col items-center text-white bg-white/10 px-6 py-4 rounded-lg backdrop-blur-sm shadow-lg hover:bg-white/15 transition-all duration-300 hover:scale-105">
+            <div className="flex flex-col items-center text-white bg-white/10 px-6 py-4 rounded-lg backdrop-blur-sm shadow-lg">
               <span className="font-display font-bold text-3xl md:text-4xl">₹200Cr+</span>
               <span className="text-gray-200 text-sm md:text-base">Transactions</span>
             </div>
-            <div className="flex flex-col items-center text-white bg-white/10 px-6 py-4 rounded-lg backdrop-blur-sm shadow-lg hover:bg-white/15 transition-all duration-300 hover:scale-105">
+            <div className="flex flex-col items-center text-white bg-white/10 px-6 py-4 rounded-lg backdrop-blur-sm shadow-lg">
               <span className="font-display font-bold text-3xl md:text-4xl">180+</span>
               <span className="text-gray-200 text-sm md:text-base">Successful Deals</span>
             </div>
