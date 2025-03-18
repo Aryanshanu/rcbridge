@@ -71,25 +71,25 @@ export const ServicesTab = () => {
       title: "Time Efficiency",
       description: "Save valuable time with our curated property recommendations that match your exact requirements.",
       icon: <Clock className="h-10 w-10 text-primary" />,
-      color: "bg-[#FEF7CD]"
+      color: "bg-gradient-to-br from-[#FEF7CD] to-[#FFEFB0]"
     },
     {
       title: "Value Preservation",
       description: "Maintain property value through controlled exposure and direct transactions without public listings.",
       icon: <Shield className="h-10 w-10 text-primary" />,
-      color: "bg-[#FFDEE2]"
+      color: "bg-gradient-to-br from-[#FFDEE2] to-[#FFD0D6]"
     },
     {
       title: "Expert Guidance",
       description: "Benefit from our decade of industry expertise and deep market knowledge throughout your journey.",
       icon: <Users className="h-10 w-10 text-primary" />,
-      color: "bg-[#FDE1D3]"
+      color: "bg-gradient-to-br from-[#FDE1D3] to-[#FBD3C1]"
     },
     {
       title: "Zero Brokerage",
       description: "Eliminate unnecessary brokerage fees through our direct buyer-seller connection platform.",
       icon: <Check className="h-10 w-10 text-primary" />,
-      color: "bg-[#F2FCE2]"
+      color: "bg-gradient-to-br from-[#F2FCE2] to-[#E2EDD0]"
     }
   ];
 
@@ -122,9 +122,11 @@ export const ServicesTab = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-3xl font-bold text-gray-900 mb-4"
+            className="text-3xl font-bold text-gray-900 mb-4 relative inline-block"
           >
+            <span className="absolute -left-6 -top-6 text-4xl text-primary/10">❝</span>
             Our Service Categories
+            <span className="absolute -right-6 -bottom-6 text-4xl text-primary/10">❞</span>
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0 }}
@@ -144,8 +146,8 @@ export const ServicesTab = () => {
         >
           {serviceCategories.map((category, index) => (
             <motion.div key={index} variants={itemVariants}>
-              <Card className="overflow-hidden hover-card border-0 shadow-lg hover:shadow-xl transition-all duration-300 h-full">
-                <div className={`${category.color} p-6`}>
+              <Card className="overflow-hidden hover-card border-0 shadow-lg hover:shadow-xl transition-all duration-300 h-full transform hover:-translate-y-2">
+                <div className={`${category.color} p-6 bg-gradient-to-br`}>
                   {category.icon}
                 </div>
                 <div className="p-6 flex flex-col h-full">
@@ -159,7 +161,7 @@ export const ServicesTab = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full bg-primary hover:bg-primary/90 mt-auto">
+                  <Button className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 mt-auto shadow-md hover:shadow-lg">
                     Learn More
                   </Button>
                 </div>
@@ -200,9 +202,9 @@ export const ServicesTab = () => {
             <motion.div 
               key={index} 
               variants={itemVariants}
-              className={`${benefit.color} rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}
+              className={`${benefit.color} rounded-xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-white/50`}
             >
-              <div className="mb-5">
+              <div className="mb-5 bg-white/30 p-3 rounded-full inline-block">
                 {benefit.icon}
               </div>
               <h3 className="text-xl font-semibold mb-3">{benefit.title}</h3>

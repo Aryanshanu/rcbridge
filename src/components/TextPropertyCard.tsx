@@ -89,14 +89,14 @@ export const TextPropertyCard = ({
   return (
     <div 
       className={cn(
-        "bg-white rounded-lg shadow-md border border-gray-200 p-4 hover:shadow-lg transition-shadow duration-300",
+        "bg-white rounded-lg shadow-md border border-gray-200 p-4 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1",
         className
       )}
     >
       <div className="flex justify-between items-start mb-2">
         <h3 className="text-lg font-bold text-gray-900 line-clamp-2">{property.title}</h3>
         <div 
-          className="px-2 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap ml-2 flex-shrink-0"
+          className="px-2 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap ml-2 flex-shrink-0 shadow-md"
           style={{ backgroundColor: propertyColor }}
         >
           {propertyType === 'commercial' ? (
@@ -115,7 +115,7 @@ export const TextPropertyCard = ({
       </div>
       
       <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="flex items-center text-[#1e40af] font-bold text-xl">
+        <div className="flex items-center text-primary font-bold text-xl">
           {property.price}
         </div>
         
@@ -149,8 +149,8 @@ export const TextPropertyCard = ({
             <button 
               onClick={handleLike}
               className={cn(
-                "flex flex-col items-center justify-center p-2 rounded-md transition-colors duration-200",
-                isLiked ? "bg-red-50 text-red-500" : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                "flex flex-col items-center justify-center p-2 rounded-md transition-all duration-200 hover:scale-105",
+                isLiked ? "bg-red-50 text-red-500 shadow-md" : "bg-gray-50 text-gray-500 hover:bg-gray-100"
               )}
             >
               <Heart className={cn("h-4 w-4", isLiked && "fill-red-500")} />
@@ -160,8 +160,8 @@ export const TextPropertyCard = ({
             <button 
               onClick={handleSave}
               className={cn(
-                "flex flex-col items-center justify-center p-2 rounded-md transition-colors duration-200",
-                isSaved ? "bg-blue-50 text-blue-500" : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                "flex flex-col items-center justify-center p-2 rounded-md transition-all duration-200 hover:scale-105",
+                isSaved ? "bg-blue-50 text-blue-500 shadow-md" : "bg-gray-50 text-gray-500 hover:bg-gray-100"
               )}
             >
               <Bookmark className={cn("h-4 w-4", isSaved && "fill-blue-500")} />
@@ -169,7 +169,7 @@ export const TextPropertyCard = ({
             </button>
             
             <button 
-              className="flex flex-col items-center justify-center p-2 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors duration-200"
+              className="flex flex-col items-center justify-center p-2 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 transition-all duration-200 hover:scale-105"
               onClick={handleWantToKnowMore}
             >
               <Info className="h-4 w-4" />
@@ -179,7 +179,7 @@ export const TextPropertyCard = ({
           
           <Button 
             onClick={handleWantToKnowMore}
-            className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-md transition-all duration-300"
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white py-2 rounded-md transition-all duration-300 shadow-md hover:shadow-lg"
           >
             <Info className="h-4 w-4" />
             Want to Know More
@@ -187,7 +187,7 @@ export const TextPropertyCard = ({
           
           {/* Authentication Dialog */}
           <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Authentication Required</DialogTitle>
                 <DialogDescription>
@@ -198,9 +198,12 @@ export const TextPropertyCard = ({
                 <Button variant="outline" onClick={() => setShowAuthDialog(false)}>
                   Cancel
                 </Button>
-                <Button onClick={() => {
-                  window.location.href = "/login";
-                }}>
+                <Button 
+                  className="bg-primary hover:bg-primary/90" 
+                  onClick={() => {
+                    window.location.href = "/login";
+                  }}
+                >
                   Sign In
                 </Button>
               </div>

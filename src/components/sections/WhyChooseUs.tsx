@@ -28,8 +28,10 @@ export const WhyChooseUs = () => {
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4 relative inline-block">
+            <span className="absolute -left-6 -top-6 text-5xl text-primary/10">❝</span>
             RC Bridge: A Decade of Excellence in Real Estate 🏡
+            <span className="absolute -right-6 -bottom-6 text-5xl text-primary/10">❞</span>
           </h2>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
             With 10+ years of expertise in the real estate market, RC Bridge has built a trusted and 
@@ -47,12 +49,12 @@ export const WhyChooseUs = () => {
           viewport={{ once: true, amount: 0.2 }}
         >
           <motion.div 
-            className="flex gap-4 p-6 bg-gray-50 rounded-lg border border-gray-100 hover:border-primary/30 hover:shadow-md transition-all"
+            className="flex gap-4 p-6 bg-gradient-to-br from-white to-gray-50 rounded-lg border border-gray-100 hover:border-primary/30 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
             variants={itemVariants}
           >
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Clock className="h-6 w-6 text-primary" />
+              <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center shadow-inner">
+                <Clock className="h-7 w-7 text-primary" />
               </div>
             </div>
             <div>
@@ -64,29 +66,29 @@ export const WhyChooseUs = () => {
           </motion.div>
 
           <motion.div 
-            className="flex gap-4 p-6 bg-gray-50 rounded-lg border border-gray-100 hover:border-primary/30 hover:shadow-md transition-all"
+            className="flex gap-4 p-6 bg-gradient-to-br from-white to-gray-50 rounded-lg border border-gray-100 hover:border-primary/30 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
             variants={itemVariants}
           >
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Check className="h-6 w-6 text-primary" />
+              <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center shadow-inner">
+                <Check className="h-7 w-7 text-primary" />
               </div>
             </div>
             <div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Proven Track Record</h3>
               <p className="text-gray-600">
-                Successfully facilitated ₹750+ Crores in transactions while preserving property value.
+                Successfully facilitated ₹200+ Crores in transactions while preserving property value.
               </p>
             </div>
           </motion.div>
 
           <motion.div 
-            className="flex gap-4 p-6 bg-gray-50 rounded-lg border border-gray-100 hover:border-primary/30 hover:shadow-md transition-all"
+            className="flex gap-4 p-6 bg-gradient-to-br from-white to-gray-50 rounded-lg border border-gray-100 hover:border-primary/30 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
             variants={itemVariants}
           >
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Shield className="h-6 w-6 text-primary" />
+              <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center shadow-inner">
+                <Shield className="h-7 w-7 text-primary" />
               </div>
             </div>
             <div>
@@ -98,12 +100,12 @@ export const WhyChooseUs = () => {
           </motion.div>
 
           <motion.div 
-            className="flex gap-4 p-6 bg-gray-50 rounded-lg border border-gray-100 hover:border-primary/30 hover:shadow-md transition-all"
+            className="flex gap-4 p-6 bg-gradient-to-br from-white to-gray-50 rounded-lg border border-gray-100 hover:border-primary/30 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
             variants={itemVariants}
           >
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Users className="h-6 w-6 text-primary" />
+              <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center shadow-inner">
+                <Users className="h-7 w-7 text-primary" />
               </div>
             </div>
             <div>
@@ -169,7 +171,7 @@ export const WhyChooseUs = () => {
         </div>
 
         <div className="mt-12 text-center">
-          <div className="inline-block bg-gray-100 p-4 rounded-lg">
+          <div className="inline-block bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-lg shadow-md border border-gray-100">
             <p className="text-lg text-gray-800 font-medium italic">
               RC Bridge isn't just a platform—it's a revolution in real estate, ensuring buyers, sellers, and investors get the best deals with maximum value retention. 🚀
             </p>
