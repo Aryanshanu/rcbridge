@@ -79,7 +79,7 @@ export const LazyImage = ({
 
   // Immediately check if the URL is valid by creating an Image object
   useEffect(() => {
-    if (src !== placeholderSrc && src !== "" && isInView) {
+    if (src && src !== placeholderSrc && src !== "" && isInView) {
       const img = new Image();
       img.src = src;
       img.onload = () => {
@@ -110,6 +110,7 @@ export const LazyImage = ({
               isLoaded && !imgError ? "opacity-0" : "opacity-100"
             )}
             aria-hidden="true"
+            onError={() => console.log("Placeholder image failed to load")}
           />
         </div>
       )}

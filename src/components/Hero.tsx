@@ -112,7 +112,7 @@ export const Hero = () => {
             </button>
           </div>
           
-          {/* Trust Indicators - Updated with revised numbers */}
+          {/* Trust Indicators */}
           <div className="mt-12 flex flex-wrap justify-center gap-8 md:gap-16 animate-fade-in delay-600">
             <div className="flex flex-col items-center text-white bg-white/10 px-6 py-4 rounded-lg backdrop-blur-sm shadow-lg">
               <span className="font-display font-bold text-3xl md:text-4xl">10+</span>
