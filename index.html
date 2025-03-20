@@ -11,8 +11,34 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
     <!-- Preload critical assets -->
     <link rel="preload" href="/placeholder.svg" as="image" type="image/svg+xml" />
+    
+    <!-- Add prefetch for common routes -->
+    <link rel="prefetch" href="/properties" />
+    <link rel="prefetch" href="/services" />
+    
+    <!-- Fallback for no JavaScript -->
+    <noscript>
+      <style>
+        .noscript-message {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          text-align: center;
+          font-family: sans-serif;
+          padding: 20px;
+        }
+      </style>
+      <div class="noscript-message">
+        <div>
+          <h1>JavaScript Required</h1>
+          <p>We're sorry, but RC Bridge requires JavaScript to function properly. Please enable JavaScript to continue.</p>
+        </div>
+      </div>
+    </noscript>
   </head>
 
   <body>

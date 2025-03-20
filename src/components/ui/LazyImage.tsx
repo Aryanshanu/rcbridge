@@ -34,33 +34,43 @@ export const LazyImage = ({
       return;
     }
     
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry.isIntersecting) {
-          setIsInView(true);
+    try {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const [entry] = entries;
+          if (entry.isIntersecting) {
+            setIsInView(true);
+            observer.disconnect();
+          }
+        },
+        {
+          rootMargin: "200px", // Load when within 200px of viewport
+          threshold: 0.01,
+        }
+      );
+
+      if (imgRef.current) {
+        observer.observe(imgRef.current);
+      }
+
+      return () => {
+        if (observer) {
           observer.disconnect();
         }
-      },
-      {
-        rootMargin: "200px", // Load when within 200px of viewport
-        threshold: 0.01,
-      }
-    );
-
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
+      };
+    } catch (error) {
+      console.error("IntersectionObserver error:", error);
+      // Fallback: just show the image
+      setIsInView(true);
     }
-
-    return () => {
-      observer.disconnect();
-    };
   }, [priority]);
 
   useEffect(() => {
     // Reset error state when src changes
-    setImgError(false);
-    setIsLoaded(false);
+    if (src) {
+      setImgError(false);
+      setIsLoaded(false);
+    }
   }, [src]);
 
   const aspectRatioClasses = {
@@ -77,17 +87,36 @@ export const LazyImage = ({
     setIsLoaded(false);
   };
 
+  const handlePlaceholderError = () => {
+    console.warn("Placeholder image failed to load:", placeholderSrc);
+  };
+
   // Immediately check if the URL is valid by creating an Image object
   useEffect(() => {
     if (src && src !== placeholderSrc && src !== "" && isInView) {
-      const img = new Image();
-      img.src = src;
-      img.onload = () => {
-        if (isInView) setIsLoaded(true);
-      };
-      img.onerror = handleError;
+      try {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => {
+          if (isInView) setIsLoaded(true);
+        };
+        img.onerror = handleError;
+        
+        // Set a fallback timeout in case image loading takes too long
+        const timeout = setTimeout(() => {
+          if (!isLoaded) {
+            console.warn(`Image loading timeout for: ${src}`);
+            setIsLoaded(true); // Show the image anyway
+          }
+        }, 5000);
+        
+        return () => clearTimeout(timeout);
+      } catch (error) {
+        console.error("Error loading image:", error);
+        handleError();
+      }
     }
-  }, [src, placeholderSrc, isInView]);
+  }, [src, placeholderSrc, isInView, isLoaded]);
 
   return (
     <div
@@ -102,7 +131,7 @@ export const LazyImage = ({
       {(!isLoaded || imgError) && (
         <div className="absolute inset-0 bg-gray-200 animate-pulse">
           <img
-            src={placeholderSrc}
+            src={placeholderSrc || "/placeholder.svg"}
             alt={alt}
             className={cn(
               "w-full h-full absolute inset-0 transition-opacity duration-500",
@@ -110,13 +139,13 @@ export const LazyImage = ({
               isLoaded && !imgError ? "opacity-0" : "opacity-100"
             )}
             aria-hidden="true"
-            onError={() => console.log("Placeholder image failed to load")}
+            onError={handlePlaceholderError}
           />
         </div>
       )}
       
       {/* Main image */}
-      {isInView && !imgError && (
+      {isInView && !imgError && src && (
         <img
           src={src}
           alt={alt}

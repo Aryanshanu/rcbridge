@@ -7,11 +7,12 @@ import { SEO } from "@/components/SEO";
 import { CallToAction } from "@/components/sections/CallToAction";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { PropertiesTab } from "@/components/tabs/PropertiesTab";
-import { Home, Building, Filter, Search, MapPin, ArrowRight, Moon, Sun, Grid, LayoutList } from "lucide-react";
+import { Home, Building, Filter, Search, MapPin, ArrowRight, Moon, Sun, Grid, LayoutList, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Properties = () => {
   const location = useLocation();
@@ -27,6 +28,9 @@ const Properties = () => {
     // Check user's preferred view mode
     return localStorage.getItem('viewMode') as "grid" | "table" || "grid";
   });
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   
   const quickFilters = [
     { id: "location", label: "Hyderabad", icon: <MapPin className="h-4 w-4 mr-1 text-primary" />, value: "hyderabad" },
@@ -45,20 +49,37 @@ const Properties = () => {
   }, [isDarkMode]);
 
   useEffect(() => {
-    if (selectedPropertyId) {
-      console.log("Selected property ID:", selectedPropertyId);
-      
-      const propertiesSection = document.getElementById('properties-section');
-      if (propertiesSection) {
-        propertiesSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
+    // Simulate loading and check for errors
+    setIsLoading(true);
+    setHasError(false);
+    
+    try {
+      // Wait for component to be fully mounted
+      const timer = setTimeout(() => {
+        if (selectedPropertyId) {
+          console.log("Selected property ID:", selectedPropertyId);
+          
+          const propertiesSection = document.getElementById('properties-section');
+          if (propertiesSection) {
+            propertiesSection.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
 
-    const params = new URLSearchParams(location.search);
-    const query = params.get('q');
-    if (query) {
-      setSearchQuery(query);
-      applySearch(query);
+        const params = new URLSearchParams(location.search);
+        const query = params.get('q');
+        if (query) {
+          setSearchQuery(query);
+          applySearch(query);
+        }
+        
+        setIsLoading(false);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    } catch (error) {
+      console.error("Error loading properties page:", error);
+      setHasError(true);
+      setIsLoading(false);
     }
   }, [selectedPropertyId, location.search]);
 
@@ -128,6 +149,34 @@ const Properties = () => {
   const isFilterActive = (filterId: string, value: string) => {
     return activeFilters[filterId] === value;
   };
+
+  // If there's an error, show fallback UI
+  if (hasError) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-screen-md mx-auto px-4 py-16">
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              There was an error loading the properties page. Please try refreshing the page.
+            </AlertDescription>
+          </Alert>
+          
+          <div className="flex justify-center mt-8">
+            <Button onClick={() => window.location.reload()} className="mr-4">
+              Refresh Page
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/')}>
+              Return to Home
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
   
   return (
     <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gradient-to-b from-gray-50 to-white'} w-full max-w-full transition-colors duration-300`}>
@@ -200,127 +249,135 @@ const Properties = () => {
       </div>
       
       <main className={`w-full max-w-full px-4 sm:px-6 lg:px-12 xl:px-16 py-8 sm:py-12 ${isDarkMode ? 'text-gray-200' : ''}`}>
-        <Breadcrumb className="mb-8">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/" className="flex items-center hover:text-primary">
-                <Home className="h-4 w-4 mr-1" />
-                Home
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="flex items-center font-medium">
-                <Building className="h-4 w-4 mr-1 text-primary" />
-                Properties
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        
-        <motion.div 
-          className="flex flex-wrap gap-3 mb-8"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} self-center`}>Quick filters:</span>
-          {quickFilters.map((filter) => (
-            <Button 
-              key={filter.id}
-              variant="outline" 
-              size="sm" 
-              className={`rounded-full ${
-                isFilterActive(filter.id, filter.value) 
-                  ? "bg-primary text-white border-primary hover:bg-primary/90" 
-                  : isDarkMode 
-                    ? "bg-gray-800 border border-gray-700 hover:bg-gray-700 text-gray-200" 
-                    : "bg-gray-50 border border-gray-300 hover:bg-gray-100"
-              }`}
-              onClick={() => toggleQuickFilter(filter)}
-            >
-              {filter.icon}
-              {filter.label}
-            </Button>
-          ))}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className={`rounded-full ${
-              isDarkMode 
-                ? "text-blue-400 bg-blue-900/30 border border-blue-800/50 hover:bg-blue-900/50" 
-                : "text-primary bg-primary/5 border border-primary/20 hover:bg-primary/10"
-            }`}
-            onClick={applyAllFilters}
-          >
-            <Filter className="h-4 w-4 mr-1" />
-            More Filters
-          </Button>
-        </motion.div>
-        
-        <motion.section 
-          id="properties-section" 
-          className={`mb-16 w-full ${
-            isDarkMode 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-100'
-          } rounded-xl shadow-sm border p-6 md:p-8`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-        >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-            <div>
-              <h2 className={`text-2xl md:text-3xl font-display font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Our Properties
-              </h2>
-              <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
-                Find your dream property from our carefully curated selection
-              </p>
-              {Object.keys(activeFilters).length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {Object.entries(activeFilters).map(([key, value]) => (
-                    <Badge 
-                      key={key} 
-                      variant={isDarkMode ? "outline" : "secondary"}
-                      className={isDarkMode ? "bg-blue-900/50 text-blue-200 border-blue-700" : ""} 
-                    >
-                      {key}: {value}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            <div className="mt-4 md:mt-0 flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className={`${isDarkMode ? 'border-gray-600 text-gray-300' : ''} ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : ''}`}
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid className="h-4 w-4 mr-2" />
-                Grid
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className={`${isDarkMode ? 'border-gray-600 text-gray-300' : ''} ${viewMode === 'table' ? 'bg-primary/10 text-primary' : ''}`}
-                onClick={() => setViewMode('table')}
-              >
-                <LayoutList className="h-4 w-4 mr-2" />
-                Table
-              </Button>
-            </div>
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
           </div>
-          
-          <PropertiesTab 
-            selectedPropertyId={selectedPropertyId} 
-            filters={activeFilters} 
-            viewMode={viewMode}
-            isDarkMode={isDarkMode}
-          />
-        </motion.section>
+        ) : (
+          <>
+            <Breadcrumb className="mb-8">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/" className="flex items-center hover:text-primary">
+                    <Home className="h-4 w-4 mr-1" />
+                    Home
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="flex items-center font-medium">
+                    <Building className="h-4 w-4 mr-1 text-primary" />
+                    Properties
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            
+            <motion.div 
+              className="flex flex-wrap gap-3 mb-8"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
+              <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} self-center`}>Quick filters:</span>
+              {quickFilters.map((filter) => (
+                <Button 
+                  key={filter.id}
+                  variant="outline" 
+                  size="sm" 
+                  className={`rounded-full ${
+                    isFilterActive(filter.id, filter.value) 
+                      ? "bg-primary text-white border-primary hover:bg-primary/90" 
+                      : isDarkMode 
+                        ? "bg-gray-800 border border-gray-700 hover:bg-gray-700 text-gray-200" 
+                        : "bg-gray-50 border border-gray-300 hover:bg-gray-100"
+                  }`}
+                  onClick={() => toggleQuickFilter(filter)}
+                >
+                  {filter.icon}
+                  {filter.label}
+                </Button>
+              ))}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={`rounded-full ${
+                  isDarkMode 
+                    ? "text-blue-400 bg-blue-900/30 border border-blue-800/50 hover:bg-blue-900/50" 
+                    : "text-primary bg-primary/5 border border-primary/20 hover:bg-primary/10"
+                }`}
+                onClick={applyAllFilters}
+              >
+                <Filter className="h-4 w-4 mr-1" />
+                More Filters
+              </Button>
+            </motion.div>
+            
+            <motion.section 
+              id="properties-section" 
+              className={`mb-16 w-full ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-700' 
+                  : 'bg-white border-gray-100'
+              } rounded-xl shadow-sm border p-6 md:p-8`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+            >
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+                <div>
+                  <h2 className={`text-2xl md:text-3xl font-display font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+                    Our Properties
+                  </h2>
+                  <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                    Find your dream property from our carefully curated selection
+                  </p>
+                  {Object.keys(activeFilters).length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {Object.entries(activeFilters).map(([key, value]) => (
+                        <Badge 
+                          key={key} 
+                          variant={isDarkMode ? "outline" : "secondary"}
+                          className={isDarkMode ? "bg-blue-900/50 text-blue-200 border-blue-700" : ""} 
+                        >
+                          {key}: {value}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="mt-4 md:mt-0 flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className={`${isDarkMode ? 'border-gray-600 text-gray-300' : ''} ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : ''}`}
+                    onClick={() => setViewMode('grid')}
+                  >
+                    <Grid className="h-4 w-4 mr-2" />
+                    Grid
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className={`${isDarkMode ? 'border-gray-600 text-gray-300' : ''} ${viewMode === 'table' ? 'bg-primary/10 text-primary' : ''}`}
+                    onClick={() => setViewMode('table')}
+                  >
+                    <LayoutList className="h-4 w-4 mr-2" />
+                    Table
+                  </Button>
+                </div>
+              </div>
+              
+              <PropertiesTab 
+                selectedPropertyId={selectedPropertyId} 
+                filters={activeFilters} 
+                viewMode={viewMode}
+                isDarkMode={isDarkMode}
+              />
+            </motion.section>
+          </>
+        )}
       </main>
       
       <CallToAction />
