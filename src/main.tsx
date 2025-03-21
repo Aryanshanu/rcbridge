@@ -157,6 +157,16 @@ window.addEventListener('offline', () => {
 const root = createRoot(rootElement!);
 try {
   root.render(<App />);
+  
+  // Handle any redirect from direct navigation (addressed by the script in index.html)
+  window.addEventListener('load', () => {
+    const redirectPath = sessionStorage.getItem('redirectPath');
+    if (redirectPath) {
+      // Clear the redirect path from storage
+      sessionStorage.removeItem('redirectPath');
+      // The App component will handle the routing internally via BrowserRouter
+    }
+  });
 } catch (error) {
   console.error('Error rendering app:', error);
   if (rootElement) {

@@ -40,6 +40,11 @@ const ErrorFallback = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  useEffect(() => {
+    // Report 404 error
+    console.error(`Page not found: ${location.pathname}`);
+  }, [location.pathname]);
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 text-center">
@@ -66,6 +71,25 @@ const ErrorFallback = () => {
       </div>
     </div>
   );
+};
+
+// App Router component to handle redirect paths from sessionStorage
+const AppRouter = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Check if there's a redirect path in sessionStorage
+    const redirectPath = sessionStorage.getItem('redirectPath');
+    if (redirectPath && location.pathname === '/') {
+      // Clear the redirect path
+      sessionStorage.removeItem('redirectPath');
+      // Navigate to the stored path
+      navigate(redirectPath);
+    }
+  }, [location.pathname, navigate]);
+  
+  return null;
 };
 
 // Protected Route Component
@@ -127,6 +151,8 @@ const App = () => {
               <Toaster />
               <Sonner />
               <BrowserRouter>
+                {/* Router to handle redirects */}
+                <AppRouter />
                 <WelcomeWrapper>
                   <Suspense fallback={<PageLoading />}>
                     {isAppReady ? (
