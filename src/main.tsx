@@ -1,4 +1,3 @@
-
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
@@ -162,9 +161,8 @@ try {
   window.addEventListener('load', () => {
     const redirectPath = sessionStorage.getItem('redirectPath');
     if (redirectPath) {
-      // Clear the redirect path from storage
-      sessionStorage.removeItem('redirectPath');
-      // The App component will handle the routing internally via BrowserRouter
+      console.log("Found redirectPath in sessionStorage:", redirectPath);
+      // The AppRouter component will handle the actual navigation
     }
   });
 } catch (error) {

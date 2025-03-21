@@ -85,7 +85,8 @@ const AppRouter = () => {
       // Clear the redirect path
       sessionStorage.removeItem('redirectPath');
       // Navigate to the stored path
-      navigate(redirectPath);
+      navigate(redirectPath, { replace: true });
+      console.log("Redirecting to:", redirectPath);
     }
   }, [location.pathname, navigate]);
   
