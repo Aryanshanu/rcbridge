@@ -82,11 +82,17 @@ const AppRouter = () => {
     // Check if there's a redirect path in sessionStorage
     const redirectPath = sessionStorage.getItem('redirectPath');
     if (redirectPath && location.pathname === '/') {
-      // Clear the redirect path
+      console.log("Found redirectPath in sessionStorage:", redirectPath);
+      
+      // Clear the redirect path before navigating to prevent loops
       sessionStorage.removeItem('redirectPath');
-      // Navigate to the stored path
-      navigate(redirectPath, { replace: true });
-      console.log("Redirecting to:", redirectPath);
+      
+      // Small timeout to ensure the app is fully loaded
+      setTimeout(() => {
+        // Use replace: true to replace the current history entry
+        navigate(redirectPath, { replace: true });
+        console.log("Navigated to:", redirectPath);
+      }, 50);
     }
   }, [location.pathname, navigate]);
   
@@ -135,6 +141,7 @@ const App = () => {
     // Mark app as ready after a short delay to ensure components are loaded
     const timer = setTimeout(() => {
       setIsAppReady(true);
+      console.log("App ready for navigation");
     }, 200);
     
     return () => {

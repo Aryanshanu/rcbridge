@@ -9,7 +9,7 @@
     // Store the URL the user tried to access
     sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search);
     // Redirect to the index page where the SPA will load
-    window.location.href = '/';
+    window.location.replace('/');
   </script>
   <style>
     body {

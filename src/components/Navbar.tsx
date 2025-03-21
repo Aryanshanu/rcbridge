@@ -37,7 +37,8 @@ export const Navbar = () => {
   };
 
   const handleContactClick = () => {
-    window.location.href = "mailto:aryan@rcbridge.co";
+    // Use React Router navigation instead of directly changing window.location
+    navigate('/contact');
     setIsOpen(false);
   };
 

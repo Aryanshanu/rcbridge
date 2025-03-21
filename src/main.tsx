@@ -1,3 +1,4 @@
+
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
@@ -7,7 +8,7 @@ document.head.innerHTML += `
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 `;
 
-// Add a custom style to make sure the root div takes full width
+// Add global styles
 const style = document.createElement('style');
 style.innerHTML = `
   #root {
@@ -52,78 +53,6 @@ style.innerHTML = `
     z-index: 9999;
     transition: opacity 0.3s ease-out;
   }
-  
-  /* Improve image rendering */
-  img {
-    image-rendering: auto;
-  }
-  
-  /* Add smooth transitions */
-  * {
-    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-    transition-duration: 300ms;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  
-  /* Fix for mobile viewport issues */
-  @media screen and (max-width: 768px) {
-    body, html, #root {
-      width: 100%;
-      max-width: 100%;
-      overflow-x: hidden;
-    }
-  }
-  
-  /* Error page styling */
-  .error-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    padding: 1rem;
-    text-align: center;
-  }
-  
-  /* Critical CSS for initial render */
-  .bg-primary {
-    background-color: #4f46e5;
-  }
-  
-  .text-white {
-    color: white;
-  }
-  
-  .animate-spin {
-    animation: spin 1s linear infinite;
-  }
-  
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-  
-  /* Offline fallback */
-  .offline-alert {
-    position: fixed;
-    bottom: 1rem;
-    left: 1rem;
-    right: 1rem;
-    padding: 1rem;
-    background-color: #f59e0b;
-    color: white;
-    border-radius: 0.5rem;
-    z-index: 9999;
-    display: none;
-  }
-  
-  html.offline .offline-alert {
-    display: block;
-  }
 `;
 document.head.appendChild(style);
 
@@ -133,38 +62,26 @@ loadingElement.className = 'page-loading';
 loadingElement.innerHTML = '<div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>';
 document.body.appendChild(loadingElement);
 
-// Add offline indicator
-const offlineElement = document.createElement('div');
-offlineElement.className = 'offline-alert';
-offlineElement.innerHTML = 'You are currently offline. Some features may not work properly.';
-document.body.appendChild(offlineElement);
-
-// Create root and add no-fouc class
+// Create root with error handling
 const rootElement = document.getElementById('root');
 if (rootElement) rootElement.classList.add('no-fouc');
 
-// Handle network status
-window.addEventListener('online', () => {
-  document.documentElement.classList.remove('offline');
-});
-
-window.addEventListener('offline', () => {
-  document.documentElement.classList.add('offline');
-});
-
 // Initialize app with error handling
 const root = createRoot(rootElement!);
+
+// Log the current URL for debugging
+console.log('Current URL at load time:', window.location.pathname + window.location.search);
+console.log('Checking for redirectPath in sessionStorage');
+const redirectPath = sessionStorage.getItem('redirectPath');
+if (redirectPath) {
+  console.log('Found redirectPath:', redirectPath);
+} else {
+  console.log('No redirectPath found in sessionStorage');
+}
+
 try {
   root.render(<App />);
-  
-  // Handle any redirect from direct navigation (addressed by the script in index.html)
-  window.addEventListener('load', () => {
-    const redirectPath = sessionStorage.getItem('redirectPath');
-    if (redirectPath) {
-      console.log("Found redirectPath in sessionStorage:", redirectPath);
-      // The AppRouter component will handle the actual navigation
-    }
-  });
+  console.log('App component rendered successfully');
 } catch (error) {
   console.error('Error rendering app:', error);
   if (rootElement) {
@@ -179,11 +96,6 @@ try {
     `;
     rootElement.classList.remove('no-fouc');
   }
-  // Remove loading indicator
-  loadingElement.style.opacity = '0';
-  setTimeout(() => {
-    loadingElement.remove();
-  }, 300);
 }
 
 // Remove loading indicator and show content when app is ready
@@ -200,16 +112,9 @@ window.addEventListener('load', () => {
 // Add global error handling
 window.addEventListener('error', (event) => {
   console.error('Global error:', event.error || event.message);
-  // Don't show error UI for non-critical errors (like script loading, image loading)
-  if (event.error && event.error.message && !event.filename?.includes('extension')) {
-    const isAssetError = event.filename?.match(/\.(jpg|jpeg|png|gif|svg|webp|css|js)$/i);
-    if (!isAssetError) {
-      toast.error('An error occurred. Please try refreshing the page.');
-    }
-  }
 });
 
-// Define toast for the error handler above
+// Define toast for error handling
 const toast = {
   error: (message: string) => {
     const toastElement = document.createElement('div');

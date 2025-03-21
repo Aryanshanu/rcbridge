@@ -33,6 +33,17 @@
         }
       </style>
     </noscript>
+    
+    <!-- SPA redirect handler -->
+    <script>
+      (function() {
+        // Handle direct navigation to routes in SPA
+        if (window.location.pathname !== '/' && !window.location.pathname.includes('.')) {
+          console.log('Detected direct route access:', window.location.pathname);
+          sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search);
+        }
+      })();
+    </script>
   </head>
 
   <body>
@@ -49,17 +60,5 @@
     <div id="root"></div>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
-
-    <!-- Add improved redirect script for SPA routing -->
-    <script>
-      // This script handles direct navigation to routes in a SPA
-      (function() {
-        // Check if this is a direct route hit (not a regular page navigation)
-        if (window.location.pathname !== '/' && !window.location.pathname.includes('.')) {
-          // Store the current URL and route the user was trying to access
-          sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search);
-        }
-      })();
-    </script>
   </body>
 </html>
