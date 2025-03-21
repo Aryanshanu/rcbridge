@@ -58,7 +58,7 @@ export default {
           foreground: "#1E3A8A",
         },
         accent: {
-          DEFAULT: "#9b87f5", // New purple accent color
+          DEFAULT: "#1E3A8A", // Changed to blue to match the color scheme
           foreground: "#FFFFFF",
         },
         background: "#FFFFFF",
@@ -67,7 +67,7 @@ export default {
       fontFamily: {
         sans: ["Inter", "sans-serif"],
         body: ["Open Sans", "sans-serif"],
-        heading: ["Playfair Display", "serif"], // Changed from "display" to "heading"
+        heading: ["Playfair Display", "serif"], 
       },
       spacing: {
         "navbar-height": "70px",

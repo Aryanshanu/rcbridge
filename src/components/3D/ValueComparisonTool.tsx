@@ -56,15 +56,15 @@ export const ValueComparisonTool = ({ className }: ValueComparisonToolProps) => 
     plane.receiveShadow = true;
     scene.add(plane);
     
-    // Materials
+    // Materials - Updated to blue and gray for traditional/RC Bridge
     const traditionalMaterial = new THREE.MeshStandardMaterial({
-      color: 0x94A3B8,
+      color: 0x94A3B8, // gray color for traditional
       metalness: 0.3,
       roughness: 0.7
     });
     
     const rcBridgeMaterial = new THREE.MeshStandardMaterial({
-      color: 0x10B981,
+      color: 0x1E3A8A, // deep blue for RC Bridge
       metalness: 0.3,
       roughness: 0.7
     });
@@ -175,15 +175,15 @@ export const ValueComparisonTool = ({ className }: ValueComparisonToolProps) => 
               <div className="text-gray-700 font-bold text-lg">₹{traditionalValue.toFixed(1)}Cr</div>
             </div>
             
-            <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-accent text-sm">RC Bridge</div>
-              <div className="text-accent font-bold text-lg">₹{rcBridgeValue.toFixed(1)}Cr</div>
+            <div className="text-center p-3 bg-blue-50 rounded-lg">
+              <div className="text-primary text-sm">RC Bridge</div>
+              <div className="text-primary font-bold text-lg">₹{rcBridgeValue.toFixed(1)}Cr</div>
             </div>
           </div>
           
           <div className="mt-4 p-3 bg-blue-50 rounded-lg text-center">
-            <div className="text-blue-600 text-sm">Value Difference</div>
-            <div className="text-blue-700 font-bold text-lg">+₹{difference.toFixed(1)}Cr (+{differencePercent}%)</div>
+            <div className="text-primary text-sm">Value Difference</div>
+            <div className="text-primary font-bold text-lg">+₹{difference.toFixed(1)}Cr (+{differencePercent}%)</div>
           </div>
         </div>
         
@@ -226,7 +226,7 @@ export const ValueComparisonTool = ({ className }: ValueComparisonToolProps) => 
             </ul>
           </div>
           
-          <Button className="mt-4 w-full">
+          <Button className="mt-4 w-full bg-primary hover:bg-primary/90 text-white">
             Get Your Personalized Value Analysis
           </Button>
         </div>
