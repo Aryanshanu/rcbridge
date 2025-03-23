@@ -23,24 +23,26 @@ const AdminPage = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check auth status and role
+    // Check auth status and role only once when component mounts or user changes
     const checkAccess = async () => {
-      setIsLoading(true);
-      
-      if (!user) {
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to access the admin panel.",
-          variant: "destructive",
-        });
-        navigate("/login");
-        return;
-      }
-      
       try {
+        setIsLoading(true);
+        
+        if (!user) {
+          toast({
+            title: "Authentication Required",
+            description: "Please sign in to access the admin panel.",
+            variant: "destructive",
+          });
+          navigate("/login");
+          return;
+        }
+        
+        // Get user role from profiles table
         const role = await getUserRole();
         setUserRole(role);
         
+        // Check if user has admin permissions
         if (role !== "admin" && role !== "developer" && role !== "maintainer") {
           toast({
             title: "Access Denied",
@@ -65,9 +67,10 @@ const AdminPage = () => {
     checkAccess();
   }, [user, navigate, toast]);
 
+  // Show a clean loading state while checking access
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
         <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-sm">
           <Loader className="h-10 w-10 text-primary animate-spin mb-4" />
           <p className="text-primary font-medium">Verifying admin access...</p>
@@ -76,7 +79,8 @@ const AdminPage = () => {
     );
   }
 
-  const tabs = [
+  // Only define tabs if we have a user role
+  const tabs = userRole ? [
     {
       id: "properties",
       label: "Properties",
@@ -101,7 +105,7 @@ const AdminPage = () => {
       content: <AdminChatbot userRole={userRole} />,
       disabled: false,
     },
-  ];
+  ] : [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -129,9 +133,11 @@ const AdminPage = () => {
           </div>
         )}
         
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <TabsContainer tabs={tabs} defaultTab="properties" />
-        </div>
+        {userRole && (
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <TabsContainer tabs={tabs} defaultTab="properties" />
+          </div>
+        )}
       </main>
       
       <Footer />

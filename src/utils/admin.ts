@@ -65,6 +65,7 @@ export async function updateUserRole(userId: string, newRole: UserRole): Promise
 // Fetch all users - only for admin
 export async function getAllUsers(): Promise<UserProfile[]> {
   try {
+    // We need to fetch from the profiles table, not the auth.users table (which we can't access)
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
@@ -74,31 +75,28 @@ export async function getAllUsers(): Promise<UserProfile[]> {
       throw error;
     }
     
-    const usersWithEmail = await Promise.all(
-      (data || []).map(async (profile) => {
-        // Since we can't directly query the auth.users table,
-        // we'll use a placeholder email based on the user ID
-        // For the two special admin users, use their known emails if IDs match
-        // In a real app, you'd store emails in profiles or have a proper mapping
-        let email = `user-${profile.id.substring(0, 8)}@example.com`;
-        
-        // Special handling for admin emails (in a real app, you'd query this properly)
-        // This is just a placeholder to show the admin emails in the UI
-        if (profile.role === "admin") {
-          // This is a simplified approach - in a real app you'd have proper email storage
-          if (profile.id === "admin-user-1") { // Replace with actual IDs if known
-            email = ADMIN_EMAILS[0];
-          } else if (profile.id === "admin-user-2") {
-            email = ADMIN_EMAILS[1];
-          }
+    // Create user profiles with placeholder emails since we can't directly access the auth.users emails
+    const usersWithEmail = (data || []).map((profile) => {
+      // Generate a placeholder email based on the user ID
+      // For the two special admin users, display their known emails if IDs match
+      let email = `user-${profile.id.substring(0, 8)}@example.com`;
+      
+      // Special handling for admin emails (these are just placeholders since we can't
+      // query auth.users directly from the client)
+      if (profile.role === "admin") {
+        // This is a simplified way to show admin emails in the UI
+        if (profile.id === "admin-user-1") { // Replace with actual IDs if known
+          email = ADMIN_EMAILS[0];
+        } else if (profile.id === "admin-user-2") {
+          email = ADMIN_EMAILS[1];
         }
-        
-        return {
-          ...profile,
-          email
-        } as UserProfile;
-      })
-    );
+      }
+      
+      return {
+        ...profile,
+        email
+      } as UserProfile;
+    });
     
     return usersWithEmail;
   } catch (error: any) {
