@@ -12,7 +12,7 @@ import { AdminChatbot } from "@/components/admin/AdminChatbot";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/user";
-import { Shield, AlertCircle } from "lucide-react";
+import { Shield, AlertCircle, Loader } from "lucide-react";
 import { getUserRole } from "@/utils/admin";
 
 const AdminPage = () => {
@@ -23,6 +23,7 @@ const AdminPage = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Check auth status and role
     const checkAccess = async () => {
       setIsLoading(true);
       
@@ -67,9 +68,9 @@ const AdminPage = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center">
-          <div className="h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin mb-4"></div>
-          <p className="text-primary font-medium">Verifying access...</p>
+        <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-sm">
+          <Loader className="h-10 w-10 text-primary animate-spin mb-4" />
+          <p className="text-primary font-medium">Verifying admin access...</p>
         </div>
       </div>
     );
@@ -107,7 +108,7 @@ const AdminPage = () => {
       <SEO title="Admin Panel | RC Bridge" description="Admin panel for managing RC Bridge properties and users" />
       <Navbar />
       
-      <main className="container py-8">
+      <main className="container py-8 px-4 mx-auto max-w-7xl">
         <div className="flex items-center mb-8 space-x-3">
           <Shield size={32} className="text-primary" />
           <div>
@@ -128,7 +129,7 @@ const AdminPage = () => {
           </div>
         )}
         
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <TabsContainer tabs={tabs} defaultTab="properties" />
         </div>
       </main>
