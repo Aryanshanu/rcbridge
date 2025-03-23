@@ -3,6 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserRole, UserProfile } from "@/types/user";
 import { toast } from "sonner";
 
+// List of admin email addresses that always have full access
+const ADMIN_EMAILS = [
+  "ganeshgoud0023@gmail.com",
+  "surakantichandrashekhar@gmail.com"
+];
+
 // Get the current user's role
 export async function getUserRole(): Promise<UserRole> {
   try {
@@ -10,6 +16,11 @@ export async function getUserRole(): Promise<UserRole> {
     
     if (!user) {
       throw new Error("User not authenticated");
+    }
+    
+    // Check if user email is in the admin list
+    if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+      return "admin"; // Override role for specified emails
     }
     
     const { data, error } = await supabase
@@ -67,9 +78,20 @@ export async function getAllUsers(): Promise<UserProfile[]> {
       (data || []).map(async (profile) => {
         // Since we can't directly query the auth.users table,
         // we'll use a placeholder email based on the user ID
-        // In a real application, you might store emails in your profiles table
-        // or have a separate table that maps user IDs to emails
-        const email = `user-${profile.id.substring(0, 8)}@example.com`;
+        // For the two special admin users, use their known emails if IDs match
+        // In a real app, you'd store emails in profiles or have a proper mapping
+        let email = `user-${profile.id.substring(0, 8)}@example.com`;
+        
+        // Special handling for admin emails (in a real app, you'd query this properly)
+        // This is just a placeholder to show the admin emails in the UI
+        if (profile.role === "admin") {
+          // This is a simplified approach - in a real app you'd have proper email storage
+          if (profile.id === "admin-user-1") { // Replace with actual IDs if known
+            email = ADMIN_EMAILS[0];
+          } else if (profile.id === "admin-user-2") {
+            email = ADMIN_EMAILS[1];
+          }
+        }
         
         return {
           ...profile,
