@@ -14,6 +14,7 @@ import { Suspense, lazy, useEffect, useState } from "react";
 import { WelcomeAnimation } from "./components/auth/WelcomeAnimation";
 import { AlertCircle, Home } from "lucide-react";
 import { Button } from "./components/ui/button";
+import { ChatbotWidget } from "./components/ChatbotWidget";
 
 // Lazy-loaded pages for better performance
 const Blog = lazy(() => import("./pages/Blog"));
@@ -24,6 +25,7 @@ const MyProperties = lazy(() => import("./pages/MyProperties"));
 const SavedSearches = lazy(() => import("./pages/SavedSearches"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
+const Admin = lazy(() => import("./pages/Admin"));
 
 // Loading component
 const PageLoading = () => (
@@ -164,26 +166,32 @@ const App = () => {
                 <WelcomeWrapper>
                   <Suspense fallback={<PageLoading />}>
                     {isAppReady ? (
-                      <Routes>
-                        {/* Public Routes */}
-                        <Route path="/" element={<Index />} />
-                        <Route path="/properties" element={<Properties />} />
-                        <Route path="/services" element={<Services />} />
-                        <Route path="/calculator" element={<Calculator />} />
-                        <Route path="/blog" element={<Blog />} />
-                        <Route path="/faq" element={<FAQ />} />
-                        <Route path="/contact" element={<Contact />} />
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
+                      <>
+                        <Routes>
+                          {/* Public Routes */}
+                          <Route path="/" element={<Index />} />
+                          <Route path="/properties" element={<Properties />} />
+                          <Route path="/services" element={<Services />} />
+                          <Route path="/calculator" element={<Calculator />} />
+                          <Route path="/blog" element={<Blog />} />
+                          <Route path="/faq" element={<FAQ />} />
+                          <Route path="/contact" element={<Contact />} />
+                          <Route path="/login" element={<Login />} />
+                          <Route path="/register" element={<Register />} />
+                          
+                          {/* Protected Routes */}
+                          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                          <Route path="/my-properties" element={<ProtectedRoute><MyProperties /></ProtectedRoute>} />
+                          <Route path="/saved-searches" element={<ProtectedRoute><SavedSearches /></ProtectedRoute>} />
+                          <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+                          
+                          {/* Catch-all route */}
+                          <Route path="*" element={<ErrorFallback />} />
+                        </Routes>
                         
-                        {/* Protected Routes */}
-                        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                        <Route path="/my-properties" element={<ProtectedRoute><MyProperties /></ProtectedRoute>} />
-                        <Route path="/saved-searches" element={<ProtectedRoute><SavedSearches /></ProtectedRoute>} />
-                        
-                        {/* Catch-all route */}
-                        <Route path="*" element={<ErrorFallback />} />
-                      </Routes>
+                        {/* Chatbot Widget (available on all pages) */}
+                        <ChatbotWidget />
+                      </>
                     ) : (
                       <PageLoading />
                     )}

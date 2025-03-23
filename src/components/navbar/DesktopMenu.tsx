@@ -1,9 +1,12 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Building, Home, LogIn, MapPin, Phone, Users } from "lucide-react";
+import { Building, Home, LogIn, MapPin, Phone, Users, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useState, useEffect } from "react";
+import { getUserRole } from "@/utils/admin";
+import { UserRole } from "@/types/user";
 
 interface DesktopMenuProps {
   scrollToPropertyForm: () => void;
@@ -22,10 +25,30 @@ const getInitials = (name: string) => {
 
 export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: DesktopMenuProps) => {
   const { user, signOut } = useAuth();
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   
   // Get user display name and initials
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
   const initials = getInitials(displayName);
+
+  // Fetch user role when user is logged in
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (user) {
+        try {
+          const role = await getUserRole();
+          setUserRole(role);
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+          setUserRole(null);
+        }
+      }
+    };
+    
+    fetchUserRole();
+  }, [user]);
+  
+  const isAdminUser = userRole === "admin" || userRole === "developer" || userRole === "maintainer";
 
   return (
     <div className="hidden md:flex items-center space-x-8">
@@ -76,6 +99,14 @@ export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: Deskto
               <Link to="/saved-searches" className="block px-4 py-2 hover:bg-gray-50 text-gray-700">
                 Saved Searches
               </Link>
+              
+              {isAdminUser && (
+                <Link to="/admin" className="block px-4 py-2 hover:bg-gray-50 text-primary flex items-center">
+                  <Shield className="h-4 w-4 mr-1.5" />
+                  Admin Panel
+                </Link>
+              )}
+              
               <button 
                 onClick={signOut}
                 className="block w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-700"
