@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole, UserProfile } from "@/types/user";
 import { toast } from "sonner";
@@ -64,13 +65,11 @@ export async function getAllUsers(): Promise<UserProfile[]> {
     
     const usersWithEmail = await Promise.all(
       (data || []).map(async (profile) => {
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('email')
-          .eq('id', profile.id)
-          .single();
-        
-        const email = userData?.email || `user-${profile.id.substring(0, 8)}@example.com`;
+        // Since we can't directly query the auth.users table,
+        // we'll use a placeholder email based on the user ID
+        // In a real application, you might store emails in your profiles table
+        // or have a separate table that maps user IDs to emails
+        const email = `user-${profile.id.substring(0, 8)}@example.com`;
         
         return {
           ...profile,
