@@ -4,16 +4,27 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Building, Sparkles, Calculator } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-interface TabsContainerProps {
-  children: React.ReactNode;
+interface Tab {
+  id: string;
+  label: string;
+  content: React.ReactNode;
+  disabled?: boolean;
 }
 
-export const TabsContainer = ({ children }: TabsContainerProps) => {
+interface TabsContainerProps {
+  children?: React.ReactNode;
+  tabs?: Tab[];
+  defaultTab?: string;
+}
+
+export const TabsContainer = ({ children, tabs, defaultTab }: TabsContainerProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Determine the active tab based on the current URL path
+  // Determine the active tab based on the current URL path or the defaultTab prop
   const getTabFromPath = () => {
+    if (tabs && defaultTab) return defaultTab;
+    
     const path = location.pathname;
     if (path === "/services") return "services";
     if (path === "/calculator") return "calculator";
@@ -24,11 +35,16 @@ export const TabsContainer = ({ children }: TabsContainerProps) => {
   
   // Update active tab when the URL changes
   useEffect(() => {
-    setActiveTab(getTabFromPath());
-  }, [location.pathname]);
+    if (!tabs) {
+      setActiveTab(getTabFromPath());
+    }
+  }, [location.pathname, tabs]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    
+    // If we're using custom tabs, don't navigate
+    if (tabs) return;
     
     // Use React Router's navigate with replace option to prevent history stacking
     if (value === "properties" && location.pathname !== "/properties") {
@@ -43,6 +59,32 @@ export const TabsContainer = ({ children }: TabsContainerProps) => {
     }
   };
 
+  // Render the custom tabs if provided
+  if (tabs) {
+    return (
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
+          {tabs.map((tab) => (
+            <TabsTrigger 
+              key={tab.id} 
+              value={tab.id}
+              disabled={tab.disabled}
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        
+        {tabs.map((tab) => (
+          <TabsContent key={tab.id} value={tab.id}>
+            {tab.content}
+          </TabsContent>
+        ))}
+      </Tabs>
+    );
+  }
+
+  // Render the default tabs with children
   return (
     <div className="full-width bg-gray-50">
       <div className="content-container py-6">

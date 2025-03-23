@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole, UserProfile } from "@/types/user";
 import { toast } from "sonner";
@@ -63,7 +62,24 @@ export async function getAllUsers(): Promise<UserProfile[]> {
       throw error;
     }
     
-    return data as UserProfile[];
+    const usersWithEmail = await Promise.all(
+      (data || []).map(async (profile) => {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('email')
+          .eq('id', profile.id)
+          .single();
+        
+        const email = userData?.email || `user-${profile.id.substring(0, 8)}@example.com`;
+        
+        return {
+          ...profile,
+          email
+        } as UserProfile;
+      })
+    );
+    
+    return usersWithEmail;
   } catch (error: any) {
     console.error("Error fetching users:", error);
     toast.error(`Failed to fetch users: ${error.message}`);

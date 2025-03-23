@@ -10,4 +10,5 @@ export interface UserProfile {
   role: UserRole;
   created_at: string;
   updated_at: string;
+  preferences?: any;
 }

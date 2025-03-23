@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +7,7 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { 
   Database, 
   Globe, 
@@ -40,7 +40,6 @@ export const AdminScraper = ({ userRole }: AdminScraperProps) => {
     rental: null,
   });
 
-  // Check if user is authorized
   const isAuthorized = userRole === "admin" || userRole === "developer";
 
   const handleTriggerScraper = async (scraperType: string) => {
@@ -54,7 +53,6 @@ export const AdminScraper = ({ userRole }: AdminScraperProps) => {
     try {
       await triggerApifyScraper(scraperType);
       
-      // Set last run time
       setLastRun(prev => ({ 
         ...prev, 
         [scraperType]: new Date().toISOString() 
