@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole, UserProfile } from "@/types/user";
 import { toast } from "sonner";
@@ -74,23 +75,24 @@ export async function getAllUsers(): Promise<UserProfile[]> {
       throw error;
     }
     
-    // Create user profiles with placeholder emails since we can't directly access the auth.users emails
+    // Create user profiles with email field
     const usersWithEmail = (data || []).map((profile) => {
-      // Generate a placeholder email based on the user ID
-      // For the two special admin users, display their known emails if IDs match
-      let email = `user-${profile.id.substring(0, 8)}@example.com`;
+      // Generate an email placeholder using the username or a part of the ID
+      const emailPlaceholder = profile.username 
+        ? `${profile.username}@example.com` 
+        : `user-${profile.id.substring(0, 8)}@example.com`;
       
       // Special handling for admin emails
-      if (profile.role === "admin") {
-        // This is just a simplified way to show admin emails in the UI
-        if (ADMIN_EMAILS.includes(email)) {
-          email = profile.email || email;
-        }
+      let displayEmail = emailPlaceholder;
+      if (profile.role === "admin" && ADMIN_EMAILS.length > 0) {
+        // If this is likely one of our admin users, show a real admin email
+        // This is just a UI convenience, not a security feature
+        displayEmail = ADMIN_EMAILS[0]; // Show the first admin email as placeholder
       }
       
       return {
         ...profile,
-        email
+        email: displayEmail
       } as UserProfile;
     });
     
