@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole, UserProfile } from "@/types/user";
 import { toast } from "sonner";
@@ -10,12 +9,12 @@ const ADMIN_EMAILS = [
 ];
 
 // Get the current user's role
-export async function getUserRole(): Promise<UserRole> {
+export async function getUserRole(): Promise<UserRole | null> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      throw new Error("User not authenticated");
+      return null; // Return null instead of throwing error for better handling
     }
     
     // Check if user email is in the admin list
@@ -29,15 +28,15 @@ export async function getUserRole(): Promise<UserRole> {
       .eq("id", user.id)
       .single();
     
-    if (error) {
+    if (error || !data) {
       console.error("Error fetching user role:", error);
-      throw new Error("Failed to fetch user role");
+      return "maintainer"; // Default fallback role
     }
     
     return data.role as UserRole;
   } catch (error) {
     console.error("Error in getUserRole:", error);
-    return "maintainer"; // Default fallback role
+    return null; // Return null on error for better error handling
   }
 }
 
@@ -81,14 +80,11 @@ export async function getAllUsers(): Promise<UserProfile[]> {
       // For the two special admin users, display their known emails if IDs match
       let email = `user-${profile.id.substring(0, 8)}@example.com`;
       
-      // Special handling for admin emails (these are just placeholders since we can't
-      // query auth.users directly from the client)
+      // Special handling for admin emails
       if (profile.role === "admin") {
-        // This is a simplified way to show admin emails in the UI
-        if (profile.id === "admin-user-1") { // Replace with actual IDs if known
-          email = ADMIN_EMAILS[0];
-        } else if (profile.id === "admin-user-2") {
-          email = ADMIN_EMAILS[1];
+        // This is just a simplified way to show admin emails in the UI
+        if (ADMIN_EMAILS.includes(email)) {
+          email = profile.email || email;
         }
       }
       
@@ -106,6 +102,18 @@ export async function getAllUsers(): Promise<UserProfile[]> {
   }
 }
 
+// Format date for display
+export function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
 // Trigger Apify scraper (placeholder function)
 export async function triggerApifyScraper(scraperType: string): Promise<boolean> {
   try {
@@ -119,16 +127,4 @@ export async function triggerApifyScraper(scraperType: string): Promise<boolean>
     toast.error(`Failed to trigger scraper: ${error.message}`);
     return false;
   }
-}
-
-// Format date for display
-export function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
 }

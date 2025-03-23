@@ -21,14 +21,17 @@ const AdminPage = () => {
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     // Check auth status and role only once when component mounts or user changes
     const checkAccess = async () => {
       try {
         setIsLoading(true);
+        setIsError(false);
         
         if (!user) {
+          console.log("No user found, redirecting to login");
           toast({
             title: "Authentication Required",
             description: "Please sign in to access the admin panel.",
@@ -40,19 +43,35 @@ const AdminPage = () => {
         
         // Get user role from profiles table
         const role = await getUserRole();
+        
+        if (!role) {
+          console.log("No role found, redirecting to login");
+          toast({
+            title: "Access Error",
+            description: "Could not verify your access level. Please sign in again.",
+            variant: "destructive",
+          });
+          navigate("/login");
+          return;
+        }
+        
+        // Set user role in state
         setUserRole(role);
         
         // Check if user has admin permissions
         if (role !== "admin" && role !== "developer" && role !== "maintainer") {
+          console.log("Insufficient permissions, redirecting to home");
           toast({
             title: "Access Denied",
             description: "You do not have permission to access the admin panel.",
             variant: "destructive",
           });
           navigate("/");
+          return;
         }
       } catch (error) {
         console.error("Error checking admin access:", error);
+        setIsError(true);
         toast({
           title: "Error",
           description: "Could not verify admin access. Please try again.",
@@ -70,10 +89,28 @@ const AdminPage = () => {
   // Show a clean loading state while checking access
   if (isLoading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white">
-        <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-sm">
-          <Loader className="h-10 w-10 text-primary animate-spin mb-4" />
-          <p className="text-primary font-medium">Verifying admin access...</p>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center p-8 bg-white rounded-lg shadow-sm">
+          <Loader className="h-12 w-12 text-primary animate-spin mb-4" />
+          <p className="text-primary font-medium text-lg">Verifying admin access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (isError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center p-8 bg-white rounded-lg shadow-sm">
+          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+          <p className="text-red-500 font-medium text-lg">Error verifying access</p>
+          <button 
+            onClick={() => navigate("/")}
+            className="mt-4 px-4 py-2 bg-primary text-white rounded-md"
+          >
+            Return to Home
+          </button>
         </div>
       </div>
     );
@@ -107,6 +144,9 @@ const AdminPage = () => {
     },
   ] : [];
 
+  // Render full admin UI only if we have a role
+  if (!userRole) return null;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <SEO title="Admin Panel | RC Bridge" description="Admin panel for managing RC Bridge properties and users" />
@@ -133,11 +173,9 @@ const AdminPage = () => {
           </div>
         )}
         
-        {userRole && (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <TabsContainer tabs={tabs} defaultTab="properties" />
-          </div>
-        )}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <TabsContainer tabs={tabs} defaultTab="properties" />
+        </div>
       </main>
       
       <Footer />
