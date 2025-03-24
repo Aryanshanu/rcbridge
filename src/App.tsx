@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,6 +25,7 @@ const SavedSearches = lazy(() => import("./pages/SavedSearches"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const Admin = lazy(() => import("./pages/Admin"));
+const AdminInvite = lazy(() => import("./pages/AdminInvite"));
 
 // Loading component
 const PageLoading = () => (
@@ -178,6 +178,7 @@ const App = () => {
                           <Route path="/contact" element={<Contact />} />
                           <Route path="/login" element={<Login />} />
                           <Route path="/register" element={<Register />} />
+                          <Route path="/admin-invite" element={<AdminInvite />} />
                           
                           {/* Protected Routes */}
                           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

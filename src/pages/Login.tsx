@@ -159,6 +159,12 @@ const Login = () => {
                 Register now
               </Link>
             </p>
+            <p className="mt-2 text-gray-600">
+              Have an admin invite code?{" "}
+              <Link to="/admin-invite" className="text-primary hover:underline font-medium">
+                Use invite code
+              </Link>
+            </p>
           </div>
         </div>
       </main>

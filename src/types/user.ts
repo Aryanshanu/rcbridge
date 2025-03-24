@@ -11,4 +11,5 @@ export interface UserProfile {
   created_at: string;
   updated_at: string;
   preferences?: any;
+  invite_used?: string | null;
 }

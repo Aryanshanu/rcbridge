@@ -9,6 +9,13 @@ const ADMIN_EMAILS = [
   "surakantichandrashekhar@gmail.com"
 ];
 
+// Static invite codes (in real app, these would be generated and stored in the database)
+const INVITE_CODES = {
+  "ADMIN-123456": { role: "admin", expiresAt: new Date("2025-12-31") },
+  "DEV-789012": { role: "developer", expiresAt: new Date("2025-12-31") },
+  "MAINT-345678": { role: "maintainer", expiresAt: new Date("2025-12-31") }
+};
+
 // Get the current user's role
 export async function getUserRole(): Promise<UserRole | null> {
   try {
@@ -114,6 +121,96 @@ export function formatDate(dateString: string): string {
     hour: '2-digit',
     minute: '2-digit'
   });
+}
+
+// Validate invite code
+export function validateInviteCode(code: string): { 
+  valid: boolean, 
+  role?: UserRole, 
+  message?: string 
+} {
+  // Check if the code exists
+  if (!INVITE_CODES[code]) {
+    return { valid: false, message: "Invalid invite code" };
+  }
+  
+  // Check if the code has expired
+  const inviteData = INVITE_CODES[code];
+  if (new Date() > inviteData.expiresAt) {
+    return { valid: false, message: "Invite code has expired" };
+  }
+  
+  // Code is valid
+  return {
+    valid: true,
+    role: inviteData.role
+  };
+}
+
+// Register with invite code
+export async function registerWithInviteCode(
+  email: string, 
+  password: string, 
+  inviteCode: string, 
+  fullName: string
+): Promise<{ success: boolean, message: string }> {
+  try {
+    // Validate the invite code first
+    const validation = validateInviteCode(inviteCode);
+    if (!validation.valid) {
+      return { 
+        success: false, 
+        message: validation.message || "Invalid invite code" 
+      };
+    }
+    
+    // Register the user with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          role: validation.role,
+          invite_used: inviteCode
+        }
+      }
+    });
+    
+    if (authError) {
+      console.error("Error registering user:", authError);
+      return { 
+        success: false, 
+        message: authError.message 
+      };
+    }
+    
+    // Update the user's role directly in profiles table
+    if (authData.user) {
+      const { error: roleError } = await supabase
+        .from("profiles")
+        .update({ 
+          role: validation.role,
+          invite_used: inviteCode 
+        })
+        .eq("id", authData.user.id);
+      
+      if (roleError) {
+        console.error("Error updating user role:", roleError);
+      }
+    }
+    
+    return { 
+      success: true, 
+      message: "Successfully registered with invite code" 
+    };
+  } catch (error: any) {
+    console.error("Error in registerWithInviteCode:", error);
+    return { 
+      success: false, 
+      message: error.message || "Failed to register with invite code" 
+    };
+  }
 }
 
 // Trigger Apify scraper (placeholder function)
