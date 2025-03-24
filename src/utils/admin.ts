@@ -1,6 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { UserRole } from "@/types/user";
+import { UserRole, UserProfile } from "@/types/user";
+import { format } from "date-fns";
 
 // Pre-defined invite codes with role assignments
 const INVITE_CODES = [
@@ -18,12 +18,10 @@ const INVITE_CODES = [
 
 // Function to validate invite code
 export const validateInviteCode = (code: string) => {
-  // Find the invite code in our list
   const inviteCode = INVITE_CODES.find(
     (invite) => invite.code === code && !invite.used
   );
 
-  // If code not found or already used
   if (!inviteCode) {
     return {
       valid: false,
@@ -32,7 +30,6 @@ export const validateInviteCode = (code: string) => {
     };
   }
 
-  // Check if code has expired
   const expiryDate = new Date(inviteCode.expiryDate);
   if (expiryDate < new Date()) {
     return {
@@ -42,7 +39,6 @@ export const validateInviteCode = (code: string) => {
     };
   }
 
-  // Mark code as valid and return role
   return {
     valid: true,
     message: "Invite code valid",
@@ -58,7 +54,6 @@ export const registerWithInviteCode = async (
   fullName?: string
 ) => {
   try {
-    // Validate the invite code first
     const validation = validateInviteCode(inviteCode);
     
     if (!validation.valid) {
@@ -68,7 +63,6 @@ export const registerWithInviteCode = async (
       };
     }
 
-    // Register the user with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -90,7 +84,6 @@ export const registerWithInviteCode = async (
       };
     }
 
-    // Update the user's role based on the invite code
     const { error: updateError } = await supabase
       .from("profiles")
       .update({ 
@@ -107,7 +100,6 @@ export const registerWithInviteCode = async (
       };
     }
 
-    // Mark invite code as used (this would typically be done in the database)
     const codeIndex = INVITE_CODES.findIndex(item => item.code === inviteCode);
     if (codeIndex >= 0) {
       INVITE_CODES[codeIndex].used = true;
@@ -130,14 +122,12 @@ export const registerWithInviteCode = async (
 // Get the current user's role
 export const getUserRole = async (): Promise<UserRole | null> => {
   try {
-    // Get the current user
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
       return null;
     }
     
-    // Get the user's profile with role information
     const { data, error } = await supabase
       .from("profiles")
       .select("role")
@@ -159,10 +149,8 @@ export const getUserRole = async (): Promise<UserRole | null> => {
 // Function to trigger Apify scraper for Instagram properties
 export const triggerApifyScraper = async (scraperType: string) => {
   try {
-    // In a real implementation, this would make an API call to trigger Apify
     console.log(`Triggering ${scraperType} scraper...`);
     
-    // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     return {
@@ -180,13 +168,8 @@ export const scrapeInstagramProperties = async (instagramProfiles: string[], max
   try {
     console.log(`Starting to scrape profiles: ${instagramProfiles.join(', ')}`);
     
-    // This would be a real API call to your Apify scraper
-    // For demo purposes, we're simulating the response
-    
-    // Simulate processing delay
     await new Promise(resolve => setTimeout(resolve, 3000));
     
-    // Return mock scraped data
     return {
       success: true,
       message: "Properties scraped successfully",
@@ -235,7 +218,6 @@ export const scrapeInstagramProperties = async (instagramProfiles: string[], max
 // Function to store scraped properties in Supabase
 export const storeScrapedProperties = async (properties: any[]) => {
   try {
-    // Insert properties into Supabase with conflict handling for duplicates
     const { data, error } = await supabase
       .from("properties")
       .upsert(properties, { 
@@ -255,5 +237,56 @@ export const storeScrapedProperties = async (properties: any[]) => {
   } catch (error) {
     console.error("Error storing properties:", error);
     throw error;
+  }
+};
+
+// Format date for display
+export const formatDate = (dateString: string) => {
+  if (!dateString) return "Unknown";
+  try {
+    return format(new Date(dateString), 'MMM d, yyyy');
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "Invalid date";
+  }
+};
+
+// Get all users from the profiles table
+export const getAllUsers = async (): Promise<UserProfile[]> => {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching users:", error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error("Error in getAllUsers:", error);
+    return [];
+  }
+};
+
+// Update a user's role in the profiles table
+export const updateUserRole = async (userId: string, newRole: UserRole): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ role: newRole })
+      .eq("id", userId);
+    
+    if (error) {
+      console.error("Error updating user role:", error);
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error in updateUserRole:", error);
+    return false;
   }
 };
