@@ -26,6 +26,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminInvite = lazy(() => import("./pages/AdminInvite"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
 // Loading component
 const PageLoading = () => (
@@ -179,6 +180,7 @@ const App = () => {
                           <Route path="/login" element={<Login />} />
                           <Route path="/register" element={<Register />} />
                           <Route path="/admin-invite" element={<AdminInvite />} />
+                          <Route path="/admin-dashboard" element={<AdminDashboard />} />
                           
                           {/* Protected Routes */}
                           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

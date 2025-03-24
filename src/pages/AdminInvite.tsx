@@ -1,265 +1,274 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/sections/Footer";
-import { SEO } from "@/components/SEO";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { registerWithInviteCode, validateInviteCode } from "@/utils/admin";
-import { Shield, KeyRound, Mail, User, Lock } from "lucide-react";
+import { LockIcon, KeyIcon, UserIcon, AtSignIcon, ShieldCheckIcon } from "lucide-react";
+import { validateInviteCode, registerWithInviteCode } from "@/utils/admin";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-const AdminInvite = () => {
+export const AdminInvite = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<'invite' | 'register'>('invite');
+  const [isLoading, setIsLoading] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+  const [validatedRole, setValidatedRole] = useState<string | null>(null);
   const [formData, setFormData] = useState({
+    fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    fullName: "",
-    inviteCode: ""
   });
-  const [codeValidated, setCodeValidated] = useState(false);
-  const [roleType, setRoleType] = useState<string | null>(null);
-  
-  // If user is already logged in, redirect to admin
-  React.useEffect(() => {
-    if (user) {
-      navigate("/admin");
-    }
-  }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Reset validation when invite code changes
-    if (name === "inviteCode") {
-      setCodeValidated(false);
-      setRoleType(null);
-    }
   };
 
-  const validateCode = () => {
-    if (!formData.inviteCode.trim()) {
-      toast.error("Please enter an invite code");
-      return;
-    }
-    
-    const result = validateInviteCode(formData.inviteCode);
-    if (result.valid && result.role) {
-      setCodeValidated(true);
-      setRoleType(result.role);
-      toast.success(`Valid invite code for ${result.role} role`);
-    } else {
-      toast.error(result.message || "Invalid invite code");
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleInviteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!codeValidated) {
-      toast.error("Please validate your invite code first");
-      return;
+    setIsLoading(true);
+
+    try {
+      // Validate the invite code
+      const validation = validateInviteCode(inviteCode);
+      
+      if (!validation.valid) {
+        toast.error(validation.message || "Invalid invite code");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Store the validated role and move to registration step
+      setValidatedRole(validation.role);
+      setStep('register');
+      toast.success(`Invite code accepted! Role: ${validation.role}`);
+      
+    } catch (error) {
+      console.error("Error validating invite code:", error);
+      toast.error("Error validating invite code. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-    
-    if (formData.password.length < 8) {
-      toast.error("Password must be at least 8 characters long");
-      return;
-    }
-    
-    setLoading(true);
+  };
+
+  const handleRegistrationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
     
     try {
+      // Validate passwords match
+      if (formData.password !== formData.confirmPassword) {
+        toast.error("Passwords do not match");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Validate password length
+      if (formData.password.length < 8) {
+        toast.error("Password must be at least 8 characters long");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast.error("Please enter a valid email address");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Register with invite code
       const result = await registerWithInviteCode(
         formData.email,
         formData.password,
-        formData.inviteCode,
+        inviteCode,
         formData.fullName
       );
       
       if (result.success) {
-        toast.success(result.message);
-        navigate("/login");
+        toast.success("Registration successful! You can now log in.");
+        
+        // Navigate to login page
+        setTimeout(() => {
+          navigate("/login");
+        }, 1500);
       } else {
-        toast.error(result.message);
+        toast.error(result.message || "Registration failed. Please try again.");
       }
     } catch (error: any) {
-      toast.error(error.message || "Registration failed");
+      console.error("Registration error:", error);
+      toast.error(error.message || "An unexpected error occurred");
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const getRoleColor = () => {
-    switch (roleType) {
-      case "admin": return "text-red-600";
-      case "developer": return "text-blue-600";
-      case "maintainer": return "text-green-600";
-      default: return "text-gray-600";
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <SEO 
-        title="Admin Invitation | RC Bridge" 
-        description="Register with your admin invitation code" 
-      />
-      <Navbar />
-      
-      <main className="container py-12 px-4 mx-auto max-w-4xl">
-        <Card className="w-full max-w-md mx-auto shadow-lg">
-          <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Shield size={28} className="text-primary" />
-            </div>
-            <CardTitle className="text-2xl">Admin Invitation</CardTitle>
-            <CardDescription>
-              Register with your invitation code to access the admin panel
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="inviteCode">Invitation Code</Label>
-                  <div className="flex space-x-2 mt-1">
-                    <div className="relative flex-1">
-                      <KeyRound className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
-                      <Input
-                        id="inviteCode"
-                        name="inviteCode"
-                        value={formData.inviteCode}
-                        onChange={handleChange}
-                        className="pl-9"
-                        placeholder="Enter your invite code"
-                        disabled={codeValidated}
-                        required
-                      />
-                    </div>
-                    <Button 
-                      type="button" 
-                      onClick={validateCode}
-                      disabled={codeValidated || !formData.inviteCode.trim()}
-                      variant="outline"
-                    >
-                      Verify
-                    </Button>
-                  </div>
-                  
-                  {codeValidated && roleType && (
-                    <div className="mt-2 text-sm flex items-center">
-                      <span>Role access: </span>
-                      <span className={`font-medium ml-1 ${getRoleColor()}`}>
-                        {roleType.charAt(0).toUpperCase() + roleType.slice(1)}
-                      </span>
-                    </div>
-                  )}
+    <div className="container flex items-center justify-center min-h-screen py-8">
+      <div className="w-full max-w-md">
+        {step === 'invite' ? (
+          <Card>
+            <CardHeader className="space-y-1">
+              <div className="flex justify-center mb-2">
+                <div className="p-3 rounded-full bg-primary/10">
+                  <KeyIcon className="h-6 w-6 text-primary" />
                 </div>
-                
-                {codeValidated && (
-                  <>
-                    <div>
-                      <Label htmlFor="fullName">Full Name</Label>
-                      <div className="relative mt-1">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
-                        <Input
-                          id="fullName"
-                          name="fullName"
-                          value={formData.fullName}
-                          onChange={handleChange}
-                          className="pl-9"
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="email">Email Address</Label>
-                      <div className="relative mt-1">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          className="pl-9"
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="password">Password</Label>
-                      <div className="relative mt-1">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
-                        <Input
-                          id="password"
-                          name="password"
-                          type="password"
-                          value={formData.password}
-                          onChange={handleChange}
-                          className="pl-9"
-                          required
-                          minLength={8}
-                        />
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters long</p>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="confirmPassword">Confirm Password</Label>
-                      <div className="relative mt-1">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
-                        <Input
-                          id="confirmPassword"
-                          name="confirmPassword"
-                          type="password"
-                          value={formData.confirmPassword}
-                          onChange={handleChange}
-                          className="pl-9"
-                          required
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
               </div>
-              
-              {codeValidated && (
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Creating Account..." : "Create Admin Account"}
+              <CardTitle className="text-2xl text-center">Admin Access</CardTitle>
+              <CardDescription className="text-center">
+                Enter your invite code to create an admin account
+              </CardDescription>
+            </CardHeader>
+            <form onSubmit={handleInviteSubmit}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="inviteCode">Invite Code</Label>
+                  <div className="relative">
+                    <KeyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input 
+                      id="inviteCode"
+                      name="inviteCode"
+                      value={inviteCode}
+                      onChange={(e) => setInviteCode(e.target.value)}
+                      placeholder="Enter your invite code"
+                      className="pl-9"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                  <p className="text-sm text-amber-800">
+                    <span className="font-semibold">Note:</span> Invite codes are required for admin access. If you don't have an invite code, please contact the system administrator.
+                  </p>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Validating..." : "Continue"}
                 </Button>
-              )}
+              </CardFooter>
             </form>
-          </CardContent>
-          
-          <CardFooter className="flex flex-col space-y-2">
-            <div className="text-sm text-center text-gray-500">
-              Already have an account?{" "}
-              <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/login")}>
-                Sign in
+            <div className="px-6 pb-6 text-center">
+              <Button variant="link" onClick={() => navigate("/login")}>
+                Return to Login
               </Button>
             </div>
-          </CardFooter>
-        </Card>
-      </main>
-      
-      <Footer />
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader className="space-y-1">
+              <div className="flex justify-center mb-2">
+                <div className="p-3 rounded-full bg-primary/10">
+                  <ShieldCheckIcon className="h-6 w-6 text-primary" />
+                </div>
+              </div>
+              <CardTitle className="text-2xl text-center">Create Admin Account</CardTitle>
+              <CardDescription className="text-center">
+                Complete your registration with invite code
+              </CardDescription>
+            </CardHeader>
+            
+            <Alert className="mx-6 bg-blue-50 border-blue-200">
+              <AlertTitle className="text-blue-800">Invite Code Verified</AlertTitle>
+              <AlertDescription className="text-blue-700">
+                Role: <span className="font-semibold capitalize">{validatedRole}</span>
+              </AlertDescription>
+            </Alert>
+            
+            <form onSubmit={handleRegistrationSubmit}>
+              <CardContent className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input 
+                      id="fullName"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      placeholder="Enter your full name"
+                      className="pl-9"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <div className="relative">
+                    <AtSignIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input 
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="Enter your email"
+                      className="pl-9"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <LockIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input 
+                      id="password"
+                      name="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="pl-9"
+                      required
+                      minLength={8}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters long</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <div className="relative">
+                    <LockIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input 
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className="pl-9"
+                      required
+                    />
+                  </div>
+                </div>
+              </CardContent>
+              
+              <CardFooter className="flex-col space-y-4">
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Creating Account..." : "Register"}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setStep('invite')}
+                  disabled={isLoading}
+                >
+                  Back to Invite Code
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
