@@ -9,11 +9,18 @@ const ADMIN_EMAILS = [
   "surakantichandrashekhar@gmail.com"
 ];
 
-// Static invite codes (in real app, these would be generated and stored in the database)
+// Pre-generated invite codes with role and expiration
 const INVITE_CODES = {
   "ADMIN-123456": { role: "admin", expiresAt: new Date("2025-12-31") },
   "DEV-789012": { role: "developer", expiresAt: new Date("2025-12-31") },
-  "MAINT-345678": { role: "maintainer", expiresAt: new Date("2025-12-31") }
+  "MAINT-345678": { role: "maintainer", expiresAt: new Date("2025-12-31") },
+  "ADMIN-987654": { role: "admin", expiresAt: new Date("2025-12-31") },
+  "DEV-654321": { role: "developer", expiresAt: new Date("2025-12-31") },
+  "MAINT-111222": { role: "maintainer", expiresAt: new Date("2025-12-31") },
+  "ADMIN-333444": { role: "admin", expiresAt: new Date("2025-12-31") },
+  "DEV-555666": { role: "developer", expiresAt: new Date("2025-12-31") },
+  "MAINT-777888": { role: "maintainer", expiresAt: new Date("2025-12-31") },
+  "ADMIN-999000": { role: "admin", expiresAt: new Date("2025-12-31") }
 };
 
 // Get the current user's role
@@ -191,7 +198,8 @@ export async function registerWithInviteCode(
         .from("profiles")
         .update({ 
           role: validation.role,
-          invite_used: inviteCode 
+          invite_used: inviteCode,
+          full_name: fullName
         })
         .eq("id", authData.user.id);
       

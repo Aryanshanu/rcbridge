@@ -74,6 +74,11 @@ const AdminInvite = () => {
       return;
     }
     
+    if (formData.password.length < 8) {
+      toast.error("Password must be at least 8 characters long");
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -210,8 +215,10 @@ const AdminInvite = () => {
                           onChange={handleChange}
                           className="pl-9"
                           required
+                          minLength={8}
                         />
                       </div>
+                      <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters long</p>
                     </div>
                     
                     <div>
