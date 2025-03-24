@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,11 +18,13 @@ import {
   Activity,
   CheckCircle2,
   AlertCircle,
-  Loader2
+  Loader2,
+  Instagram
 } from "lucide-react";
 import { triggerApifyScraper } from "@/utils/admin";
 import { UserRole } from "@/types/user";
 import { toast } from "sonner";
+import { InstagramScraper } from "./InstagramScraper";
 
 interface AdminScraperProps {
   userRole: UserRole | null;
@@ -33,11 +36,13 @@ export const AdminScraper = ({ userRole }: AdminScraperProps) => {
     residential: false,
     commercial: false,
     rental: false,
+    instagram: false
   });
   const [lastRun, setLastRun] = useState<Record<string, string | null>>({
     residential: null,
     commercial: null,
     rental: null,
+    instagram: null
   });
 
   const isAuthorized = userRole === "admin" || userRole === "developer";
@@ -93,6 +98,15 @@ export const AdminScraper = ({ userRole }: AdminScraperProps) => {
       sources: ["nobroker.in", "nestaway.com", "zolo.com"],
       interval: "Every 12 hours",
       dataPoints: ["Rent", "Location", "Deposit", "Furnishing", "Available From"]
+    },
+    {
+      id: "instagram",
+      title: "Instagram Properties",
+      description: "Scrape property listings from Instagram profiles",
+      icon: <Instagram className="h-5 w-5 text-pink-500" />,
+      sources: ["Instagram profiles with property listings"],
+      interval: "Manual trigger only",
+      dataPoints: ["Price", "Property Type", "Location", "Description", "Hashtags"]
     }
   ];
 
@@ -121,102 +135,107 @@ export const AdminScraper = ({ userRole }: AdminScraperProps) => {
       </div>
       
       <Tabs defaultValue="residential" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 mb-6">
+        <TabsList className="grid grid-cols-4 mb-6">
           <TabsTrigger value="residential">Residential</TabsTrigger>
           <TabsTrigger value="commercial">Commercial</TabsTrigger>
           <TabsTrigger value="rental">Rental</TabsTrigger>
+          <TabsTrigger value="instagram">Instagram</TabsTrigger>
         </TabsList>
         
         {scraperConfigs.map(config => (
           <TabsContent key={config.id} value={config.id}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="flex items-center">
-                      {config.icon}
-                      <span className="ml-2">{config.title}</span>
-                    </CardTitle>
-                    <CardDescription>{config.description}</CardDescription>
-                  </div>
-                  <Button 
-                    onClick={() => handleTriggerScraper(config.id)}
-                    disabled={isLoading[config.id]}
-                  >
-                    {isLoading[config.id] ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Running...
-                      </>
-                    ) : (
-                      <>
-                        Run Scraper
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Data Sources</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {config.sources.map(source => (
-                        <Badge 
-                          key={source} 
-                          className="flex items-center bg-blue-50 text-blue-700 border-blue-200"
-                        >
-                          <Globe className="mr-1 h-3 w-3" />
-                          {source}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {config.id === "instagram" ? (
+              <InstagramScraper userRole={userRole} />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="text-sm font-medium mb-2">Scheduled Interval</h4>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Clock className="mr-1 h-4 w-4 text-gray-400" />
-                        {config.interval}
+                      <CardTitle className="flex items-center">
+                        {config.icon}
+                        <span className="ml-2">{config.title}</span>
+                      </CardTitle>
+                      <CardDescription>{config.description}</CardDescription>
+                    </div>
+                    <Button 
+                      onClick={() => handleTriggerScraper(config.id)}
+                      disabled={isLoading[config.id]}
+                    >
+                      {isLoading[config.id] ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Running...
+                        </>
+                      ) : (
+                        <>
+                          Run Scraper
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Data Sources</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {config.sources.map(source => (
+                          <Badge 
+                            key={source} 
+                            className="flex items-center bg-blue-50 text-blue-700 border-blue-200"
+                          >
+                            <Globe className="mr-1 h-3 w-3" />
+                            {source}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">Scheduled Interval</h4>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Clock className="mr-1 h-4 w-4 text-gray-400" />
+                          {config.interval}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">Last Run</h4>
+                        <div className="flex items-center text-sm text-gray-600">
+                          {lastRun[config.id] ? (
+                            <>
+                              <CheckCircle2 className="mr-1 h-4 w-4 text-green-500" />
+                              {new Date(lastRun[config.id]!).toLocaleString()}
+                            </>
+                          ) : (
+                            <>
+                              <Activity className="mr-1 h-4 w-4 text-gray-400" />
+                              Never run
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                     
                     <div>
-                      <h4 className="text-sm font-medium mb-2">Last Run</h4>
-                      <div className="flex items-center text-sm text-gray-600">
-                        {lastRun[config.id] ? (
-                          <>
-                            <CheckCircle2 className="mr-1 h-4 w-4 text-green-500" />
-                            {new Date(lastRun[config.id]!).toLocaleString()}
-                          </>
-                        ) : (
-                          <>
-                            <Activity className="mr-1 h-4 w-4 text-gray-400" />
-                            Never run
-                          </>
-                        )}
+                      <h4 className="text-sm font-medium mb-2">Data Points Collected</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {config.dataPoints.map(point => (
+                          <div key={point} className="flex items-center text-sm text-gray-600">
+                            <CheckCircle2 className="mr-1 h-3 w-3 text-green-500" />
+                            {point}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Data Points Collected</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {config.dataPoints.map(point => (
-                        <div key={point} className="flex items-center text-sm text-gray-600">
-                          <CheckCircle2 className="mr-1 h-3 w-3 text-green-500" />
-                          {point}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="border-t pt-4 text-xs text-gray-500">
-                Note: Running the scraper may take several minutes to complete. Results will be automatically imported.
-              </CardFooter>
-            </Card>
+                </CardContent>
+                <CardFooter className="border-t pt-4 text-xs text-gray-500">
+                  Note: Running the scraper may take several minutes to complete. Results will be automatically imported.
+                </CardFooter>
+              </Card>
+            )}
           </TabsContent>
         ))}
       </Tabs>
