@@ -3,7 +3,7 @@ export type UserRole = "admin" | "developer" | "maintainer";
 
 export interface UserProfile {
   id: string;
-  email: string;
+  email?: string; // Adding email as optional since it's not in the profiles table
   username?: string | null;
   full_name?: string | null;
   avatar_url?: string | null;
