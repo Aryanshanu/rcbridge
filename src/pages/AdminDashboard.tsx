@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Users, Settings, LayoutDashboard, FileText, LogOut } from "lucide-react";
+import { Users, Settings, LayoutDashboard, FileText, LogOut, AlertCircle } from "lucide-react";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { AdminChatbot } from "@/components/admin/AdminChatbot";
 import { getUserRole } from "@/utils/admin";
@@ -20,40 +20,68 @@ const AdminDashboard = () => {
   const [userRole, setUserRole] = useState<"admin" | "developer" | "maintainer" | null>(null);
   const [userCount, setUserCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkUserRole = async () => {
-      setLoading(true);
+    const checkAccess = async () => {
+      console.log("Checking admin dashboard access...");
+      
+      if (!user) {
+        console.log("No user found, redirecting to login");
+        toast.error("Login required for admin access");
+        navigate("/login", { state: { returnTo: "/admin-dashboard" } });
+        return;
+      }
+
       try {
-        const role = await getUserRole();
-        setUserRole(role);
+        setLoading(true);
+        setError(null);
         
-        // If not admin or developer, redirect to home
+        // Get user role
+        const role = await getUserRole();
+        console.log("User role:", role);
+        
+        if (!role) {
+          throw new Error("Unable to verify role");
+        }
+        
+        // Check if role has access
         if (role !== "admin" && role !== "developer") {
+          console.log("Insufficient permissions, redirecting to home");
           toast.error("You don't have permission to access the admin dashboard");
           navigate("/");
+          return;
         }
         
-        // Get user count
+        setUserRole(role);
+        
+        // Fetch user count for admin overview
         if (role === "admin" || role === "developer") {
-          const { count, error } = await supabase
-            .from("profiles")
-            .select("*", { count: "exact", head: true });
-            
-          if (!error && count !== null) {
-            setUserCount(count);
+          try {
+            const { count, error } = await supabase
+              .from("profiles")
+              .select("*", { count: "exact", head: true });
+              
+            if (!error && count !== null) {
+              setUserCount(count);
+            } else if (error) {
+              console.error("Error fetching user count:", error);
+            }
+          } catch (countError) {
+            console.error("Error in user count query:", countError);
           }
         }
-      } catch (error) {
-        console.error("Error checking user role:", error);
-        navigate("/");
+      } catch (err: any) {
+        console.error("Admin dashboard access error:", err);
+        setError(err.message || "Failed to verify admin access");
+        toast.error("Access verification failed");
       } finally {
         setLoading(false);
       }
     };
     
-    checkUserRole();
-  }, [navigate]);
+    checkAccess();
+  }, [user, navigate]);
   
   const handleLogout = async () => {
     try {
@@ -66,10 +94,42 @@ const AdminDashboard = () => {
     }
   };
 
+  // Loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+        <div className="flex flex-col items-center p-8 bg-white rounded-lg shadow-sm max-w-md w-full">
+          <div className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent animate-spin mb-4"></div>
+          <p className="text-primary font-medium">Verifying admin access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center p-8 bg-white rounded-lg shadow-sm max-w-md w-full">
+          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+          <p className="text-red-500 font-medium text-lg mb-2">Access Error</p>
+          <p className="text-gray-600 text-center mb-4">{error}</p>
+          <div className="flex flex-col sm:flex-row gap-3 w-full">
+            <Button 
+              onClick={() => window.location.reload()}
+              className="flex items-center justify-center gap-2 w-full"
+            >
+              <span>Try Again</span>
+            </Button>
+            <Button 
+              onClick={() => navigate("/")}
+              variant="outline"
+              className="w-full"
+            >
+              Return to Home
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }

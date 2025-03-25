@@ -24,71 +24,76 @@ const AdminPage = () => {
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
+  // Simple, direct role check
   useEffect(() => {
-    // Simple, direct authentication check
-    const checkAccess = async () => {
-      console.log("Admin page - Checking access");
-      setIsLoading(true);
-      setIsError(false);
+    async function checkRole() {
+      console.log("Checking admin access...");
+      
+      // Check if logged in
+      if (!user) {
+        console.log("No user found, redirecting to login");
+        toast.error("Login required");
+        navigate("/login", { state: { returnTo: "/admin" } });
+        return;
+      }
       
       try {
-        // Check if user is logged in
-        if (!user) {
-          console.log("No user found, redirecting to login");
-          toast.error("Authentication required");
-          navigate("/login", { state: { returnTo: "/admin" } });
-          return;
-        }
+        setIsLoading(true);
+        setIsError(false);
         
-        // Get user role
+        // Get role
         const role = await getUserRole();
-        console.log("Retrieved role:", role);
+        console.log("User role:", role);
         
-        // Check if role is valid
         if (!role) {
-          console.log("No role found, redirecting to login");
-          toast.error("Unable to verify access level");
-          navigate("/login", { state: { returnTo: "/admin" } });
+          console.log("No role found");
+          toast.error("Unable to verify access");
+          navigate("/login");
           return;
         }
         
-        // Set role and check permissions
-        setUserRole(role);
-        
-        // Check specific role permissions
+        // Check permissions
         if (role !== "admin" && role !== "developer" && role !== "maintainer") {
-          console.log("Insufficient permissions, redirecting to home");
-          toast.error("You don't have permission to access the admin panel");
+          console.log("Insufficient permissions");
+          toast.error("You don't have permission to access admin panel");
           navigate("/");
           return;
         }
+        
+        // Set role if access granted
+        setUserRole(role);
       } catch (error: any) {
         console.error("Admin access check error:", error);
         setIsError(true);
         setErrorMessage(error.message || "Could not verify admin access");
-        toast.error("Access verification failed");
       } finally {
         setIsLoading(false);
       }
-    };
+    }
     
-    checkAccess();
+    checkRole();
   }, [user, navigate]);
 
   // Handle retry
   const handleRetry = () => {
     setIsError(false);
     setIsLoading(true);
-    // Re-trigger the useEffect
-    const retryAccess = async () => {
+    
+    // Re-trigger role check
+    async function retryCheck() {
       try {
         const role = await getUserRole();
-        if (role) {
-          setUserRole(role);
-          setIsError(false);
-        } else {
+        
+        if (!role) {
           throw new Error("Could not verify role");
         }
+        
+        if (role !== "admin" && role !== "developer" && role !== "maintainer") {
+          throw new Error("Insufficient permissions");
+        }
+        
+        setUserRole(role);
+        setIsError(false);
       } catch (error: any) {
         setIsError(true);
         setErrorMessage(error.message || "Access verification failed");
@@ -96,12 +101,12 @@ const AdminPage = () => {
       } finally {
         setIsLoading(false);
       }
-    };
+    }
     
-    retryAccess();
+    retryCheck();
   };
 
-  // Clean loading state
+  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
