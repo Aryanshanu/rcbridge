@@ -10,7 +10,10 @@ export const registerWithInviteCode = async (
   fullName?: string
 ) => {
   try {
+    console.log("Starting registration with invite code:", { email, inviteCode, hasFullName: !!fullName });
+    
     const validation = validateInviteCode(inviteCode);
+    console.log("Invite code validation result:", validation);
     
     if (!validation.valid) {
       return {
@@ -30,16 +33,21 @@ export const registerWithInviteCode = async (
     });
 
     if (authError) {
+      console.error("Auth signup error:", authError);
       throw authError;
     }
 
     if (!authData.user) {
+      console.warn("No user returned from signUp");
       return {
         success: false,
         message: "Registration failed. Please try again."
       };
     }
 
+    console.log("User created successfully:", authData.user.id);
+
+    // Update the profile with role information
     const { error: updateError } = await supabase
       .from("profiles")
       .update({ 
@@ -57,7 +65,8 @@ export const registerWithInviteCode = async (
     }
 
     // Mark the invite code as used
-    markInviteCodeAsUsed(inviteCode);
+    const inviteMarked = markInviteCodeAsUsed(inviteCode);
+    console.log("Invite code marked as used:", inviteMarked);
 
     return {
       success: true,
@@ -76,10 +85,22 @@ export const registerWithInviteCode = async (
 // Get the current user's role with improved error handling and timeout management
 export const getUserRole = async (): Promise<UserRole | null> => {
   // First, check if the user is authenticated without waiting for too long
-  const VERIFICATION_TIMEOUT = 5000; // 5 seconds timeout, reduced from 8 seconds
+  const VERIFICATION_TIMEOUT = 3000; // Further reduced from 5 seconds to 3 seconds
   
   try {
     console.log("Getting user role - starting auth check");
+    
+    // Check if we're still logged in first
+    const sessionCheck = await supabase.auth.getSession();
+    console.log("Session check result:", {
+      hasSession: !!sessionCheck.data.session,
+      error: sessionCheck.error
+    });
+    
+    if (!sessionCheck.data.session) {
+      console.log("No active session found");
+      return null;
+    }
     
     // Create a timeout promise
     const timeoutPromise = new Promise<null>((_, reject) => 
@@ -88,59 +109,82 @@ export const getUserRole = async (): Promise<UserRole | null> => {
     
     // Get the user with timeout
     const userPromise = supabase.auth.getUser();
-    const raceResult = await Promise.race([
-      userPromise,
-      timeoutPromise
-    ]);
     
-    // If we hit the timeout, raceResult will be from the rejected timeoutPromise
-    // Otherwise, it will be the result from userPromise
-    const { data: { user }, error: userError } = raceResult as Awaited<typeof userPromise>;
-    
-    if (userError) {
-      console.error("Authentication error:", userError);
-      throw userError;
-    }
-    
-    if (!user) {
-      console.log("No authenticated user found");
-      return null;
-    }
-    
-    console.log("User found, getting profile...");
-    
-    // Then, get the user's profile with role information with a timeout
-    const profilePromise = supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle(); // Using maybeSingle instead of single to prevent errors if no profile is found
-    
-    const profileRaceResult = await Promise.race([
-      profilePromise,
-      new Promise<null>((_, reject) => 
-        setTimeout(() => reject(new Error("Profile fetch timed out")), VERIFICATION_TIMEOUT)
-      )
-    ]);
-    
-    const { data, error } = profileRaceResult as Awaited<typeof profilePromise>;
-    
-    if (error) {
-      console.error("Error fetching user role:", error);
-      // If it's a 404/not found error, log it separately
-      if (error.code === "PGRST116") {
-        console.log("No profile found for user");
+    try {
+      const raceResult = await Promise.race([
+        userPromise,
+        timeoutPromise
+      ]);
+      
+      // If we hit the timeout, raceResult will be from the rejected timeoutPromise
+      // Otherwise, it will be the result from userPromise
+      const { data: { user }, error: userError } = raceResult as Awaited<typeof userPromise>;
+      
+      if (userError) {
+        console.error("Authentication error:", userError);
+        throw userError;
       }
-      throw error;
+      
+      if (!user) {
+        console.log("No authenticated user found");
+        return null;
+      }
+      
+      console.log("User found, id:", user.id);
+      
+      // Then, get the user's profile with role information with a timeout
+      const profilePromise = supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle(); // Using maybeSingle instead of single to prevent errors if no profile is found
+      
+      const profileRaceResult = await Promise.race([
+        profilePromise,
+        new Promise<null>((_, reject) => 
+          setTimeout(() => reject(new Error("Profile fetch timed out")), VERIFICATION_TIMEOUT)
+        )
+      ]);
+      
+      const { data, error } = profileRaceResult as Awaited<typeof profilePromise>;
+      
+      if (error) {
+        console.error("Error fetching user role:", error);
+        // If it's a 404/not found error, log it separately
+        if (error.code === "PGRST116") {
+          console.log("No profile found for user");
+        }
+        throw error;
+      }
+      
+      if (!data) {
+        console.log("No profile data found");
+        return null;
+      }
+      
+      console.log("Got user role:", data.role);
+      return data.role as UserRole;
+    } catch (timeoutError) {
+      console.error("Timeout error:", timeoutError);
+      
+      // Fallback: try without the race/timeout pattern as a last resort
+      console.log("Attempting fallback user role retrieval...");
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log("Fallback: No user found");
+        return null;
+      }
+      
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+        
+      console.log("Fallback role retrieval result:", data);
+      return data?.role as UserRole || null;
     }
-    
-    if (!data) {
-      console.log("No profile data found");
-      return null;
-    }
-    
-    console.log("Got user role:", data.role);
-    return data.role as UserRole;
   } catch (error: any) {
     // Improved error logging with more context
     console.error("Error getting user role:", {
@@ -150,7 +194,24 @@ export const getUserRole = async (): Promise<UserRole | null> => {
       stack: error.stack?.slice(0, 200) // Truncate stack for readability
     });
     
-    // Re-throw the error to allow handling in the component
-    throw error;
+    // Try one more approach as a final fallback
+    try {
+      console.log("Final fallback attempt...");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .maybeSingle();
+          
+        console.log("Final fallback result:", data);
+        return data?.role as UserRole || null;
+      }
+    } catch (fallbackError) {
+      console.error("Final fallback failed:", fallbackError);
+    }
+    
+    return null; // Return null instead of re-throwing to prevent page loading issues
   }
 };
