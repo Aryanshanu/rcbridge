@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/user";
 import { Shield, AlertCircle, Loader } from "lucide-react";
-import { getUserRole } from "@/utils/admin";
+import { getUserRole } from "@/utils/admin/authUtils";
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -36,7 +36,6 @@ const AdminPage = () => {
           toast({
             title: "Authentication Required",
             description: "Please sign in to access the admin panel.",
-            variant: "destructive",
           });
           navigate("/login");
           return;
@@ -55,7 +54,6 @@ const AdminPage = () => {
           toast({
             title: "Access Error",
             description: "Could not verify your access level. Please sign in again.",
-            variant: "destructive",
           });
           navigate("/login");
           return;
@@ -70,7 +68,6 @@ const AdminPage = () => {
           toast({
             title: "Access Denied",
             description: "You do not have permission to access the admin panel.",
-            variant: "destructive",
           });
           navigate("/");
           return;
@@ -88,7 +85,6 @@ const AdminPage = () => {
         toast({
           title: "Error",
           description: "Could not verify admin access. Please try again.",
-          variant: "destructive",
         });
       } finally {
         setIsLoading(false);
