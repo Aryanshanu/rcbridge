@@ -74,7 +74,7 @@ export const registerWithInviteCode = async (
   }
 };
 
-// Get the current user's role with improved error handling
+// Get the current user's role with improved error handling and timeout management
 export const getUserRole = async (): Promise<UserRole | null> => {
   try {
     console.log("Getting user role...");
@@ -94,7 +94,7 @@ export const getUserRole = async (): Promise<UserRole | null> => {
     
     console.log("User found, getting profile...");
     
-    // Then, get the user's profile with role information
+    // Then, get the user's profile with role information with a timeout
     const { data, error } = await supabase
       .from("profiles")
       .select("role")

@@ -12,8 +12,9 @@ import { AdminChatbot } from "@/components/admin/AdminChatbot";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/user";
-import { Shield, AlertCircle, Loader } from "lucide-react";
+import { Shield, AlertCircle, Loader, RefreshCw } from "lucide-react";
 import { getUserRole } from "@/utils/admin/authUtils";
+import { Button } from "@/components/ui/button";
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -21,7 +22,11 @@ const AdminPage = () => {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [loadAttempts, setLoadAttempts] = useState(0);
+
+  const MAX_ATTEMPTS = 3;
+  const VERIFY_TIMEOUT = 8000; // 8 seconds timeout
 
   useEffect(() => {
     // Check auth status and role
@@ -29,6 +34,7 @@ const AdminPage = () => {
       try {
         setIsLoading(true);
         setIsError(false);
+        setErrorMessage("");
         
         // If no user is found, redirect to login
         if (!user) {
@@ -36,51 +42,58 @@ const AdminPage = () => {
           toast("Authentication Required", {
             description: "Please sign in to access the admin panel."
           });
-          navigate("/login");
+          navigate("/login", { state: { returnTo: "/admin" } });
           return;
         }
         
         // Get user role from profiles table with timeout
         const rolePromise = getUserRole();
         const timeoutPromise = new Promise<null>((_, reject) => 
-          setTimeout(() => reject(new Error("Request timed out")), 5000)
+          setTimeout(() => reject(new Error("Request timed out")), VERIFY_TIMEOUT)
         );
         
-        const role = await Promise.race([rolePromise, timeoutPromise]) as UserRole | null;
-        
-        if (!role) {
-          console.log("No role found, redirecting to login");
-          toast("Access Error", {
-            description: "Could not verify your access level. Please sign in again."
-          });
-          navigate("/login");
-          return;
+        try {
+          const role = await Promise.race([rolePromise, timeoutPromise]) as UserRole | null;
+          
+          if (!role) {
+            console.log("No role found, redirecting to login");
+            toast("Access Error", {
+              description: "Could not verify your access level. Please sign in again."
+            });
+            navigate("/login", { state: { returnTo: "/admin" } });
+            return;
+          }
+          
+          // Set user role in state
+          setUserRole(role);
+          
+          // Check if user has admin permissions
+          if (role !== "admin" && role !== "developer" && role !== "maintainer") {
+            console.log("Insufficient permissions, redirecting to home");
+            toast("Access Denied", {
+              description: "You do not have permission to access the admin panel."
+            });
+            navigate("/");
+            return;
+          }
+        } catch (timeoutError) {
+          console.error("Timeout verifying user role:", timeoutError);
+          throw new Error("Verification timed out. Server might be busy.");
         }
-        
-        // Set user role in state
-        setUserRole(role);
-        
-        // Check if user has admin permissions
-        if (role !== "admin" && role !== "developer" && role !== "maintainer") {
-          console.log("Insufficient permissions, redirecting to home");
-          toast("Access Denied", {
-            description: "You do not have permission to access the admin panel."
-          });
-          navigate("/");
-          return;
-        }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error checking admin access:", error);
         
-        // If we've tried less than 3 times, try again
-        if (loadAttempts < 2) {
+        // If we've tried less than max attempts, try again
+        if (loadAttempts < MAX_ATTEMPTS - 1) {
+          console.log(`Attempt ${loadAttempts + 1} of ${MAX_ATTEMPTS} failed. Retrying...`);
           setLoadAttempts(prev => prev + 1);
           return;
         }
         
         setIsError(true);
+        setErrorMessage(error.message || "Could not verify admin access. Please try again.");
         toast("Error", {
-          description: "Could not verify admin access. Please try again."
+          description: error.message || "Could not verify admin access. Please try again."
         });
       } finally {
         setIsLoading(false);
@@ -90,15 +103,29 @@ const AdminPage = () => {
     checkAccess();
   }, [user, navigate, loadAttempts]);
 
+  // Function to retry loading
+  const handleRetry = () => {
+    setIsError(false);
+    setLoadAttempts(0);
+  };
+
   // Show a clean loading state while checking access
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="flex-1 flex items-center justify-center bg-white">
-          <div className="flex flex-col items-center p-8 bg-white rounded-lg shadow-sm">
+        <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="flex flex-col items-center p-8 bg-white rounded-lg shadow-sm max-w-md w-full">
             <Loader className="h-12 w-12 text-primary animate-spin mb-4" />
-            <p className="text-primary font-medium text-lg">Verifying admin access...</p>
+            <p className="text-primary font-medium text-lg mb-2">Verifying admin access...</p>
+            <p className="text-gray-500 text-sm text-center">
+              Please wait while we confirm your access permissions.
+            </p>
+            {loadAttempts > 0 && (
+              <div className="mt-3 text-amber-600 text-sm">
+                <p>Attempt {loadAttempts + 1} of {MAX_ATTEMPTS}...</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -110,25 +137,29 @@ const AdminPage = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="flex-1 flex items-center justify-center bg-white">
-          <div className="flex flex-col items-center p-8 bg-white rounded-lg shadow-sm">
+        <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="flex flex-col items-center p-8 bg-white rounded-lg shadow-sm max-w-md w-full">
             <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-            <p className="text-red-500 font-medium text-lg">Error verifying access</p>
-            <button 
-              onClick={() => {
-                setIsError(false);
-                setLoadAttempts(0);
-              }}
-              className="mt-4 px-4 py-2 bg-primary text-white rounded-md"
-            >
-              Try Again
-            </button>
-            <button 
-              onClick={() => navigate("/")}
-              className="mt-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
-            >
-              Return to Home
-            </button>
+            <p className="text-red-500 font-medium text-lg mb-2">Error verifying access</p>
+            <p className="text-gray-600 text-center mb-4">
+              {errorMessage || "There was a problem connecting to the server. Please try again."}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <Button 
+                onClick={handleRetry}
+                className="flex items-center justify-center gap-2 w-full"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span>Try Again</span>
+              </Button>
+              <Button 
+                onClick={() => navigate("/")}
+                variant="outline"
+                className="w-full"
+              >
+                Return to Home
+              </Button>
+            </div>
           </div>
         </div>
       </div>
