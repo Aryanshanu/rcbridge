@@ -33,9 +33,8 @@ const AdminPage = () => {
         // If no user is found, redirect to login
         if (!user) {
           console.log("No user found, redirecting to login");
-          toast({
-            title: "Authentication Required",
-            description: "Please sign in to access the admin panel.",
+          toast("Authentication Required", {
+            description: "Please sign in to access the admin panel."
           });
           navigate("/login");
           return;
@@ -51,9 +50,8 @@ const AdminPage = () => {
         
         if (!role) {
           console.log("No role found, redirecting to login");
-          toast({
-            title: "Access Error",
-            description: "Could not verify your access level. Please sign in again.",
+          toast("Access Error", {
+            description: "Could not verify your access level. Please sign in again."
           });
           navigate("/login");
           return;
@@ -65,9 +63,8 @@ const AdminPage = () => {
         // Check if user has admin permissions
         if (role !== "admin" && role !== "developer" && role !== "maintainer") {
           console.log("Insufficient permissions, redirecting to home");
-          toast({
-            title: "Access Denied",
-            description: "You do not have permission to access the admin panel.",
+          toast("Access Denied", {
+            description: "You do not have permission to access the admin panel."
           });
           navigate("/");
           return;
@@ -82,9 +79,8 @@ const AdminPage = () => {
         }
         
         setIsError(true);
-        toast({
-          title: "Error",
-          description: "Could not verify admin access. Please try again.",
+        toast("Error", {
+          description: "Could not verify admin access. Please try again."
         });
       } finally {
         setIsLoading(false);
