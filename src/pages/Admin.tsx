@@ -23,93 +23,85 @@ const AdminPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [loadAttempts, setLoadAttempts] = useState(0);
-
-  const MAX_ATTEMPTS = 3;
-  const VERIFY_TIMEOUT = 8000; // 8 seconds timeout
 
   useEffect(() => {
-    // Check auth status and role
+    // Simple, direct authentication check
     const checkAccess = async () => {
+      console.log("Admin page - Checking access");
+      setIsLoading(true);
+      setIsError(false);
+      
       try {
-        setIsLoading(true);
-        setIsError(false);
-        setErrorMessage("");
-        
-        // If no user is found, redirect to login
+        // Check if user is logged in
         if (!user) {
           console.log("No user found, redirecting to login");
-          toast("Authentication Required", {
-            description: "Please sign in to access the admin panel."
-          });
+          toast.error("Authentication required");
           navigate("/login", { state: { returnTo: "/admin" } });
           return;
         }
         
-        // Get user role from profiles table with timeout
-        const rolePromise = getUserRole();
-        const timeoutPromise = new Promise<null>((_, reject) => 
-          setTimeout(() => reject(new Error("Request timed out")), VERIFY_TIMEOUT)
-        );
+        // Get user role
+        const role = await getUserRole();
+        console.log("Retrieved role:", role);
         
-        try {
-          const role = await Promise.race([rolePromise, timeoutPromise]) as UserRole | null;
-          
-          if (!role) {
-            console.log("No role found, redirecting to login");
-            toast("Access Error", {
-              description: "Could not verify your access level. Please sign in again."
-            });
-            navigate("/login", { state: { returnTo: "/admin" } });
-            return;
-          }
-          
-          // Set user role in state
-          setUserRole(role);
-          
-          // Check if user has admin permissions
-          if (role !== "admin" && role !== "developer" && role !== "maintainer") {
-            console.log("Insufficient permissions, redirecting to home");
-            toast("Access Denied", {
-              description: "You do not have permission to access the admin panel."
-            });
-            navigate("/");
-            return;
-          }
-        } catch (timeoutError) {
-          console.error("Timeout verifying user role:", timeoutError);
-          throw new Error("Verification timed out. Server might be busy.");
-        }
-      } catch (error: any) {
-        console.error("Error checking admin access:", error);
-        
-        // If we've tried less than max attempts, try again
-        if (loadAttempts < MAX_ATTEMPTS - 1) {
-          console.log(`Attempt ${loadAttempts + 1} of ${MAX_ATTEMPTS} failed. Retrying...`);
-          setLoadAttempts(prev => prev + 1);
+        // Check if role is valid
+        if (!role) {
+          console.log("No role found, redirecting to login");
+          toast.error("Unable to verify access level");
+          navigate("/login", { state: { returnTo: "/admin" } });
           return;
         }
         
+        // Set role and check permissions
+        setUserRole(role);
+        
+        // Check specific role permissions
+        if (role !== "admin" && role !== "developer" && role !== "maintainer") {
+          console.log("Insufficient permissions, redirecting to home");
+          toast.error("You don't have permission to access the admin panel");
+          navigate("/");
+          return;
+        }
+      } catch (error: any) {
+        console.error("Admin access check error:", error);
         setIsError(true);
-        setErrorMessage(error.message || "Could not verify admin access. Please try again.");
-        toast("Error", {
-          description: error.message || "Could not verify admin access. Please try again."
-        });
+        setErrorMessage(error.message || "Could not verify admin access");
+        toast.error("Access verification failed");
       } finally {
         setIsLoading(false);
       }
     };
     
     checkAccess();
-  }, [user, navigate, loadAttempts]);
+  }, [user, navigate]);
 
-  // Function to retry loading
+  // Handle retry
   const handleRetry = () => {
     setIsError(false);
-    setLoadAttempts(0);
+    setIsLoading(true);
+    // Re-trigger the useEffect
+    const retryAccess = async () => {
+      try {
+        const role = await getUserRole();
+        if (role) {
+          setUserRole(role);
+          setIsError(false);
+        } else {
+          throw new Error("Could not verify role");
+        }
+      } catch (error: any) {
+        setIsError(true);
+        setErrorMessage(error.message || "Access verification failed");
+        toast.error("Verification failed");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    retryAccess();
   };
 
-  // Show a clean loading state while checking access
+  // Clean loading state
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -121,18 +113,13 @@ const AdminPage = () => {
             <p className="text-gray-500 text-sm text-center">
               Please wait while we confirm your access permissions.
             </p>
-            {loadAttempts > 0 && (
-              <div className="mt-3 text-amber-600 text-sm">
-                <p>Attempt {loadAttempts + 1} of {MAX_ATTEMPTS}...</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
     );
   }
 
-  // Show error state
+  // Error state
   if (isError) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -194,7 +181,7 @@ const AdminPage = () => {
     },
   ] : [];
 
-  // Render full admin UI only if we have a role
+  // Return null if no userRole - failsafe
   if (!userRole) return null;
 
   return (
