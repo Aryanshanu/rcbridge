@@ -9,7 +9,7 @@ import { AdminProperties } from "@/components/admin/AdminProperties";
 import { AdminUsers } from "@/components/admin/AdminUsers";
 import { AdminScraper } from "@/components/admin/AdminScraper";
 import { AdminChatbot } from "@/components/admin/AdminChatbot";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/user";
 import { Shield, AlertCircle, Loader } from "lucide-react";
@@ -17,19 +17,20 @@ import { getUserRole } from "@/utils/admin";
 
 const AdminPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
+  const [loadAttempts, setLoadAttempts] = useState(0);
 
   useEffect(() => {
-    // Check auth status and role only once when component mounts or user changes
+    // Check auth status and role
     const checkAccess = async () => {
       try {
         setIsLoading(true);
         setIsError(false);
         
+        // If no user is found, redirect to login
         if (!user) {
           console.log("No user found, redirecting to login");
           toast({
@@ -41,8 +42,13 @@ const AdminPage = () => {
           return;
         }
         
-        // Get user role from profiles table
-        const role = await getUserRole();
+        // Get user role from profiles table with timeout
+        const rolePromise = getUserRole();
+        const timeoutPromise = new Promise<null>((_, reject) => 
+          setTimeout(() => reject(new Error("Request timed out")), 5000)
+        );
+        
+        const role = await Promise.race([rolePromise, timeoutPromise]) as UserRole | null;
         
         if (!role) {
           console.log("No role found, redirecting to login");
@@ -71,28 +77,37 @@ const AdminPage = () => {
         }
       } catch (error) {
         console.error("Error checking admin access:", error);
+        
+        // If we've tried less than 3 times, try again
+        if (loadAttempts < 2) {
+          setLoadAttempts(prev => prev + 1);
+          return;
+        }
+        
         setIsError(true);
         toast({
           title: "Error",
           description: "Could not verify admin access. Please try again.",
           variant: "destructive",
         });
-        navigate("/");
       } finally {
         setIsLoading(false);
       }
     };
     
     checkAccess();
-  }, [user, navigate, toast]);
+  }, [user, navigate, loadAttempts]);
 
   // Show a clean loading state while checking access
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="flex flex-col items-center p-8 bg-white rounded-lg shadow-sm">
-          <Loader className="h-12 w-12 text-primary animate-spin mb-4" />
-          <p className="text-primary font-medium text-lg">Verifying admin access...</p>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center bg-white">
+          <div className="flex flex-col items-center p-8 bg-white rounded-lg shadow-sm">
+            <Loader className="h-12 w-12 text-primary animate-spin mb-4" />
+            <p className="text-primary font-medium text-lg">Verifying admin access...</p>
+          </div>
         </div>
       </div>
     );
@@ -101,16 +116,28 @@ const AdminPage = () => {
   // Show error state
   if (isError) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="flex flex-col items-center p-8 bg-white rounded-lg shadow-sm">
-          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-          <p className="text-red-500 font-medium text-lg">Error verifying access</p>
-          <button 
-            onClick={() => navigate("/")}
-            className="mt-4 px-4 py-2 bg-primary text-white rounded-md"
-          >
-            Return to Home
-          </button>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center bg-white">
+          <div className="flex flex-col items-center p-8 bg-white rounded-lg shadow-sm">
+            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+            <p className="text-red-500 font-medium text-lg">Error verifying access</p>
+            <button 
+              onClick={() => {
+                setIsError(false);
+                setLoadAttempts(0);
+              }}
+              className="mt-4 px-4 py-2 bg-primary text-white rounded-md"
+            >
+              Try Again
+            </button>
+            <button 
+              onClick={() => navigate("/")}
+              className="mt-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
+            >
+              Return to Home
+            </button>
+          </div>
         </div>
       </div>
     );

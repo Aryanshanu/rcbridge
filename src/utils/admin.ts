@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole, UserProfile } from "@/types/user";
 import { format } from "date-fns";
@@ -119,30 +120,51 @@ export const registerWithInviteCode = async (
   }
 };
 
-// Get the current user's role
+// Get the current user's role with improved error handling
 export const getUserRole = async (): Promise<UserRole | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    console.log("Getting user role...");
+    
+    // First, check if the user is authenticated
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error("Auth error:", userError);
+      throw userError;
+    }
     
     if (!user) {
+      console.log("No authenticated user found");
       return null;
     }
     
+    console.log("User found, getting profile...");
+    
+    // Then, get the user's profile with role information
     const { data, error } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
     
-    if (error || !data) {
+    if (error) {
       console.error("Error fetching user role:", error);
+      if (error.code === "PGRST116") {
+        console.log("No profile found for user");
+      }
+      throw error;
+    }
+    
+    if (!data) {
+      console.log("No profile data found");
       return null;
     }
     
+    console.log("Got user role:", data.role);
     return data.role as UserRole;
   } catch (error) {
     console.error("Error getting user role:", error);
-    return null;
+    throw error; // Re-throw to allow handling in the component
   }
 };
 

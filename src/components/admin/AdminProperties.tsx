@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +21,8 @@ import {
   Building, 
   Map, 
   RefreshCcw, 
-  ArrowUpDown 
+  ArrowUpDown, 
+  AlertCircle 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -54,39 +54,56 @@ export const AdminProperties = ({ userRole }: AdminPropertiesProps) => {
   const [sortField, setSortField] = useState<keyof Property>("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   
   // Check if table exists
   useEffect(() => {
     checkTableWithFeedback("properties", "Properties table is accessible");
   }, []);
 
-  // Load properties
+  // Load properties with timeout
   useEffect(() => {
     const fetchProperties = async () => {
       setLoading(true);
+      setLoadError(null);
+      
       try {
-        let query = supabase
-          .from("properties")
-          .select("*")
-          .order(sortField, { ascending: sortDirection === "asc" });
+        // Create a promise that rejects after 10 seconds
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Request timed out")), 10000);
+        });
         
-        if (priceRange[0] > 0) {
-          query = query.gte("price", priceRange[0]);
-        }
+        // Create the query promise
+        const queryPromise = (async () => {
+          let query = supabase
+            .from("properties")
+            .select("*")
+            .order(sortField, { ascending: sortDirection === "asc" });
+          
+          if (priceRange[0] > 0) {
+            query = query.gte("price", priceRange[0]);
+          }
+          
+          if (priceRange[1] < 10000000) {
+            query = query.lte("price", priceRange[1]);
+          }
+          
+          const { data, error } = await query;
+          
+          if (error) {
+            throw error;
+          }
+          
+          return data as Property[];
+        })();
         
-        if (priceRange[1] < 10000000) {
-          query = query.lte("price", priceRange[1]);
-        }
-        
-        const { data, error } = await query;
-        
-        if (error) {
-          throw error;
-        }
-        
-        setProperties(data as Property[]);
+        // Race the promises
+        const data = await Promise.race([queryPromise, timeoutPromise]) as Property[];
+        setProperties(data || []);
       } catch (error: any) {
         console.error("Error fetching properties:", error);
+        setLoadError(error.message || "Failed to load properties");
+        setProperties([]);
         toast.error(`Failed to load properties: ${error.message}`);
       } finally {
         setLoading(false);
@@ -216,6 +233,21 @@ export const AdminProperties = ({ userRole }: AdminPropertiesProps) => {
       {loading ? (
         <div className="flex justify-center items-center p-12">
           <div className="h-8 w-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+        </div>
+      ) : loadError ? (
+        <div className="text-center py-12 bg-red-50 rounded-lg">
+          <AlertCircle className="h-12 w-12 mx-auto text-red-400 mb-3" />
+          <h3 className="text-lg font-medium text-red-800 mb-1">Failed to load properties</h3>
+          <p className="text-red-600 max-w-md mx-auto mb-4">{loadError}</p>
+          <Button 
+            onClick={() => {
+              setSortField("created_at");
+              setSortDirection("desc");
+            }}
+            variant="outline"
+          >
+            Try Again
+          </Button>
         </div>
       ) : filteredProperties.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
