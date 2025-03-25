@@ -24,46 +24,48 @@ const AdminPage = () => {
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
-  // Simple, direct role check
+  // Clear, direct role check
   useEffect(() => {
-    async function checkRole() {
-      console.log("Checking admin access...");
-      
-      // Check if logged in
-      if (!user) {
-        console.log("No user found, redirecting to login");
-        toast.error("Login required");
-        navigate("/login", { state: { returnTo: "/admin" } });
-        return;
-      }
-      
+    console.log("Admin page mounted");
+    
+    // Check if user is logged in
+    if (!user) {
+      console.log("No user found, redirecting to login");
+      toast.error("Login required to access admin panel");
+      navigate("/login", { state: { returnTo: "/admin" } });
+      return;
+    }
+    
+    // Function to fetch and verify user role
+    async function fetchUserRole() {
       try {
         setIsLoading(true);
         setIsError(false);
         
-        // Get role
+        console.log("Fetching user role...");
         const role = await getUserRole();
-        console.log("User role:", role);
+        console.log("Fetched role:", role);
         
         if (!role) {
           console.log("No role found");
-          toast.error("Unable to verify access");
-          navigate("/login");
+          setIsError(true);
+          setErrorMessage("Could not verify your access level");
           return;
         }
         
-        // Check permissions
+        // Verify admin access
         if (role !== "admin" && role !== "developer" && role !== "maintainer") {
-          console.log("Insufficient permissions");
+          console.log("Insufficient permissions:", role);
           toast.error("You don't have permission to access admin panel");
           navigate("/");
           return;
         }
         
-        // Set role if access granted
+        // Valid admin role
+        console.log("Valid admin role:", role);
         setUserRole(role);
       } catch (error: any) {
-        console.error("Admin access check error:", error);
+        console.error("Error checking admin access:", error);
         setIsError(true);
         setErrorMessage(error.message || "Could not verify admin access");
       } finally {
@@ -71,18 +73,19 @@ const AdminPage = () => {
       }
     }
     
-    checkRole();
+    fetchUserRole();
   }, [user, navigate]);
 
   // Handle retry
   const handleRetry = () => {
+    console.log("Retrying admin access check");
     setIsError(false);
     setIsLoading(true);
     
-    // Re-trigger role check
-    async function retryCheck() {
+    async function retryRoleCheck() {
       try {
         const role = await getUserRole();
+        console.log("Retry role check result:", role);
         
         if (!role) {
           throw new Error("Could not verify role");
@@ -95,6 +98,7 @@ const AdminPage = () => {
         setUserRole(role);
         setIsError(false);
       } catch (error: any) {
+        console.error("Retry failed:", error);
         setIsError(true);
         setErrorMessage(error.message || "Access verification failed");
         toast.error("Verification failed");
@@ -103,7 +107,7 @@ const AdminPage = () => {
       }
     }
     
-    retryCheck();
+    retryRoleCheck();
   };
 
   // Loading state
@@ -158,8 +162,14 @@ const AdminPage = () => {
     );
   }
 
+  // Return null if no userRole - failsafe
+  if (!userRole) {
+    console.log("No user role found, rendering null");
+    return null;
+  }
+
   // Only define tabs if we have a user role
-  const tabs = userRole ? [
+  const tabs = [
     {
       id: "properties",
       label: "Properties",
@@ -184,11 +194,10 @@ const AdminPage = () => {
       content: <AdminChatbot userRole={userRole} />,
       disabled: false,
     },
-  ] : [];
+  ];
 
-  // Return null if no userRole - failsafe
-  if (!userRole) return null;
-
+  console.log("Rendering admin page with role:", userRole);
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <SEO title="Admin Panel | RC Bridge" description="Admin panel for managing RC Bridge properties and users" />
