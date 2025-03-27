@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -140,6 +141,7 @@ const App = () => {
   // Add scroll behavior and initialize app
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth';
+    console.log("App initialization started");
     
     // Mark app as ready after a short delay to ensure components are loaded
     const timer = setTimeout(() => {

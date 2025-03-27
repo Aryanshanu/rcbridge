@@ -64,10 +64,21 @@ document.body.appendChild(loadingElement);
 
 // Create root with error handling
 const rootElement = document.getElementById('root');
-if (rootElement) rootElement.classList.add('no-fouc');
+if (rootElement) {
+  rootElement.classList.add('no-fouc');
+  console.log('Root element found');
+} else {
+  console.error('Root element not found! Creating a new one.');
+  const newRoot = document.createElement('div');
+  newRoot.id = 'root';
+  document.body.appendChild(newRoot);
+}
+
+// Get the root element again in case we had to create it
+const finalRootElement = document.getElementById('root');
 
 // Initialize app with error handling
-const root = createRoot(rootElement!);
+const root = createRoot(finalRootElement!);
 
 // Log the current URL for debugging
 console.log('Current URL at load time:', window.location.pathname + window.location.search);
@@ -80,12 +91,13 @@ if (redirectPath) {
 }
 
 try {
+  console.log('Attempting to render App component...');
   root.render(<App />);
   console.log('App component rendered successfully');
 } catch (error) {
   console.error('Error rendering app:', error);
-  if (rootElement) {
-    rootElement.innerHTML = `
+  if (finalRootElement) {
+    finalRootElement.innerHTML = `
       <div class="error-page">
         <h1>Something went wrong</h1>
         <p>We're sorry, but there was an error loading the application. Please try refreshing the page.</p>
@@ -94,17 +106,22 @@ try {
         </button>
       </div>
     `;
-    rootElement.classList.remove('no-fouc');
+    finalRootElement.classList.remove('no-fouc');
   }
 }
 
 // Remove loading indicator and show content when app is ready
 window.addEventListener('load', () => {
+  console.log('Window load event triggered');
   setTimeout(() => {
     loadingElement.style.opacity = '0';
-    if (rootElement) rootElement.classList.remove('no-fouc');
+    if (finalRootElement) {
+      console.log('Removing no-fouc class from root element');
+      finalRootElement.classList.remove('no-fouc');
+    }
     setTimeout(() => {
       loadingElement.remove();
+      console.log('Loading element removed');
     }, 300);
   }, 300);
 });

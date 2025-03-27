@@ -86,38 +86,40 @@ export const registerWithInviteCode = async (
 // Clean, simplified getUserRole function
 export const getUserRole = async (): Promise<UserRole | null> => {
   try {
+    console.log("getUserRole: Starting role check");
+    
     // Get current session
     const { data } = await supabase.auth.getSession();
     
     if (!data.session || !data.session.user) {
-      console.log("No active session found");
+      console.log("getUserRole: No active session found");
       return null;
     }
     
     const userId = data.session.user.id;
-    console.log("Checking role for user ID:", userId);
+    console.log("getUserRole: Checking role for user ID:", userId);
     
     // Simple, direct query to get user role
     const { data: profile, error } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
     
     if (error) {
-      console.error("Error fetching user role:", error);
+      console.error("getUserRole: Error fetching user role:", error);
       return null;
     }
     
     if (!profile) {
-      console.log("No profile found for user");
+      console.log("getUserRole: No profile found for user");
       return null;
     }
     
-    console.log("Retrieved user role:", profile.role);
+    console.log("getUserRole: Retrieved user role:", profile.role);
     return profile.role as UserRole;
   } catch (error) {
-    console.error("Error in getUserRole:", error);
+    console.error("getUserRole: Error in function:", error);
     return null;
   }
 };
