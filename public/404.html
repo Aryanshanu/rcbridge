@@ -8,6 +8,8 @@
   <script>
     // Store the URL the user tried to access
     sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search);
+    // Log to console for debugging
+    console.log('404 handler: Redirecting from', window.location.pathname, 'to homepage');
     // Redirect to the index page where the SPA will load
     window.location.replace('/');
   </script>
@@ -36,10 +38,17 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    .message {
+      text-align: center;
+      max-width: 80%;
+    }
   </style>
 </head>
 <body>
   <div class="loader"></div>
-  <p>Redirecting to the homepage...</p>
+  <div class="message">
+    <p>The page you requested was not found.</p>
+    <p>Redirecting to the homepage...</p>
+  </div>
 </body>
 </html>

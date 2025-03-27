@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,7 +15,6 @@ import { AlertCircle, Home } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { ChatbotWidget } from "./components/ChatbotWidget";
 
-// Lazy-loaded pages for better performance
 const Blog = lazy(() => import("./pages/Blog"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -29,7 +27,6 @@ const Admin = lazy(() => import("./pages/Admin"));
 const AdminInvite = lazy(() => import("./pages/AdminInvite"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
-// Loading component
 const PageLoading = () => (
   <div className="w-full h-screen flex items-center justify-center bg-gray-50">
     <div className="flex flex-col items-center">
@@ -39,14 +36,13 @@ const PageLoading = () => (
   </div>
 );
 
-// Error Boundary to catch route errors
 const ErrorFallback = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
   useEffect(() => {
-    // Report 404 error
     console.error(`Page not found: ${location.pathname}`);
+    console.log('Current available routes: /, /properties, /services, /calculator, /blog, /faq, /contact, /login, /register, /profile, /my-properties, /saved-searches, /admin, /admin-invite, /admin-dashboard');
   }, [location.pathname]);
   
   return (
@@ -77,23 +73,18 @@ const ErrorFallback = () => {
   );
 };
 
-// App Router component to handle redirect paths from sessionStorage
 const AppRouter = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
   useEffect(() => {
-    // Check if there's a redirect path in sessionStorage
     const redirectPath = sessionStorage.getItem('redirectPath');
     if (redirectPath && location.pathname === '/') {
       console.log("Found redirectPath in sessionStorage:", redirectPath);
       
-      // Clear the redirect path before navigating to prevent loops
       sessionStorage.removeItem('redirectPath');
       
-      // Small timeout to ensure the app is fully loaded
       setTimeout(() => {
-        // Use replace: true to replace the current history entry
         navigate(redirectPath, { replace: true });
         console.log("Navigated to:", redirectPath);
       }, 50);
@@ -103,7 +94,6 @@ const AppRouter = () => {
   return null;
 };
 
-// Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   
@@ -138,12 +128,11 @@ const queryClient = new QueryClient({
 const App = () => {
   const [isAppReady, setIsAppReady] = useState(false);
 
-  // Add scroll behavior and initialize app
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth';
     console.log("App initialization started");
+    console.log("Current path:", window.location.pathname);
     
-    // Mark app as ready after a short delay to ensure components are loaded
     const timer = setTimeout(() => {
       setIsAppReady(true);
       console.log("App ready for navigation");
@@ -164,14 +153,12 @@ const App = () => {
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                {/* Router to handle redirects */}
                 <AppRouter />
                 <WelcomeWrapper>
                   <Suspense fallback={<PageLoading />}>
                     {isAppReady ? (
                       <>
                         <Routes>
-                          {/* Public Routes */}
                           <Route path="/" element={<Index />} />
                           <Route path="/properties" element={<Properties />} />
                           <Route path="/services" element={<Services />} />
@@ -183,18 +170,13 @@ const App = () => {
                           <Route path="/register" element={<Register />} />
                           <Route path="/admin-invite" element={<AdminInvite />} />
                           <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                          
-                          {/* Protected Routes */}
                           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                           <Route path="/my-properties" element={<ProtectedRoute><MyProperties /></ProtectedRoute>} />
                           <Route path="/saved-searches" element={<ProtectedRoute><SavedSearches /></ProtectedRoute>} />
                           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-                          
-                          {/* Catch-all route */}
+                          <Route path="/lander" element={<Navigate to="/" replace />} />
                           <Route path="*" element={<ErrorFallback />} />
                         </Routes>
-                        
-                        {/* Chatbot Widget (available on all pages) */}
                         <ChatbotWidget />
                       </>
                     ) : (

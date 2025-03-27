@@ -86,6 +86,8 @@ console.log('Checking for redirectPath in sessionStorage');
 const redirectPath = sessionStorage.getItem('redirectPath');
 if (redirectPath) {
   console.log('Found redirectPath:', redirectPath);
+  // Clear it to prevent redirection loops
+  sessionStorage.removeItem('redirectPath');
 } else {
   console.log('No redirectPath found in sessionStorage');
 }
@@ -101,6 +103,7 @@ try {
       <div class="error-page">
         <h1>Something went wrong</h1>
         <p>We're sorry, but there was an error loading the application. Please try refreshing the page.</p>
+        <p style="color: red;">Error: ${error instanceof Error ? error.message : 'Unknown error'}</p>
         <button onclick="window.location.reload()" class="bg-primary text-white px-4 py-2 rounded mt-4">
           Refresh Page
         </button>
@@ -129,6 +132,12 @@ window.addEventListener('load', () => {
 // Add global error handling
 window.addEventListener('error', (event) => {
   console.error('Global error:', event.error || event.message);
+  
+  // Attempt to recover from fatal errors
+  if (event.message && event.message.includes('ChunkLoadError')) {
+    console.log('Detected chunk load error, attempting to recover by reloading the page');
+    window.location.reload();
+  }
 });
 
 // Define toast for error handling
