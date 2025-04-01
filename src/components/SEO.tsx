@@ -18,6 +18,7 @@ interface SEOProps {
     bathrooms?: number;
     floorSize?: string;
   };
+  noindex?: boolean;
 }
 
 export const SEO = ({
@@ -28,9 +29,12 @@ export const SEO = ({
   url,
   type = "website",
   propertyData,
+  noindex = false,
 }: SEOProps) => {
   const location = useLocation();
   const currentUrl = url || `${window.location.origin}${location.pathname}`;
+  const pageTitle = title.includes("RC Bridge") ? title : `${title} | RC Bridge`;
+  const absoluteImageUrl = image.startsWith('http') ? image : `${window.location.origin}${image}`;
 
   // Generate structured data based on page type
   const getStructuredData = () => {
@@ -39,7 +43,7 @@ export const SEO = ({
       "@type": "Organization",
       "name": "RC Bridge",
       "url": window.location.origin,
-      "logo": `${window.location.origin}${image}`,
+      "logo": `${window.location.origin}/lovable-uploads/5fd561ff-5bbd-449c-94a3-d39d0a8b4f03.png`,
       "description": description,
       "address": {
         "@type": "PostalAddress",
@@ -60,7 +64,7 @@ export const SEO = ({
         "@type": "RealEstateListing",
         "name": propertyData.name,
         "description": description,
-        "image": image,
+        "image": absoluteImageUrl,
         "url": currentUrl,
         "offers": {
           "@type": "Offer",
@@ -84,6 +88,33 @@ export const SEO = ({
           "unitCode": "SQF"
         }
       };
+    } else if (type === "article") {
+      return {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": title,
+        "image": absoluteImageUrl,
+        "author": {
+          "@type": "Organization",
+          "name": "RC Bridge"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "RC Bridge",
+          "logo": {
+            "@type": "ImageObject",
+            "url": `${window.location.origin}/lovable-uploads/5fd561ff-5bbd-449c-94a3-d39d0a8b4f03.png`
+          }
+        },
+        "url": currentUrl,
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": currentUrl
+        },
+        "datePublished": new Date().toISOString(),
+        "dateModified": new Date().toISOString(),
+        "description": description
+      };
     }
 
     return baseData;
@@ -91,32 +122,35 @@ export const SEO = ({
 
   return (
     <Helmet>
-      <title>{title}</title>
+      <title>{pageTitle}</title>
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
 
       {/* Canonical URL */}
       <link rel="canonical" href={currentUrl} />
+      
+      {/* Indexing directive */}
+      {noindex && <meta name="robots" content="noindex, nofollow" />}
+      {!noindex && <meta name="robots" content="index, follow, max-image-preview:large" />}
 
       {/* Open Graph / Facebook */}
-      <meta property="og:type" content={type === "property" ? "realestate.listing" : "website"} />
+      <meta property="og:type" content={type === "property" ? "realestate.listing" : type === "article" ? "article" : "website"} />
       <meta property="og:url" content={currentUrl} />
-      <meta property="og:title" content={title} />
+      <meta property="og:title" content={pageTitle} />
       <meta property="og:description" content={description} />
-      <meta property="og:image" content={image} />
+      <meta property="og:image" content={absoluteImageUrl} />
       <meta property="og:site_name" content="RC Bridge" />
       <meta property="og:locale" content="en_IN" />
 
       {/* Twitter */}
       <meta property="twitter:card" content="summary_large_image" />
       <meta property="twitter:url" content={currentUrl} />
-      <meta property="twitter:title" content={title} />
+      <meta property="twitter:title" content={pageTitle} />
       <meta property="twitter:description" content={description} />
-      <meta property="twitter:image" content={image} />
+      <meta property="twitter:image" content={absoluteImageUrl} />
       <meta property="twitter:creator" content="@rcbridge" />
 
       {/* Additional SEO tags */}
-      <meta name="robots" content="index, follow, max-image-preview:large" />
       <meta name="author" content="RC Bridge" />
       <meta name="geo.region" content="IN-TG" />
       <meta name="geo.placename" content="Hyderabad" />

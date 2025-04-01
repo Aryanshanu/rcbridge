@@ -4,3 +4,6 @@
 
 # Explicitly handle /lander
 /lander / 301
+
+# Redirect missing assets to defaults
+/assets/* /placeholder.svg 404

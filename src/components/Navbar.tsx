@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Menu, X, Phone, MapPin, Users, Building, Home, LogIn, Search } from "lucide-react";
+import { Menu, X, Search } from "lucide-react";
 import { DesktopMenu } from "./navbar/DesktopMenu";
 import { MobileMenu } from "./navbar/MobileMenu";
 import { cn } from "@/lib/utils";
@@ -28,10 +28,26 @@ export const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Close mobile menu when navigating to a new page or screen size changes
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768 && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isOpen]);
+
   const scrollToPropertyForm = () => {
     const formElement = document.querySelector('#property-form');
     if (formElement) {
       formElement.scrollIntoView({ behavior: 'smooth' });
+      setIsOpen(false);
+    } else {
+      // If not on home page, navigate to home first then scroll
+      navigate('/?scrollTo=property-form');
       setIsOpen(false);
     }
   };
@@ -54,6 +70,7 @@ export const Navbar = () => {
         search: `?q=${encodeURIComponent(searchQuery)}`
       });
       setShowSearch(false);
+      setSearchQuery("");
     }
   };
 
@@ -110,7 +127,7 @@ export const Navbar = () => {
 
       {/* Search overlay */}
       {showSearch && (
-        <div className="absolute top-16 left-0 w-full bg-white shadow-md p-4 md:px-6 animate-in fade-in slide-in-from-top duration-300">
+        <div className="absolute top-16 left-0 w-full bg-white shadow-md p-4 md:px-6 animate-in fade-in slide-in-from-top duration-300 z-50">
           <div className="relative max-w-3xl mx-auto">
             <form onSubmit={handleSearchSubmit}>
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -129,6 +146,7 @@ export const Navbar = () => {
               >
                 <X className="h-5 w-5" />
               </button>
+              <button type="submit" className="sr-only">Search</button>
             </form>
           </div>
         </div>

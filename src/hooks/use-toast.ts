@@ -5,8 +5,8 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_LIMIT = 10
+const TOAST_REMOVE_DELAY = 5000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -74,6 +74,17 @@ const addToRemoveQueue = (toastId: string) => {
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
+      // If we already have a toast with this ID, update it
+      if (state.toasts.find(t => t.id === action.toast.id)) {
+        return {
+          ...state,
+          toasts: state.toasts.map(t => 
+            t.id === action.toast.id ? { ...t, ...action.toast } : t
+          )
+        }
+      }
+      
+      // Otherwise add the new toast
       return {
         ...state,
         toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
@@ -185,6 +196,32 @@ function useToast() {
     ...state,
     toast,
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
+    error: (message: string) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      })
+    },
+    success: (message: string) => {
+      toast({
+        title: "Success",
+        description: message,
+      })
+    },
+    info: (message: string) => {
+      toast({
+        title: "Information",
+        description: message,
+      })
+    },
+    warning: (message: string) => {
+      toast({
+        variant: "destructive",
+        title: "Warning",
+        description: message,
+      })
+    },
   }
 }
 

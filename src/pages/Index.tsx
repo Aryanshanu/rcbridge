@@ -6,13 +6,14 @@ import { CallToAction } from "@/components/sections/CallToAction";
 import { Footer } from "@/components/sections/Footer";
 import { PropertyForm } from "@/components/PropertyForm";
 import { SEO } from "@/components/SEO";
-import { Loader2, Building, Sparkles, Calculator, Clock, Shield, Users, HeartHandshake, Target, Trophy } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { NotificationButton } from "@/components/ui/NotificationButton";
 import { ChatBot } from "@/components/ChatBot";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { TextFeaturedProperties } from "@/components/sections/TextFeaturedProperties";
 import { WhyChooseUs } from "@/components/sections/WhyChooseUs";
+import { CoreValues } from "@/components/sections/CoreValues";
+import { HowItWorks } from "@/components/sections/HowItWorks";
+import { ExploreServices } from "@/components/sections/ExploreServices";
+import { TextFeaturedProperties } from "@/components/sections/TextFeaturedProperties";
 
 const Testimonials = lazy(() => import("@/components/sections/Testimonials").then(module => ({ default: module.Testimonials })));
 const Features = lazy(() => import("@/components/sections/Features").then(module => ({ default: module.Features })));
@@ -26,6 +27,16 @@ const LoadingSpinner = () => (
 const Index = () => {
   useEffect(() => {
     console.log("Page viewed:", window.location.pathname);
+    
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('scrollTo') === 'property-form') {
+      setTimeout(() => {
+        const formElement = document.querySelector('#property-form');
+        if (formElement) {
+          formElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 500);
+    }
   }, []);
 
   return (
@@ -44,14 +55,14 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Why Choose Us Section - Moved to top */}
+        {/* Why Choose Us Section */}
         <section className="full-width bg-white py-16">
           <div className="content-container">
             <WhyChooseUs />
           </div>
         </section>
         
-        {/* Tell Us Your Requirements Section - Moved after Why Choose Us */}
+        {/* Tell Us Your Requirements Section */}
         <section className="full-width bg-gray-50 py-16">
           <div className="content-container">
             <div className="text-center mb-6 sm:mb-8">
@@ -68,157 +79,14 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Our Core Values Section */}
-        <section className="full-width bg-white py-16">
-          <div className="content-container">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Our Core Values</h2>
-              <p className="mt-2 text-base sm:text-lg text-gray-600">
-                The principles that drive our commitment to excellence in real estate
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
-                <div className="rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-4 mx-auto">
-                  <HeartHandshake className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-center">Integrity</h3>
-                <p className="text-gray-600 text-center">
-                  Upholding the highest ethical standards in every transaction and relationship, ensuring trust and transparency.
-                </p>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
-                <div className="rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-4 mx-auto">
-                  <Target className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-center">Innovation</h3>
-                <p className="text-gray-600 text-center">
-                  Constantly evolving our approach to meet changing market needs and leveraging technology for better outcomes.
-                </p>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
-                <div className="rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-4 mx-auto">
-                  <Users className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-center">Community</h3>
-                <p className="text-gray-600 text-center">
-                  Building relationships that extend beyond transactions, fostering a vibrant ecosystem of property stakeholders.
-                </p>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
-                <div className="rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-4 mx-auto">
-                  <Trophy className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-center">Excellence</h3>
-                <p className="text-gray-600 text-center">
-                  Committed to delivering exceptional service and results that exceed expectations in every aspect.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Core Values Section */}
+        <CoreValues />
         
         {/* How It Works Section */}
-        <section className="full-width bg-gray-50 py-16">
-          <div className="content-container">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">How RC Bridge Works</h2>
-              <p className="mt-2 text-base sm:text-lg text-gray-600">
-                Our unique approach to revolutionizing real estate transactions
-              </p>
-            </div>
-            
-            <div className="relative">
-              <div className="hidden md:block absolute left-1/2 top-24 bottom-24 w-0.5 bg-primary/30 -translate-x-1/2 z-0"></div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
-                <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all text-center">
-                  <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto">
-                    <Users className="h-8 w-8 text-primary" />
-                  </div>
-                  <div className="bg-primary text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-3 mx-auto">
-                    1
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Share Your Requirements</h3>
-                  <p className="text-gray-600">Tell us what you're looking for, whether buying, selling, or renting property.</p>
-                </div>
-                
-                <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all text-center">
-                  <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto">
-                    <Clock className="h-8 w-8 text-primary" />
-                  </div>
-                  <div className="bg-primary text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-3 mx-auto">
-                    2
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Personalized Matching</h3>
-                  <p className="text-gray-600">We match you with exclusive off-market properties or serious buyers based on your criteria.</p>
-                </div>
-                
-                <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all text-center">
-                  <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto">
-                    <Shield className="h-8 w-8 text-primary" />
-                  </div>
-                  <div className="bg-primary text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-3 mx-auto">
-                    3
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Direct Connections</h3>
-                  <p className="text-gray-600">Connect directly with property owners or buyers, eliminating middlemen and unnecessary fees.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <HowItWorks />
         
-        {/* Navigation Links to Pages */}
-        <section className="full-width bg-white py-16">
-          <div className="content-container">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Explore Our Services</h2>
-              <p className="mt-2 text-base sm:text-lg text-gray-600">
-                Discover what RC Bridge has to offer to help you achieve your real estate goals
-              </p>
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center">
-                <Building className="h-12 w-12 text-primary mb-4" />
-                <h3 className="text-xl font-bold mb-2">Properties</h3>
-                <p className="text-gray-600 mb-4">Explore our curated collection of premium properties designed to meet your investment needs.</p>
-                <Link to="/properties" className="mt-auto">
-                  <Button className="w-full">
-                    Browse Properties
-                  </Button>
-                </Link>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center">
-                <Sparkles className="h-12 w-12 text-primary mb-4" />
-                <h3 className="text-xl font-bold mb-2">Our Services</h3>
-                <p className="text-gray-600 mb-4">Learn about the comprehensive real estate solutions we offer to our clients.</p>
-                <Link to="/services" className="mt-auto">
-                  <Button className="w-full">
-                    View Services
-                  </Button>
-                </Link>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center">
-                <Calculator className="h-12 w-12 text-primary mb-4" />
-                <h3 className="text-xl font-bold mb-2">Investment Calculator</h3>
-                <p className="text-gray-600 mb-4">Calculate potential returns and evaluate investment opportunities with our tools.</p>
-                <Link to="/calculator" className="mt-auto">
-                  <Button className="w-full">
-                    Use Calculator
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Explore Services Section */}
+        <ExploreServices />
         
         {/* Featured Properties Section - Text Only */}
         <section className="full-width bg-gray-50 py-16">
@@ -233,6 +101,7 @@ const Index = () => {
           </div>
         </section>
         
+        {/* Features Section */}
         <section className="full-width bg-white py-16">
           <div className="content-container">
             <Suspense fallback={<LoadingSpinner />}>
@@ -241,6 +110,7 @@ const Index = () => {
           </div>
         </section>
         
+        {/* Testimonials Section */}
         <section className="full-width bg-gray-50 py-16">
           <div className="content-container">
             <Suspense fallback={<LoadingSpinner />}>
@@ -249,6 +119,7 @@ const Index = () => {
           </div>
         </section>
         
+        {/* Call to Action Section */}
         <section className="full-width bg-primary text-white py-16">
           <div className="content-container">
             <Suspense fallback={<LoadingSpinner />}>
@@ -258,7 +129,6 @@ const Index = () => {
         </section>
       </main>
 
-      {/* Fixed position components with improved positioning */}
       <div className="fixed bottom-6 right-6 z-50">
         <NotificationButton />
       </div>

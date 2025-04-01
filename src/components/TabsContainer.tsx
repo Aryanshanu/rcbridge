@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Building, Sparkles, Calculator } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -7,6 +7,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 interface Tab {
   id: string;
   label: string;
+  icon?: React.ElementType;
   content: React.ReactNode;
   disabled?: boolean;
 }
@@ -15,21 +16,22 @@ interface TabsContainerProps {
   children?: React.ReactNode;
   tabs?: Tab[];
   defaultTab?: string;
+  onTabChange?: (tabId: string) => void;
 }
 
-export const TabsContainer = ({ children, tabs, defaultTab }: TabsContainerProps) => {
+export const TabsContainer = ({ children, tabs, defaultTab, onTabChange }: TabsContainerProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   
   // Determine the active tab based on the current URL path or the defaultTab prop
-  const getTabFromPath = () => {
+  const getTabFromPath = useCallback(() => {
     if (tabs && defaultTab) return defaultTab;
     
     const path = location.pathname;
     if (path === "/services") return "services";
     if (path === "/calculator") return "calculator";
     return "properties";
-  };
+  }, [tabs, defaultTab, location.pathname]);
   
   const [activeTab, setActiveTab] = useState(getTabFromPath());
   
@@ -38,10 +40,15 @@ export const TabsContainer = ({ children, tabs, defaultTab }: TabsContainerProps
     if (!tabs) {
       setActiveTab(getTabFromPath());
     }
-  }, [location.pathname, tabs]);
+  }, [location.pathname, tabs, getTabFromPath]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    
+    // Call onTabChange callback if provided
+    if (onTabChange) {
+      onTabChange(value);
+    }
     
     // If we're using custom tabs, don't navigate
     if (tabs) return;
@@ -63,20 +70,22 @@ export const TabsContainer = ({ children, tabs, defaultTab }: TabsContainerProps
   if (tabs) {
     return (
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
+        <TabsList className={`grid w-full ${tabs.length <= 4 ? `grid-cols-${tabs.length}` : 'grid-cols-4'} mb-6`}>
           {tabs.map((tab) => (
             <TabsTrigger 
               key={tab.id} 
               value={tab.id}
               disabled={tab.disabled}
+              className="flex items-center justify-center gap-2"
             >
+              {tab.icon && <tab.icon className="h-4 w-4" />}
               {tab.label}
             </TabsTrigger>
           ))}
         </TabsList>
         
         {tabs.map((tab) => (
-          <TabsContent key={tab.id} value={tab.id}>
+          <TabsContent key={tab.id} value={tab.id} className="focus-visible:outline-none focus-visible:ring-0">
             {tab.content}
           </TabsContent>
         ))}
