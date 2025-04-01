@@ -1,3 +1,4 @@
+
 import { Suspense, useEffect, lazy } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
@@ -14,6 +15,7 @@ import { CoreValues } from "@/components/sections/CoreValues";
 import { HowItWorks } from "@/components/sections/HowItWorks";
 import { ExploreServices } from "@/components/sections/ExploreServices";
 import { TextFeaturedProperties } from "@/components/sections/TextFeaturedProperties";
+import { Link } from "react-router-dom";
 
 const Testimonials = lazy(() => import("@/components/sections/Testimonials").then(module => ({ default: module.Testimonials })));
 const Features = lazy(() => import("@/components/sections/Features").then(module => ({ default: module.Features })));
