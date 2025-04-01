@@ -5,11 +5,13 @@ import { useToast } from "@/hooks/use-toast";
 import { AbstractCitySkyline } from "./3D/AbstractCitySkyline";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export const Hero = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,13 +36,24 @@ export const Hero = () => {
           searchQuery.toLowerCase().includes("land") ? "undeveloped" : null
       });
 
+      // Navigate to properties page with search query
+      navigate({
+        pathname: '/properties',
+        search: `?q=${encodeURIComponent(searchQuery)}`
+      });
+      
       toast({
         title: "Search",
         description: `Searching for: ${searchQuery}`,
       });
     } catch (error) {
       console.error("Error saving search query:", error);
-      // Still show search toast even if saving fails
+      // Still navigate to properties page even if saving fails
+      navigate({
+        pathname: '/properties',
+        search: `?q=${encodeURIComponent(searchQuery)}`
+      });
+      
       toast({
         title: "Search",
         description: `Searching for: ${searchQuery}`,
