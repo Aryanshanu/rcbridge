@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 interface BreadcrumbItem {
   label: string;
   path: string;
-  icon?: React.ReactNode; // Make icon optional
+  icon?: React.ReactNode;
 }
 
 interface BreadcrumbsProps {
@@ -27,10 +27,10 @@ export const BreadcrumbNavigation = ({
   // Generate breadcrumb items if not explicitly provided
   const breadcrumbItems = items.length ? items : pathSegments.map((segment, index) => {
     const path = `/${pathSegments.slice(0, index + 1).join("/")}`;
+    // Create auto-generated items with just label and path (no icon)
     return {
       label: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " "),
-      path,
-      // Don't include an icon for auto-generated items
+      path
     };
   });
 
