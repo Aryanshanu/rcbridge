@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   MessageSquare, 
   X, 
@@ -23,12 +24,19 @@ interface Message {
   timestamp: Date;
   adminName?: string;
   requiresUserInfo?: boolean;
+  requiresPropertyInfo?: boolean;
 }
 
 interface UserInfo {
   name: string;
   email: string;
   phone: string;
+}
+
+interface PropertyInfo {
+  budget: string;
+  propertyType: string;
+  location: string;
   requirements: string;
 }
 
@@ -40,14 +48,25 @@ export const ChatbotWidget = () => {
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  
+  // User information collection
   const [collectingUserInfo, setCollectingUserInfo] = useState<boolean>(false);
   const [userInfo, setUserInfo] = useState<UserInfo>({
     name: "",
     email: "",
     phone: "",
-    requirements: ""
   });
   const [currentUserInfoField, setCurrentUserInfoField] = useState<keyof UserInfo | null>(null);
+  
+  // Property information collection (new)
+  const [collectingPropertyInfo, setCollectingPropertyInfo] = useState<boolean>(false);
+  const [propertyInfo, setPropertyInfo] = useState<PropertyInfo>({
+    budget: "",
+    propertyType: "",
+    location: "",
+    requirements: "",
+  });
+  const [currentPropertyInfoField, setCurrentPropertyInfoField] = useState<keyof PropertyInfo | null>(null);
   
   // Scroll to bottom of messages whenever messages change
   useEffect(() => {
@@ -83,7 +102,7 @@ export const ChatbotWidget = () => {
         
         const welcomeMessage: Message = {
           id: '1',
-          text: "Hello! I'm Aryan. How can I help you today?",
+          text: "Hello! I'm Aryan from RC Bridge. How can I help you find your dream property today?",
           sender: 'bot',
           timestamp: new Date()
         };
@@ -103,7 +122,7 @@ export const ChatbotWidget = () => {
       console.error("Failed to initialize conversation:", error);
       setMessages([{
         id: '1',
-        text: "Hello! I'm Aryan. How can I help you today?",
+        text: "Hello! I'm Aryan from RC Bridge. How can I help you find your dream property today?",
         sender: 'bot',
         timestamp: new Date()
       }]);
@@ -115,67 +134,13 @@ export const ChatbotWidget = () => {
     
     if (collectingUserInfo && currentUserInfoField) {
       // Handle user info collection
-      setUserInfo(prev => ({ ...prev, [currentUserInfoField]: inputMessage }));
-      
-      // Add user's message to the UI
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        text: inputMessage,
-        sender: 'user',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, userMessage]);
-      setInputMessage("");
-      
-      // Save user message to database
-      if (conversationId) {
-        await supabase
-          .from('chat_messages')
-          .insert([{
-            conversation_id: conversationId,
-            sender_type: 'user',
-            content: inputMessage,
-          }]);
-      }
-      
-      // Move to next field or complete user info collection
-      const fields: (keyof UserInfo)[] = ['name', 'email', 'phone', 'requirements'];
-      const currentIndex = fields.indexOf(currentUserInfoField);
-      
-      if (currentIndex < fields.length - 1) {
-        // Move to the next field
-        const nextField = fields[currentIndex + 1];
-        setCurrentUserInfoField(nextField);
-        
-        // Send bot message for next field
-        const nextMessage = getNextUserInfoPrompt(nextField);
-        const botMessage: Message = {
-          id: Date.now().toString() + '-bot',
-          text: nextMessage,
-          sender: 'bot',
-          timestamp: new Date()
-        };
-        
-        setTimeout(() => {
-          setMessages(prev => [...prev, botMessage]);
-          
-          // Save bot message to database
-          if (conversationId) {
-            supabase
-              .from('chat_messages')
-              .insert([{
-                conversation_id: conversationId,
-                sender_type: 'bot',
-                content: nextMessage,
-              }]);
-          }
-        }, 500);
-      } else {
-        // All fields completed
-        await completeUserInfoCollection();
-      }
-      
+      handleUserInfoInput();
+      return;
+    }
+    
+    if (collectingPropertyInfo && currentPropertyInfoField) {
+      // Handle property info collection
+      handlePropertyInfoInput();
       return;
     }
     
@@ -213,7 +178,8 @@ export const ChatbotWidget = () => {
         sender: response.needsHuman ? 'admin' : 'bot',
         timestamp: new Date(),
         adminName: response.needsHuman ? "Property Specialist" : undefined,
-        requiresUserInfo: response.requiresUserInfo
+        requiresUserInfo: response.requiresUserInfo,
+        requiresPropertyInfo: response.requiresPropertyInfo
       };
       
       setMessages(prev => [...prev, botMessage]);
@@ -227,7 +193,7 @@ export const ChatbotWidget = () => {
             sender_type: botMessage.sender,
             content: botMessage.text,
             admin_name: botMessage.adminName,
-            message_type: botMessage.requiresUserInfo ? 'user_info' : 'text'
+            message_type: botMessage.requiresUserInfo || botMessage.requiresPropertyInfo ? 'user_info' : 'text'
           }]);
       }
       
@@ -260,9 +226,204 @@ export const ChatbotWidget = () => {
           }
         }, 1000);
       }
+      // If this message requires collecting property info
+      else if (response.requiresPropertyInfo) {
+        setCollectingPropertyInfo(true);
+        setCurrentPropertyInfoField('budget');
+        
+        // Send prompt for budget after a small delay
+        setTimeout(async () => {
+          const budgetPrompt = "What is your budget range for the property?";
+          const promptMessage: Message = {
+            id: Date.now().toString() + '-prompt',
+            text: budgetPrompt,
+            sender: 'bot',
+            timestamp: new Date()
+          };
+          
+          setMessages(prev => [...prev, promptMessage]);
+          
+          // Save prompt message to database
+          if (conversationId) {
+            await supabase
+              .from('chat_messages')
+              .insert([{
+                conversation_id: conversationId,
+                sender_type: 'bot',
+                content: budgetPrompt,
+              }]);
+          }
+        }, 1000);
+      }
       
       setIsSending(false);
     }, 1000);
+  };
+  
+  const handleUserInfoInput = async () => {
+    if (!currentUserInfoField) return;
+    
+    // Add user's message to the UI
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: inputMessage,
+      sender: 'user',
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Update user info state
+    setUserInfo(prev => ({
+      ...prev,
+      [currentUserInfoField]: inputMessage
+    }));
+    
+    setInputMessage("");
+    
+    // Save user message to database
+    if (conversationId) {
+      await supabase
+        .from('chat_messages')
+        .insert([{
+          conversation_id: conversationId,
+          sender_type: 'user',
+          content: inputMessage,
+        }]);
+    }
+    
+    // Move to next field or complete user info collection
+    const fields: (keyof UserInfo)[] = ['name', 'email', 'phone'];
+    const currentIndex = fields.indexOf(currentUserInfoField);
+    
+    if (currentIndex < fields.length - 1) {
+      // Move to the next field
+      const nextField = fields[currentIndex + 1];
+      setCurrentUserInfoField(nextField);
+      
+      // Send bot message for next field
+      const nextMessage = getNextUserInfoPrompt(nextField);
+      const botMessage: Message = {
+        id: Date.now().toString() + '-bot',
+        text: nextMessage,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      
+      setTimeout(() => {
+        setMessages(prev => [...prev, botMessage]);
+        
+        // Save bot message to database
+        if (conversationId) {
+          supabase
+            .from('chat_messages')
+            .insert([{
+              conversation_id: conversationId,
+              sender_type: 'bot',
+              content: nextMessage,
+            }]);
+        }
+      }, 500);
+    } else {
+      // All user fields completed, now move to property info
+      setCollectingUserInfo(false);
+      setCollectingPropertyInfo(true);
+      setCurrentPropertyInfoField('budget');
+      
+      // Send prompt for budget after a small delay
+      setTimeout(async () => {
+        const budgetPrompt = "Great! Now, what's your budget range for the property?";
+        const promptMessage: Message = {
+          id: Date.now().toString() + '-prompt',
+          text: budgetPrompt,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, promptMessage]);
+        
+        // Save prompt message to database
+        if (conversationId) {
+          await supabase
+            .from('chat_messages')
+            .insert([{
+              conversation_id: conversationId,
+              sender_type: 'bot',
+              content: budgetPrompt,
+            }]);
+        }
+      }, 1000);
+    }
+  };
+  
+  const handlePropertyInfoInput = async () => {
+    if (!currentPropertyInfoField) return;
+    
+    // Add user's message to the UI
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: inputMessage,
+      sender: 'user',
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Update property info state
+    setPropertyInfo(prev => ({
+      ...prev,
+      [currentPropertyInfoField]: inputMessage
+    }));
+    
+    setInputMessage("");
+    
+    // Save user message to database
+    if (conversationId) {
+      await supabase
+        .from('chat_messages')
+        .insert([{
+          conversation_id: conversationId,
+          sender_type: 'user',
+          content: inputMessage,
+        }]);
+    }
+    
+    // Move to next field or complete property info collection
+    const fields: (keyof PropertyInfo)[] = ['budget', 'propertyType', 'location', 'requirements'];
+    const currentIndex = fields.indexOf(currentPropertyInfoField);
+    
+    if (currentIndex < fields.length - 1) {
+      // Move to the next field
+      const nextField = fields[currentIndex + 1];
+      setCurrentPropertyInfoField(nextField);
+      
+      // Send bot message for next field
+      const nextMessage = getNextPropertyInfoPrompt(nextField);
+      const botMessage: Message = {
+        id: Date.now().toString() + '-bot',
+        text: nextMessage,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      
+      setTimeout(() => {
+        setMessages(prev => [...prev, botMessage]);
+        
+        // Save bot message to database
+        if (conversationId) {
+          supabase
+            .from('chat_messages')
+            .insert([{
+              conversation_id: conversationId,
+              sender_type: 'bot',
+              content: nextMessage,
+            }]);
+        }
+      }, 500);
+    } else {
+      // All property fields completed, save to database and complete
+      await completeInquiryCollection();
+    }
   };
   
   const getNextUserInfoPrompt = (field: keyof UserInfo): string => {
@@ -270,40 +431,65 @@ export const ChatbotWidget = () => {
       case 'name':
         return "Could you please share your name?";
       case 'email':
-        return "Great! Now, what's your email address so we can reach you? (You can skip this by typing 'skip')";
+        return "Great! Now, what's your email address so we can reach you? (You can type 'skip' if you prefer not to share)";
       case 'phone':
-        return "Thanks! Could you also provide your phone number?";
-      case 'requirements':
-        return "Finally, please tell us more about what you're looking for in a property?";
+        return "Thanks! Could you also provide your phone number? (You can type 'skip' if you prefer not to share)";
       default:
         return "Could you provide more information?";
     }
   };
   
-  const completeUserInfoCollection = async () => {
-    setCollectingUserInfo(false);
+  const getNextPropertyInfoPrompt = (field: keyof PropertyInfo): string => {
+    switch (field) {
+      case 'budget':
+        return "What's your budget range for the property?";
+      case 'propertyType':
+        return "What type of property are you looking for? (Apartment, Villa, Plot, etc.)";
+      case 'location':
+        return "Which area or location are you interested in?";
+      case 'requirements':
+        return "Do you have any specific requirements for the property? (Number of bedrooms, amenities, etc.)";
+      default:
+        return "Could you provide more information?";
+    }
+  };
+  
+  const completeInquiryCollection = async () => {
+    setCollectingPropertyInfo(false);
     
     try {
-      // Handle possible "skip" for email
+      // Handle possible "skip" values
       const emailValue = userInfo.email.toLowerCase() === 'skip' ? '' : userInfo.email;
+      const phoneValue = userInfo.phone.toLowerCase() === 'skip' ? '' : userInfo.phone;
       
       // Save user info to database
       if (conversationId) {
+        // Save to chat_user_info table
         await supabase
           .from('chat_user_info')
           .insert([{
             conversation_id: conversationId,
             name: userInfo.name,
             email: emailValue,
-            phone: userInfo.phone,
-            requirements: userInfo.requirements
+            phone: phoneValue,
+            requirements: propertyInfo.requirements
+          }]);
+        
+        // Save to the new customer_inquiries table
+        await supabase
+          .from('customer_inquiries')
+          .insert([{
+            name: userInfo.name,
+            budget: propertyInfo.budget,
+            property_type: propertyInfo.propertyType,
+            location: propertyInfo.location
           }]);
           
         // Send thank you message
-        const contactMethod = emailValue || userInfo.phone;
+        const contactMethod = emailValue || phoneValue;
         const thankYouMessage: Message = {
           id: Date.now().toString(),
-          text: `Thank you, ${userInfo.name}! We've received your information and one of our property specialists will contact you soon${contactMethod ? ' at ' + contactMethod : ''}. Is there anything else you'd like to know in the meantime?`,
+          text: `Thank you, ${userInfo.name}! We've received your property inquiry for a ${propertyInfo.propertyType} in ${propertyInfo.location} with a budget of ${propertyInfo.budget}. One of our property specialists will contact you soon${contactMethod ? ' at ' + contactMethod : ''}. Is there anything else you'd like to know in the meantime?`,
           sender: 'admin',
           adminName: "Property Specialist",
           timestamp: new Date()
@@ -321,12 +507,12 @@ export const ChatbotWidget = () => {
             admin_name: "Property Specialist"
           }]);
         
-        toast.success("Your information has been submitted", {
+        toast.success("Your property inquiry has been submitted", {
           description: "A property specialist will contact you soon."
         });
       }
     } catch (error) {
-      console.error("Error saving user info:", error);
+      console.error("Error saving user inquiry:", error);
       
       const errorMessage: Message = {
         id: Date.now().toString(),
@@ -339,7 +525,12 @@ export const ChatbotWidget = () => {
     }
   };
   
-  const processUserMessage = (message: string): { text: string; needsHuman: boolean; requiresUserInfo: boolean } => {
+  const processUserMessage = (message: string): { 
+    text: string; 
+    needsHuman: boolean; 
+    requiresUserInfo: boolean;
+    requiresPropertyInfo: boolean;
+  } => {
     // Simple keyword matching for demo purposes
     const normalizedMsg = message.toLowerCase();
     
@@ -347,31 +538,43 @@ export const ChatbotWidget = () => {
       return {
         text: "Our properties range from ₹40 lakhs to ₹5 crores depending on the location, size, and amenities. Is there a specific area or type of property you're interested in?",
         needsHuman: false,
-        requiresUserInfo: false
+        requiresUserInfo: false,
+        requiresPropertyInfo: false
       };
     } else if (normalizedMsg.includes("location") || normalizedMsg.includes("area")) {
       return {
         text: "We have properties across Hyderabad including Banjara Hills, Jubilee Hills, HITEC City, Gachibowli, and many other prime locations. Which area are you interested in?",
         needsHuman: false,
-        requiresUserInfo: false
+        requiresUserInfo: false,
+        requiresPropertyInfo: false
       };
-    } else if (normalizedMsg.includes("contact") || normalizedMsg.includes("speak") || normalizedMsg.includes("agent")) {
+    } else if (normalizedMsg.includes("property") || normalizedMsg.includes("home") || normalizedMsg.includes("apartment") || normalizedMsg.includes("house")) {
       return {
-        text: "I'll connect you with one of our property specialists who can help you with more specific information. Please let us know what you're looking for in a property.",
-        needsHuman: true,
-        requiresUserInfo: true
+        text: "I'd be happy to help you find the perfect property. To provide personalized recommendations, could I collect some information about what you're looking for?",
+        needsHuman: false,
+        requiresUserInfo: true,
+        requiresPropertyInfo: false
       };
     } else if (normalizedMsg.includes("loan") || normalizedMsg.includes("mortgage") || normalizedMsg.includes("finance")) {
       return {
-        text: "We work with several banks and financial institutions to provide home loan assistance. Our property specialists can guide you through the loan application process and help you find the best interest rates.",
-        needsHuman: true,
-        requiresUserInfo: true
+        text: "We work with several banks and financial institutions to provide home loan assistance. To help you with specific loan options, I'd like to understand your property requirements better.",
+        needsHuman: false,
+        requiresUserInfo: true,
+        requiresPropertyInfo: false
+      };
+    } else if (normalizedMsg.includes("help") || normalizedMsg.includes("looking") || normalizedMsg.includes("buy") || normalizedMsg.includes("purchase")) {
+      return {
+        text: "I'd be happy to help you find your dream property. Could I ask you a few questions to understand your requirements better?",
+        needsHuman: false,
+        requiresUserInfo: true,
+        requiresPropertyInfo: false
       };
     } else {
       return {
-        text: "Thank you for your message. I'll connect you with a property specialist who can provide more personalized assistance. Could you please provide some more details about what you're looking for?",
-        needsHuman: true,
-        requiresUserInfo: true
+        text: "Thank you for reaching out to RC Bridge. To better assist you with your property search, could I ask you a few questions?",
+        needsHuman: false,
+        requiresUserInfo: true,
+        requiresPropertyInfo: false
       };
     }
   };
@@ -402,7 +605,7 @@ export const ChatbotWidget = () => {
               </Avatar>
               <div>
                 <h3 className="font-medium text-primary-foreground">Aryan</h3>
-                <p className="text-xs text-primary-foreground/80">Ask me anything about properties</p>
+                <p className="text-xs text-primary-foreground/80">RC Bridge Property Specialist</p>
               </div>
             </div>
             <Button
@@ -446,7 +649,7 @@ export const ChatbotWidget = () => {
                         )}
                       </div>
                     )}
-                    <div>{message.text}</div>
+                    <div className="whitespace-pre-line">{message.text}</div>
                     <div className="text-xs mt-1 opacity-70 text-right">
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
@@ -458,23 +661,48 @@ export const ChatbotWidget = () => {
           </CardContent>
           
           <CardFooter className="p-3 border-t">
-            <div className="flex w-full gap-2">
-              <Input
-                placeholder={collectingUserInfo ? `Enter your ${currentUserInfoField}...` : "Type your message..."}
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={handleKeyPress}
-                disabled={isSending}
-                className="flex-grow"
-              />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!inputMessage.trim() || isSending}
-                size="icon"
-              >
-                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </Button>
-            </div>
+            {collectingPropertyInfo && currentPropertyInfoField === 'requirements' ? (
+              <div className="flex w-full gap-2">
+                <Textarea
+                  placeholder="Enter your specific requirements..."
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  className="flex-grow min-h-[80px]"
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!inputMessage.trim() || isSending}
+                  className="self-end"
+                  size="icon"
+                >
+                  {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex w-full gap-2">
+                <Input
+                  placeholder={
+                    collectingUserInfo 
+                      ? `Enter your ${currentUserInfoField}...` 
+                      : collectingPropertyInfo
+                      ? `Enter ${currentPropertyInfoField}...`
+                      : "Type your message..."
+                  }
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  disabled={isSending}
+                  className="flex-grow"
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!inputMessage.trim() || isSending}
+                  size="icon"
+                >
+                  {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+              </div>
+            )}
           </CardFooter>
         </Card>
       )}

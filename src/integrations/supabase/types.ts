@@ -214,6 +214,33 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_inquiries: {
+        Row: {
+          budget: string
+          created_at: string
+          id: string
+          location: string
+          name: string
+          property_type: string
+        }
+        Insert: {
+          budget: string
+          created_at?: string
+          id?: string
+          location: string
+          name: string
+          property_type: string
+        }
+        Update: {
+          budget?: string
+          created_at?: string
+          id?: string
+          location?: string
+          name?: string
+          property_type?: string
+        }
+        Relationships: []
+      }
       demo_requests: {
         Row: {
           created_at: string
