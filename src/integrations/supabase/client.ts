@@ -12,7 +12,7 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 // Extend the Database type from types.ts to include chat tables and customer inquiries
-// This is proper module augmentation
+// This uses module augmentation instead of redeclaring the interface
 declare module './types' {
   interface Database {
     public: {
