@@ -1,64 +1,20 @@
 
-import { Search } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AbstractCitySkyline } from "./3D/AbstractCitySkyline";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { EnhancedSearch } from "./EnhancedSearch";
 
 export const Hero = () => {
-  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) {
-      toast({
-        title: "Search Error",
-        description: "Please enter a search term",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Save search query to Supabase
-      await supabase.from("search_queries").insert({
-        query: searchQuery,
-        user_id: user?.id || null,
-        location: searchQuery.includes("in") ? searchQuery.split("in")[1]?.trim() : null,
-        property_type: 
-          searchQuery.toLowerCase().includes("apartment") ? "residential" :
-          searchQuery.toLowerCase().includes("commercial") ? "commercial" :
-          searchQuery.toLowerCase().includes("land") ? "undeveloped" : null
-      });
-
-      // Navigate to properties page with search query
-      navigate({
-        pathname: '/properties',
-        search: `?q=${encodeURIComponent(searchQuery)}`
-      });
-      
-      toast({
-        title: "Search",
-        description: `Searching for: ${searchQuery}`,
-      });
-    } catch (error) {
-      console.error("Error saving search query:", error);
-      // Still navigate to properties page even if saving fails
-      navigate({
-        pathname: '/properties',
-        search: `?q=${encodeURIComponent(searchQuery)}`
-      });
-      
-      toast({
-        title: "Search",
-        description: `Searching for: ${searchQuery}`,
-      });
-    }
+  const handleSearch = (query: string, filters: any) => {
+    // This is now handled by the EnhancedSearch component
+    console.log("Search handled by EnhancedSearch component", { query, filters });
   };
 
   return (
@@ -85,26 +41,13 @@ export const Hero = () => {
             Direct connections, transparent transactions, and a vibrant ecosystem of property owners, buyers, and startups in Hyderabad.
           </p>
           
-          {/* Search Bar */}
-          <div className="mt-10 max-w-xl mx-auto animate-fade-in delay-300">
-            <form onSubmit={handleSearch} className="flex items-center bg-white/95 backdrop-blur-md rounded-lg shadow-2xl p-2 border border-white/30" role="search">
-              <Search className="h-5 w-5 text-gray-400 ml-2" aria-hidden="true" />
-              <input
-                type="search"
-                placeholder="Search by location, property type, or keywords..."
-                className="flex-1 p-2 outline-none text-gray-600 bg-transparent"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                aria-label="Search properties"
-              />
-              <button 
-                type="submit"
-                className="bg-accent hover:bg-accent/90 text-white px-6 py-2 rounded-md transition-colors btn-hover-effect shadow-lg hover:shadow-accent/20"
-                aria-label="Search properties"
-              >
-                Search
-              </button>
-            </form>
+          {/* Search Bar - Now using Enhanced Search */}
+          <div className="mt-10 max-w-xl mx-auto">
+            <EnhancedSearch 
+              variant="hero" 
+              showFilters={true} 
+              onSearch={handleSearch}
+            />
           </div>
           
           {/* CTA Buttons */}

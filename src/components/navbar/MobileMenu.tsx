@@ -1,30 +1,8 @@
 
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { 
-  Home, 
-  LogIn, 
-  Phone, 
-  Users, 
-  Building, 
-  Calculator, 
-  User,
-  ChevronDown,
-  BookOpen,
-  HelpCircle,
-  Mail
-} from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { AuthDialog } from "../auth/AuthDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -32,148 +10,161 @@ interface MobileMenuProps {
   handleContactClick: () => void;
 }
 
-// Helper function to get initials from name
-const getInitials = (name: string) => {
-  return name
-    .split(' ')
-    .map(part => part[0])
-    .join('')
-    .toUpperCase()
-    .substring(0, 2);
-};
-
 export const MobileMenu = ({ isOpen, scrollToPropertyForm, handleContactClick }: MobileMenuProps) => {
-  const { user, signOut } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [isResourcesOpen, setIsResourcesOpen] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   
-  // Get user display name and initials
-  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
-  const initials = getInitials(displayName);
+  // Close submenu when main menu closes
+  useEffect(() => {
+    if (!isOpen) {
+      setOpenSubmenu(null);
+    }
+  }, [isOpen]);
 
-  if (!isOpen) return null;
+  const toggleSubmenu = (name: string) => {
+    setOpenSubmenu(openSubmenu === name ? null : name);
+  };
 
+  const resources = [
+    { name: 'Blog', path: '/blog' },
+    { name: 'FAQ', path: '/faq' },
+    { name: 'Contact', path: '/contact', action: handleContactClick },
+  ];
+
+  const menuVariants = {
+    hidden: { opacity: 0, height: 0, transition: { duration: 0.3, ease: "easeInOut" } },
+    visible: { opacity: 1, height: "auto", transition: { duration: 0.4, ease: "easeInOut" } },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: (i: number) => ({ 
+      opacity: 1, 
+      x: 0, 
+      transition: { delay: i * 0.1, duration: 0.3 } 
+    }),
+  };
+  
   return (
-    <div className="md:hidden bg-white border-t">
-      <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-        <Link
-          to="/"
-          className="w-full block text-left text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          exit="hidden"
+          variants={menuVariants}
+          className="md:hidden absolute top-16 left-0 right-0 bg-white shadow-lg z-50 overflow-hidden"
         >
-          <Home className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
-          <span>Home</span>
-        </Link>
-        <Link
-          to="/properties"
-          className="w-full block text-left text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-        >
-          <Building className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
-          <span>Properties</span>
-        </Link>
-        <Link
-          to="/services"
-          className="w-full block text-left text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-        >
-          <Users className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
-          <span>Services</span>
-        </Link>
-        <Link
-          to="/calculator"
-          className="w-full block text-left text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-        >
-          <Calculator className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
-          <span>Calculator</span>
-        </Link>
-        
-        <div className="border-t border-gray-200 my-2"></div>
-        
-        <div className="w-full px-3 py-2">
-          <Button
-            variant="ghost"
-            className="w-full flex items-center justify-between p-0"
-            onClick={() => setIsResourcesOpen(!isResourcesOpen)}
-          >
-            <span className="flex items-center text-gray-700">
-              <BookOpen className="h-5 w-5 mr-1" />
-              Resources
-            </span>
-            <ChevronDown className={`h-4 w-4 transition-transform ${isResourcesOpen ? 'rotate-180' : ''}`} />
-          </Button>
-          
-          {isResourcesOpen && (
-            <div className="pl-6 mt-2 space-y-2">
-              <Link
-                to="/blog"
-                className="block text-gray-600 hover:text-gray-900 py-1"
-              >
-                <BookOpen className="h-4 w-4 inline-block mr-1" />
-                Blog
-              </Link>
-              <Link
-                to="/faq"
-                className="block text-gray-600 hover:text-gray-900 py-1"
-              >
-                <HelpCircle className="h-4 w-4 inline-block mr-1" />
-                FAQ
-              </Link>
-              <Link
-                to="/contact"
-                className="block text-gray-600 hover:text-gray-900 py-1"
-              >
-                <Mail className="h-4 w-4 inline-block mr-1" />
-                Contact Us
-              </Link>
-            </div>
-          )}
-        </div>
-        
-        <div className="border-t border-gray-200 my-2"></div>
-        
-        <button
-          onClick={handleContactClick}
-          className="w-full text-left text-primary hover:text-primary/90 px-3 py-2 rounded-md text-sm font-medium"
-        >
-          <Phone className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
-          <span>Contact</span>
-        </button>
-        
-        {user ? (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="px-3 flex items-center gap-2">
-              <Avatar className="h-8 w-8 bg-primary text-white">
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-              <p className="text-sm text-gray-600">Signed in as: <span className="font-medium">{displayName}</span></p>
-            </div>
-            <Link
-              to="/profile"
-              className="w-full block text-left text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium mt-2"
+          <div className="p-4 space-y-2 divide-y divide-gray-100">
+            <motion.div 
+              custom={0}
+              variants={itemVariants}
+              className="py-2"
             >
-              <User className="h-5 w-5 inline-block mr-1" aria-hidden="true" />
-              Profile
-            </Link>
-            <button
-              onClick={signOut}
-              className="w-full text-left text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+              <Link to="/" className="block px-3 py-2 rounded-md hover:bg-gray-100 font-medium">
+                Home
+              </Link>
+            </motion.div>
+            
+            <motion.div 
+              custom={1} 
+              variants={itemVariants}
+              className="py-2"
             >
-              Sign out
-            </button>
+              <Link to="/properties" className="block px-3 py-2 rounded-md hover:bg-gray-100 font-medium">
+                Properties
+              </Link>
+            </motion.div>
+            
+            <motion.div 
+              custom={2} 
+              variants={itemVariants}
+              className="py-2"
+            >
+              <Link to="/services" className="block px-3 py-2 rounded-md hover:bg-gray-100 font-medium">
+                Services
+              </Link>
+            </motion.div>
+            
+            <motion.div 
+              custom={3} 
+              variants={itemVariants}
+              className="py-2"
+            >
+              <Link to="/calculator" className="block px-3 py-2 rounded-md hover:bg-gray-100 font-medium">
+                Calculator
+              </Link>
+            </motion.div>
+            
+            <motion.div 
+              custom={4} 
+              variants={itemVariants}
+              className="py-2"
+            >
+              <div
+                className="flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-100 font-medium cursor-pointer"
+                onClick={() => toggleSubmenu('resources')}
+              >
+                <span>Resources</span>
+                {openSubmenu === 'resources' ? (
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-gray-500" />
+                )}
+              </div>
+              
+              <AnimatePresence>
+                {openSubmenu === 'resources' && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="pl-4 mt-1 overflow-hidden"
+                  >
+                    {resources.map((item, i) => (
+                      <motion.div
+                        key={item.name}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                      >
+                        {item.action ? (
+                          <button
+                            onClick={item.action}
+                            className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
+                          >
+                            {item.name}
+                          </button>
+                        ) : (
+                          <Link
+                            to={item.path}
+                            className="block px-3 py-2 rounded-md hover:bg-gray-100"
+                          >
+                            {item.name}
+                          </Link>
+                        )}
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+            
+            <motion.div 
+              custom={5} 
+              variants={itemVariants}
+              className="py-2"
+            >
+              <button
+                onClick={scrollToPropertyForm}
+                className="block w-full text-left px-3 py-2 rounded-md bg-primary text-white hover:bg-primary/90 font-medium"
+              >
+                List Property
+              </button>
+            </motion.div>
           </div>
-        ) : (
-          <div className="mt-4 pt-4 border-t border-gray-200 flex flex-col space-y-2 px-3">
-            <Link to="/login">
-              <Button variant="outline" size="sm" className="w-full">
-                Login
-              </Button>
-            </Link>
-            <Link to="/register">
-              <Button size="sm" className="w-full">
-                Register
-              </Button>
-            </Link>
-          </div>
-        )}
-      </div>
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
-}
+};
