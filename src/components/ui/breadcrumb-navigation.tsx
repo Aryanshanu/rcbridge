@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 interface BreadcrumbItem {
   label: string;
   path: string;
-  icon?: React.ReactNode;
+  icon?: React.ReactNode; // Make icon optional
 }
 
 interface BreadcrumbsProps {
@@ -30,6 +30,7 @@ export const BreadcrumbNavigation = ({
     return {
       label: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " "),
       path,
+      // Don't include an icon for auto-generated items
     };
   });
 
