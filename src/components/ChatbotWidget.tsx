@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +48,6 @@ export const ChatbotWidget = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
   
-  // User information collection
   const [collectingUserInfo, setCollectingUserInfo] = useState<boolean>(false);
   const [userInfo, setUserInfo] = useState<UserInfo>({
     name: "",
@@ -58,7 +56,6 @@ export const ChatbotWidget = () => {
   });
   const [currentUserInfoField, setCurrentUserInfoField] = useState<keyof UserInfo | null>(null);
   
-  // Property information collection (new)
   const [collectingPropertyInfo, setCollectingPropertyInfo] = useState<boolean>(false);
   const [propertyInfo, setPropertyInfo] = useState<PropertyInfo>({
     budget: "",
@@ -68,14 +65,12 @@ export const ChatbotWidget = () => {
   });
   const [currentPropertyInfoField, setCurrentPropertyInfoField] = useState<keyof PropertyInfo | null>(null);
   
-  // Scroll to bottom of messages whenever messages change
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
   
-  // Initial welcome message
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       initializeConversation();
@@ -84,7 +79,6 @@ export const ChatbotWidget = () => {
   
   const initializeConversation = async () => {
     try {
-      // Create a new conversation in the database
       const { data: conversationData, error: conversationError } = await supabase
         .from('chat_conversations')
         .insert([{ 
@@ -109,7 +103,6 @@ export const ChatbotWidget = () => {
         
         setMessages([welcomeMessage]);
         
-        // Save welcome message to database
         await supabase
           .from('chat_messages')
           .insert([{
@@ -133,18 +126,15 @@ export const ChatbotWidget = () => {
     if (!inputMessage.trim()) return;
     
     if (collectingUserInfo && currentUserInfoField) {
-      // Handle user info collection
       handleUserInfoInput();
       return;
     }
     
     if (collectingPropertyInfo && currentPropertyInfoField) {
-      // Handle property info collection
       handlePropertyInfoInput();
       return;
     }
     
-    // Add user's message
     const userMessage: Message = {
       id: Date.now().toString(),
       text: inputMessage,
@@ -156,7 +146,6 @@ export const ChatbotWidget = () => {
     setInputMessage("");
     setIsSending(true);
     
-    // Save user message to database
     if (conversationId) {
       await supabase
         .from('chat_messages')
@@ -167,9 +156,7 @@ export const ChatbotWidget = () => {
         }]);
     }
     
-    // Process the message and generate response
     setTimeout(async () => {
-      // Process the message and generate response
       const response = processUserMessage(inputMessage);
       
       const botMessage: Message = {
@@ -184,7 +171,6 @@ export const ChatbotWidget = () => {
       
       setMessages(prev => [...prev, botMessage]);
       
-      // Save bot message to database
       if (conversationId) {
         await supabase
           .from('chat_messages')
@@ -197,12 +183,10 @@ export const ChatbotWidget = () => {
           }]);
       }
       
-      // If this message requires collecting user info
       if (response.requiresUserInfo) {
         setCollectingUserInfo(true);
         setCurrentUserInfoField('name');
         
-        // Send prompt for name after a small delay
         setTimeout(async () => {
           const namePrompt = "Could you please share your name?";
           const promptMessage: Message = {
@@ -214,7 +198,6 @@ export const ChatbotWidget = () => {
           
           setMessages(prev => [...prev, promptMessage]);
           
-          // Save prompt message to database
           if (conversationId) {
             await supabase
               .from('chat_messages')
@@ -225,13 +208,10 @@ export const ChatbotWidget = () => {
               }]);
           }
         }, 1000);
-      }
-      // If this message requires collecting property info
-      else if (response.requiresPropertyInfo) {
+      } else if (response.requiresPropertyInfo) {
         setCollectingPropertyInfo(true);
         setCurrentPropertyInfoField('budget');
         
-        // Send prompt for budget after a small delay
         setTimeout(async () => {
           const budgetPrompt = "What is your budget range for the property?";
           const promptMessage: Message = {
@@ -243,7 +223,6 @@ export const ChatbotWidget = () => {
           
           setMessages(prev => [...prev, promptMessage]);
           
-          // Save prompt message to database
           if (conversationId) {
             await supabase
               .from('chat_messages')
@@ -263,7 +242,6 @@ export const ChatbotWidget = () => {
   const handleUserInfoInput = async () => {
     if (!currentUserInfoField) return;
     
-    // Add user's message to the UI
     const userMessage: Message = {
       id: Date.now().toString(),
       text: inputMessage,
@@ -273,7 +251,6 @@ export const ChatbotWidget = () => {
     
     setMessages(prev => [...prev, userMessage]);
     
-    // Update user info state
     setUserInfo(prev => ({
       ...prev,
       [currentUserInfoField]: inputMessage
@@ -281,7 +258,6 @@ export const ChatbotWidget = () => {
     
     setInputMessage("");
     
-    // Save user message to database
     if (conversationId) {
       await supabase
         .from('chat_messages')
@@ -292,16 +268,13 @@ export const ChatbotWidget = () => {
         }]);
     }
     
-    // Move to next field or complete user info collection
     const fields: (keyof UserInfo)[] = ['name', 'email', 'phone'];
     const currentIndex = fields.indexOf(currentUserInfoField);
     
     if (currentIndex < fields.length - 1) {
-      // Move to the next field
       const nextField = fields[currentIndex + 1];
       setCurrentUserInfoField(nextField);
       
-      // Send bot message for next field
       const nextMessage = getNextUserInfoPrompt(nextField);
       const botMessage: Message = {
         id: Date.now().toString() + '-bot',
@@ -313,7 +286,6 @@ export const ChatbotWidget = () => {
       setTimeout(() => {
         setMessages(prev => [...prev, botMessage]);
         
-        // Save bot message to database
         if (conversationId) {
           supabase
             .from('chat_messages')
@@ -325,12 +297,10 @@ export const ChatbotWidget = () => {
         }
       }, 500);
     } else {
-      // All user fields completed, now move to property info
       setCollectingUserInfo(false);
       setCollectingPropertyInfo(true);
       setCurrentPropertyInfoField('budget');
       
-      // Send prompt for budget after a small delay
       setTimeout(async () => {
         const budgetPrompt = "Great! Now, what's your budget range for the property?";
         const promptMessage: Message = {
@@ -342,7 +312,6 @@ export const ChatbotWidget = () => {
         
         setMessages(prev => [...prev, promptMessage]);
         
-        // Save prompt message to database
         if (conversationId) {
           await supabase
             .from('chat_messages')
@@ -359,7 +328,6 @@ export const ChatbotWidget = () => {
   const handlePropertyInfoInput = async () => {
     if (!currentPropertyInfoField) return;
     
-    // Add user's message to the UI
     const userMessage: Message = {
       id: Date.now().toString(),
       text: inputMessage,
@@ -369,7 +337,6 @@ export const ChatbotWidget = () => {
     
     setMessages(prev => [...prev, userMessage]);
     
-    // Update property info state
     setPropertyInfo(prev => ({
       ...prev,
       [currentPropertyInfoField]: inputMessage
@@ -377,7 +344,6 @@ export const ChatbotWidget = () => {
     
     setInputMessage("");
     
-    // Save user message to database
     if (conversationId) {
       await supabase
         .from('chat_messages')
@@ -388,16 +354,13 @@ export const ChatbotWidget = () => {
         }]);
     }
     
-    // Move to next field or complete property info collection
     const fields: (keyof PropertyInfo)[] = ['budget', 'propertyType', 'location', 'requirements'];
     const currentIndex = fields.indexOf(currentPropertyInfoField);
     
     if (currentIndex < fields.length - 1) {
-      // Move to the next field
       const nextField = fields[currentIndex + 1];
       setCurrentPropertyInfoField(nextField);
       
-      // Send bot message for next field
       const nextMessage = getNextPropertyInfoPrompt(nextField);
       const botMessage: Message = {
         id: Date.now().toString() + '-bot',
@@ -409,7 +372,6 @@ export const ChatbotWidget = () => {
       setTimeout(() => {
         setMessages(prev => [...prev, botMessage]);
         
-        // Save bot message to database
         if (conversationId) {
           supabase
             .from('chat_messages')
@@ -421,7 +383,6 @@ export const ChatbotWidget = () => {
         }
       }, 500);
     } else {
-      // All property fields completed, save to database and complete
       await completeInquiryCollection();
     }
   };
@@ -458,13 +419,10 @@ export const ChatbotWidget = () => {
     setCollectingPropertyInfo(false);
     
     try {
-      // Handle possible "skip" values
       const emailValue = userInfo.email.toLowerCase() === 'skip' ? '' : userInfo.email;
       const phoneValue = userInfo.phone.toLowerCase() === 'skip' ? '' : userInfo.phone;
       
-      // Save user info to database
       if (conversationId) {
-        // Save to chat_user_info table
         await supabase
           .from('chat_user_info')
           .insert([{
@@ -475,17 +433,15 @@ export const ChatbotWidget = () => {
             requirements: propertyInfo.requirements
           }]);
         
-        // Save to the new customer_inquiries table
         await supabase
           .from('customer_inquiries')
-          .insert([{
+          .insert({
             name: userInfo.name,
             budget: propertyInfo.budget,
             property_type: propertyInfo.propertyType,
             location: propertyInfo.location
-          }]);
+          });
           
-        // Send thank you message
         const contactMethod = emailValue || phoneValue;
         const thankYouMessage: Message = {
           id: Date.now().toString(),
@@ -497,7 +453,6 @@ export const ChatbotWidget = () => {
         
         setMessages(prev => [...prev, thankYouMessage]);
         
-        // Save thank you message to database
         await supabase
           .from('chat_messages')
           .insert([{
@@ -531,7 +486,6 @@ export const ChatbotWidget = () => {
     requiresUserInfo: boolean;
     requiresPropertyInfo: boolean;
   } => {
-    // Simple keyword matching for demo purposes
     const normalizedMsg = message.toLowerCase();
     
     if (normalizedMsg.includes("price") || normalizedMsg.includes("cost")) {
@@ -587,7 +541,6 @@ export const ChatbotWidget = () => {
   
   return (
     <>
-      {/* Chatbot button */}
       <Button
         className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
         onClick={() => setIsOpen(!isOpen)}
@@ -595,7 +548,6 @@ export const ChatbotWidget = () => {
         {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
       </Button>
       
-      {/* Chat window */}
       {isOpen && (
         <Card className="fixed bottom-24 right-6 w-80 sm:w-96 shadow-xl z-50 flex flex-col h-[500px] max-h-[80vh]">
           <CardHeader className="bg-primary py-3 px-4 rounded-t-lg flex flex-row items-center justify-between">

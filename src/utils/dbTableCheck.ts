@@ -14,7 +14,11 @@ export type ValidTableName =
   | "property_alerts" 
   | "property_images" 
   | "search_queries" 
-  | "user_rewards";
+  | "user_rewards"
+  | "chat_conversations"
+  | "chat_messages"
+  | "chat_user_info"
+  | "customer_inquiries";
 
 // This function validates if the provided string is a valid table name
 export const isValidTableName = (tableName: string): tableName is ValidTableName => {
@@ -29,7 +33,11 @@ export const isValidTableName = (tableName: string): tableName is ValidTableName
     "property_alerts",
     "property_images",
     "search_queries",
-    "user_rewards"
+    "user_rewards",
+    "chat_conversations",
+    "chat_messages",
+    "chat_user_info",
+    "customer_inquiries"
   ];
   
   return validTables.includes(tableName as ValidTableName);
