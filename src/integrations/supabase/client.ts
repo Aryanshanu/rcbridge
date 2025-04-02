@@ -9,3 +9,94 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+// Add the chat tables to the Database interface
+declare module './types' {
+  interface Database {
+    public: {
+      Tables: {
+        chat_conversations: {
+          Row: {
+            id: string;
+            user_id: string | null;
+            created_at: string;
+            updated_at: string;
+          };
+          Insert: {
+            id?: string;
+            user_id?: string | null;
+            created_at?: string;
+            updated_at?: string;
+          };
+          Update: {
+            id?: string;
+            user_id?: string | null;
+            created_at?: string;
+            updated_at?: string;
+          };
+        };
+        chat_messages: {
+          Row: {
+            id: string;
+            conversation_id: string;
+            sender_type: string;
+            content: string;
+            created_at: string;
+            admin_name?: string | null;
+            message_type: string;
+          };
+          Insert: {
+            id?: string;
+            conversation_id: string;
+            sender_type: string;
+            content: string;
+            created_at?: string;
+            admin_name?: string | null;
+            message_type?: string;
+          };
+          Update: {
+            id?: string;
+            conversation_id?: string;
+            sender_type?: string;
+            content?: string;
+            created_at?: string;
+            admin_name?: string | null;
+            message_type?: string;
+          };
+        };
+        chat_user_info: {
+          Row: {
+            id: string;
+            conversation_id: string;
+            name: string | null;
+            email: string | null;
+            phone: string | null;
+            requirements: string | null;
+            created_at: string;
+            updated_at: string;
+          };
+          Insert: {
+            id?: string;
+            conversation_id: string;
+            name?: string | null;
+            email?: string | null;
+            phone?: string | null;
+            requirements?: string | null;
+            created_at?: string;
+            updated_at?: string;
+          };
+          Update: {
+            id?: string;
+            conversation_id?: string;
+            name?: string | null;
+            email?: string | null;
+            phone?: string | null;
+            requirements?: string | null;
+            created_at?: string;
+            updated_at?: string;
+          };
+        };
+      }
+    };
+  }
+}

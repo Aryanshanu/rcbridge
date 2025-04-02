@@ -83,7 +83,7 @@ export const ChatbotWidget = () => {
         
         const welcomeMessage: Message = {
           id: '1',
-          text: "Hello! I'm the RC Bridge Assistant. How can I help you today?",
+          text: "Hello! I'm Aryan. How can I help you today?",
           sender: 'bot',
           timestamp: new Date()
         };
@@ -103,7 +103,7 @@ export const ChatbotWidget = () => {
       console.error("Failed to initialize conversation:", error);
       setMessages([{
         id: '1',
-        text: "Hello! I'm the RC Bridge Assistant. How can I help you today?",
+        text: "Hello! I'm Aryan. How can I help you today?",
         sender: 'bot',
         timestamp: new Date()
       }]);
@@ -270,7 +270,7 @@ export const ChatbotWidget = () => {
       case 'name':
         return "Could you please share your name?";
       case 'email':
-        return "Great! Now, what's your email address so we can reach you?";
+        return "Great! Now, what's your email address so we can reach you? (You can skip this by typing 'skip')";
       case 'phone':
         return "Thanks! Could you also provide your phone number?";
       case 'requirements':
@@ -284,19 +284,26 @@ export const ChatbotWidget = () => {
     setCollectingUserInfo(false);
     
     try {
+      // Handle possible "skip" for email
+      const emailValue = userInfo.email.toLowerCase() === 'skip' ? '' : userInfo.email;
+      
       // Save user info to database
       if (conversationId) {
         await supabase
           .from('chat_user_info')
           .insert([{
             conversation_id: conversationId,
-            ...userInfo
+            name: userInfo.name,
+            email: emailValue,
+            phone: userInfo.phone,
+            requirements: userInfo.requirements
           }]);
           
         // Send thank you message
+        const contactMethod = emailValue || userInfo.phone;
         const thankYouMessage: Message = {
           id: Date.now().toString(),
-          text: `Thank you, ${userInfo.name}! One of our property specialists will contact you soon at ${userInfo.email || userInfo.phone}. Is there anything else you'd like to know in the meantime?`,
+          text: `Thank you, ${userInfo.name}! We've received your information and one of our property specialists will contact you soon${contactMethod ? ' at ' + contactMethod : ''}. Is there anything else you'd like to know in the meantime?`,
           sender: 'admin',
           adminName: "Property Specialist",
           timestamp: new Date()
@@ -394,7 +401,7 @@ export const ChatbotWidget = () => {
                 <AvatarFallback>RC</AvatarFallback>
               </Avatar>
               <div>
-                <h3 className="font-medium text-primary-foreground">RC Bridge Assistant</h3>
+                <h3 className="font-medium text-primary-foreground">Aryan</h3>
                 <p className="text-xs text-primary-foreground/80">Ask me anything about properties</p>
               </div>
             </div>
@@ -429,7 +436,7 @@ export const ChatbotWidget = () => {
                         {message.sender === 'bot' ? (
                           <>
                             <Bot className="h-3 w-3 mr-1" />
-                            RC Assistant
+                            Aryan
                           </>
                         ) : (
                           <>
