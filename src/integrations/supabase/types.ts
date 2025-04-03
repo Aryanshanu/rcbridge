@@ -214,6 +214,30 @@ export type Database = {
         }
         Relationships: []
       }
+      conversations: {
+        Row: {
+          bot_response: string | null
+          created_at: string | null
+          id: string
+          sentiment: string | null
+          user_input: string | null
+        }
+        Insert: {
+          bot_response?: string | null
+          created_at?: string | null
+          id?: string
+          sentiment?: string | null
+          user_input?: string | null
+        }
+        Update: {
+          bot_response?: string | null
+          created_at?: string | null
+          id?: string
+          sentiment?: string | null
+          user_input?: string | null
+        }
+        Relationships: []
+      }
       customer_inquiries: {
         Row: {
           budget: string

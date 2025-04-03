@@ -19,7 +19,7 @@ export type ValidTableName =
   | "chat_messages"
   | "chat_user_info"
   | "customer_inquiries"
-  | "conversations"; // Added the new conversations table
+  | "conversations"; // This entry enables the conversations table check
 
 // This function validates if the provided string is a valid table name
 export const isValidTableName = (tableName: string): tableName is ValidTableName => {
@@ -39,7 +39,7 @@ export const isValidTableName = (tableName: string): tableName is ValidTableName
     "chat_messages",
     "chat_user_info",
     "customer_inquiries",
-    "conversations" // Added the new conversations table
+    "conversations" // Added the conversations table to the array as well
   ];
   
   return validTables.includes(tableName as ValidTableName);
