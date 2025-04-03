@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { MessageCircle, X, Send, Loader2, Image, User, Bot, Phone, Calendar } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, User, Bot, Phone, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,24 +57,20 @@ export function EnhancedChatBot() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Scroll to the bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
-    // Focus the input when the chat is opened
     if (isOpen) {
       inputRef.current?.focus();
     }
   }, [isOpen]);
   
   useEffect(() => {
-    // Load previous conversations from localStorage if available
     const savedMessages = localStorage.getItem('chatMessages');
     if (savedMessages) {
       try {
         const parsedMessages = JSON.parse(savedMessages);
-        // Convert string dates back to Date objects
         const formattedMessages = parsedMessages.map((msg: any) => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
@@ -88,8 +83,7 @@ export function EnhancedChatBot() {
   }, []);
 
   useEffect(() => {
-    // Save messages to localStorage when they change
-    if (messages.length > 1) { // Don't save if it's just the welcome message
+    if (messages.length > 1) {
       try {
         localStorage.setItem('chatMessages', JSON.stringify(messages));
       } catch (error) {
@@ -114,13 +108,11 @@ export function EnhancedChatBot() {
     setIsLoading(true);
 
     try {
-      // Extract insights from the user message
       const inquiry_type = categorizeInquiry(input);
       const locations = extractLocations(input);
       const property_types = extractPropertyTypes(input);
       const price_range = extractPriceRange(input);
       
-      // Update inquiry data with these insights
       setInquiryData(prev => ({
         ...prev,
         inquiry_type,
@@ -131,13 +123,20 @@ export function EnhancedChatBot() {
         message: prev.message ? `${prev.message}\n\n${input}` : input,
       }));
       
-      // Call the Supabase Function
+      const conversationHistory = messages.slice(-4).map(msg => ({
+        text: msg.text,
+        sender: msg.sender
+      }));
+      
       const response = await fetch('/api/rest/chatbot', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ user_input: input }),
+        body: JSON.stringify({ 
+          user_input: input,
+          conversation_history: conversationHistory 
+        }),
       });
       
       if (!response.ok) {
@@ -155,7 +154,6 @@ export function EnhancedChatBot() {
 
       setMessages((prev) => [...prev, botMessage]);
       
-      // Check if this is a good time to prompt for contact info
       if (detectLeadPotential(input) && messages.length >= 3) {
         setTimeout(() => {
           toast({
@@ -189,7 +187,6 @@ export function EnhancedChatBot() {
   };
   
   const openInquiryForm = () => {
-    // Pre-populate message with recent conversation
     const recentConversation = messages
       .slice(-3)
       .map(msg => `${msg.sender === 'user' ? 'Me' : 'Aryan'}: ${msg.text}`)
@@ -207,7 +204,6 @@ export function EnhancedChatBot() {
     e.preventDefault();
     
     try {
-      // Store in localStorage for now (would go to a backend in production)
       const inquiries = JSON.parse(localStorage.getItem('userDetailedInquiries') || '[]');
       inquiries.push({
         ...inquiryData,
@@ -215,7 +211,28 @@ export function EnhancedChatBot() {
       });
       localStorage.setItem('userDetailedInquiries', JSON.stringify(inquiries));
       
-      // Thank the user in the chat
+      fetch('/api/rest/v1/customer_inquiries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': `${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          name: inquiryData.name,
+          budget: inquiryData.price_min && inquiryData.price_max 
+            ? `${inquiryData.price_min} to ${inquiryData.price_max} lakhs` 
+            : inquiryData.price_max 
+              ? `Up to ${inquiryData.price_max} lakhs` 
+              : 'Not specified',
+          property_type: inquiryData.property_types.length > 0 
+            ? inquiryData.property_types[0] 
+            : 'Not specified',
+          location: inquiryData.locations.length > 0 
+            ? inquiryData.locations[0] 
+            : 'Not specified'
+        }),
+      });
+      
       const botMessage: Message = {
         id: messages.length + 1,
         text: `Thank you, ${inquiryData.name}! Our property specialist will contact you soon at ${inquiryData.email || inquiryData.phone}. In the meantime, is there anything specific you'd like to know about properties in Hyderabad?`,
@@ -273,7 +290,6 @@ export function EnhancedChatBot() {
 
   return (
     <>
-      {/* Chat button - positioned to not overlap with notification button */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-20 right-4 rounded-full p-3 h-12 w-12 shadow-lg z-50 bg-primary hover:bg-primary/90"
@@ -282,7 +298,6 @@ export function EnhancedChatBot() {
         {isOpen ? <X size={24} className="text-primary-foreground" /> : <MessageCircle size={24} className="text-primary-foreground" />}
       </Button>
 
-      {/* Chat window */}
       <div
         className={cn(
           "fixed bottom-36 right-4 w-80 md:w-96 z-50 transition-all duration-300 ease-in-out transform",
@@ -290,7 +305,6 @@ export function EnhancedChatBot() {
         )}
       >
         <Card className="flex flex-col h-[500px] max-h-[70vh] overflow-hidden shadow-xl border-primary/20">
-          {/* Chat header */}
           <div className="bg-primary text-primary-foreground p-3 flex justify-between items-center">
             <div className="flex items-center gap-2">
               <MessageCircle size={20} />
@@ -312,7 +326,6 @@ export function EnhancedChatBot() {
             </div>
           </div>
 
-          {/* Chat messages */}
           <div className="flex-1 p-3 overflow-y-auto bg-gray-50">
             {messages.map((message) => (
               <div
@@ -366,7 +379,6 @@ export function EnhancedChatBot() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Chat footer with input and buttons */}
           <div className="p-3 border-t">
             <form onSubmit={handleSubmit} className="flex gap-2 mb-2">
               <Input
@@ -411,7 +423,6 @@ export function EnhancedChatBot() {
         </Card>
       </div>
       
-      {/* Inquiry Form Dialog */}
       <Dialog open={showInquiryForm} onOpenChange={setShowInquiryForm}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
