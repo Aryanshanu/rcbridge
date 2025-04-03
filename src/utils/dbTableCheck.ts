@@ -19,7 +19,7 @@ export type ValidTableName =
   | "chat_messages"
   | "chat_user_info"
   | "customer_inquiries"
-  | "conversations"; // This entry enables the conversations table check
+  | "conversations";
 
 // This function validates if the provided string is a valid table name
 export const isValidTableName = (tableName: string): tableName is ValidTableName => {
@@ -39,7 +39,7 @@ export const isValidTableName = (tableName: string): tableName is ValidTableName
     "chat_messages",
     "chat_user_info",
     "customer_inquiries",
-    "conversations" // Added the conversations table to the array as well
+    "conversations"
   ];
   
   return validTables.includes(tableName as ValidTableName);
@@ -64,9 +64,9 @@ export const checkTableExists = async (
       return false;
     }
 
-    // Now that we've validated the table name, we can safely query it
+    // Now that we've validated the table name, we need to safely type it for the Supabase client
     const { error } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('*', { count: 'exact', head: true });
     
     // If there's no error, the table exists and is accessible
