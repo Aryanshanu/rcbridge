@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,7 +54,6 @@ export const AdvancedChatbot = () => {
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
-      // Check if the conversations table exists
       checkTableExists('conversations', { 
         silent: true,
         customErrorMessage: "ChatBot functionality may be limited."
@@ -65,7 +63,6 @@ export const AdvancedChatbot = () => {
         }
       });
 
-      // Add welcome message
       setMessages([{
         id: '1',
         text: "Hi there! 👋 I'm Alex, your real estate assistant. How can I help you find your dream property today?",
@@ -90,13 +87,11 @@ export const AdvancedChatbot = () => {
     setIsSending(true);
     
     try {
-      // Prepare conversation history
       const conversationHistory = messages.slice(-4).map(msg => ({
         text: msg.text,
         sender: msg.sender
       }));
       
-      // Call the Supabase edge function
       const { data, error } = await supabase.functions.invoke('chatbot', {
         body: { 
           user_input: inputMessage,
@@ -108,7 +103,6 @@ export const AdvancedChatbot = () => {
         throw new Error(error.message);
       }
       
-      // Add bot response to messages
       const botMessage: Message = {
         id: Date.now().toString() + '-bot',
         text: data.bot_response || "I'm sorry, I couldn't process your request.",
@@ -118,10 +112,8 @@ export const AdvancedChatbot = () => {
       
       setMessages(prev => [...prev, botMessage]);
       
-      // Check if we should suggest contact form
       if (data.metadata?.lead_potential || detectLeadPotential(inputMessage)) {
         setTimeout(() => {
-          // Add suggestion message after a brief pause
           const suggestionMessage: Message = {
             id: Date.now().toString() + '-suggestion',
             text: "Would you like to schedule a viewing or speak with one of our agents? I can help connect you with the right person.",
@@ -136,7 +128,6 @@ export const AdvancedChatbot = () => {
     } catch (error) {
       console.error("Error sending message:", error);
       
-      // Add error message
       const errorMessage: Message = {
         id: Date.now().toString() + '-error',
         text: "I'm sorry, there was an error processing your message. Please try again later.",
@@ -174,22 +165,17 @@ export const AdvancedChatbot = () => {
     setIsSubmittingForm(true);
 
     try {
-      // Store the inquiry in Supabase
       const { error } = await supabase.from('customer_inquiries').insert({
         name: contactForm.name,
-        email: contactForm.email,
-        phone: contactForm.phone,
-        requirement: contactForm.requirement,
-        source: 'chatbot',
-        status: 'new'
+        budget: "Not specified",
+        property_type: "Not specified",
+        location: "Not specified"
       });
 
       if (error) throw error;
 
-      // Close the form
       setShowContactForm(false);
 
-      // Add confirmation message to chat
       const confirmationMessage: Message = {
         id: Date.now().toString() + '-confirmation',
         text: `Thanks ${contactForm.name}! One of our agents will contact you soon at ${contactForm.phone || contactForm.email}. Is there anything else I can help you with in the meantime?`,
@@ -203,7 +189,6 @@ export const AdvancedChatbot = () => {
         description: "An agent will contact you soon."
       });
 
-      // Reset form
       setContactForm({
         name: "",
         email: "",
