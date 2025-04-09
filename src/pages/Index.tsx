@@ -9,7 +9,6 @@ import { PropertyForm } from "@/components/PropertyForm";
 import { SEO } from "@/components/SEO";
 import { Loader2 } from "lucide-react";
 import { NotificationButton } from "@/components/ui/NotificationButton";
-import { ChatBot } from "@/components/ChatBot";
 import { WhyChooseUs } from "@/components/sections/WhyChooseUs";
 import { CoreValues } from "@/components/sections/CoreValues";
 import { HowItWorks } from "@/components/sections/HowItWorks";
@@ -133,9 +132,6 @@ const Index = () => {
 
       <div className="fixed bottom-6 right-6 z-50">
         <NotificationButton />
-      </div>
-      <div className="fixed bottom-6 right-20 z-50">
-        <ChatBot />
       </div>
       <Footer />
     </div>

@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,7 +14,7 @@ import { Suspense, lazy, useEffect, useState } from "react";
 import { WelcomeAnimation } from "./components/auth/WelcomeAnimation";
 import { AlertCircle, Home } from "lucide-react";
 import { Button } from "./components/ui/button";
-import { ChatbotWidget } from "./components/ChatbotWidget";
+import { ChatBot } from "./components/ChatBot";
 
 const Blog = lazy(() => import("./pages/Blog"));
 const FAQ = lazy(() => import("./pages/FAQ"));
@@ -177,7 +178,7 @@ const App = () => {
                           <Route path="/lander" element={<Navigate to="/" replace />} />
                           <Route path="*" element={<ErrorFallback />} />
                         </Routes>
-                        <ChatbotWidget />
+                        <ChatBot />
                       </>
                     ) : (
                       <PageLoading />
