@@ -14,12 +14,7 @@ export type ValidTableName =
   | "property_alerts" 
   | "property_images" 
   | "search_queries" 
-  | "user_rewards"
-  | "chat_conversations"
-  | "chat_messages"
-  | "chat_user_info"
-  | "customer_inquiries"
-  | "conversations";
+  | "user_rewards";
 
 // This function validates if the provided string is a valid table name
 export const isValidTableName = (tableName: string): tableName is ValidTableName => {
@@ -34,12 +29,7 @@ export const isValidTableName = (tableName: string): tableName is ValidTableName
     "property_alerts",
     "property_images",
     "search_queries",
-    "user_rewards",
-    "chat_conversations",
-    "chat_messages",
-    "chat_user_info",
-    "customer_inquiries",
-    "conversations"
+    "user_rewards"
   ];
   
   return validTables.includes(tableName as ValidTableName);
@@ -64,9 +54,9 @@ export const checkTableExists = async (
       return false;
     }
 
-    // Now that we've validated the table name, we need to safely type it for the Supabase client
+    // Now that we've validated the table name, we can safely query it
     const { error } = await supabase
-      .from(tableName as any)
+      .from(tableName)
       .select('*', { count: 'exact', head: true });
     
     // If there's no error, the table exists and is accessible
