@@ -8,7 +8,7 @@ import { HowItWorks } from '@/components/sections/HowItWorks';
 import { WhyChooseUs } from '@/components/sections/WhyChooseUs';
 import { CallToAction } from '@/components/sections/CallToAction';
 import { Footer } from '@/components/sections/Footer';
-import { StatisticsSection } from '@/components/sections/Statistics';
+import { Statistics } from '@/components/sections/Statistics';
 import { RealEstateAssistant } from '@/components/RealEstateAssistant';
 import { Testimonials } from '@/components/sections/Testimonials';
 
@@ -28,7 +28,7 @@ const Index = () => {
       
       <FeaturedProperties />
       
-      <StatisticsSection />
+      <Statistics />
       
       <Testimonials />
       
