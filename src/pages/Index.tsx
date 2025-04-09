@@ -10,6 +10,7 @@ import { CallToAction } from '@/components/sections/CallToAction';
 import { Footer } from '@/components/sections/Footer';
 import { StatisticsSection } from '@/components/sections/Statistics';
 import { RealEstateAssistant } from '@/components/RealEstateAssistant';
+import { Testimonials } from '@/components/sections/Testimonials';
 
 const Index = () => {
   return (
@@ -28,6 +29,8 @@ const Index = () => {
       <FeaturedProperties />
       
       <StatisticsSection />
+      
+      <Testimonials />
       
       <HowItWorks />
       
