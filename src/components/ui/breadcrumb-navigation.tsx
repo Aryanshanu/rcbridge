@@ -63,7 +63,7 @@ export const BreadcrumbNavigation = ({
                   aria-current="page"
                   title={item.label}
                 >
-                  {item.icon && <span className="mr-1 inline-flex items-center">{item.icon}</span>}
+                  {item.icon && item.icon}
                   {item.label}
                 </span>
               ) : (
@@ -72,7 +72,7 @@ export const BreadcrumbNavigation = ({
                   className="hover:text-primary transition-colors truncate block"
                   title={item.label}
                 >
-                  {item.icon && <span className="mr-1 inline-flex items-center">{item.icon}</span>}
+                  {item.icon && item.icon}
                   {item.label}
                 </Link>
               )}
