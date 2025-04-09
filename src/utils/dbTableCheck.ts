@@ -73,7 +73,7 @@ export const checkTableExists = async (
       // Use type assertion to make TypeScript understand this is a valid table name
       // after we've validated it with isValidTableName
       const { error } = await supabase
-        .from(tableName as any)
+        .from(tableName as ValidTableName)
         .select('*', { count: 'exact', head: true });
       
       // If there's no error, the table exists and is accessible
