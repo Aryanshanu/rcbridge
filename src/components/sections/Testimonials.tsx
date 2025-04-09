@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Quote } from "lucide-react";
 
@@ -189,5 +188,4 @@ export const Testimonials = () => {
   );
 };
 
-// Make sure the default export is removed to prevent conflicts
-// with the named export
+export default Testimonials;
