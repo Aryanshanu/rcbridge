@@ -7,19 +7,21 @@ import { cn } from "@/lib/utils";
 interface BreadcrumbItem {
   label: string;
   path: string;
-  icon?: React.ReactNode; // Make icon optional
+  icon?: React.ReactNode;
 }
 
 interface BreadcrumbsProps {
   items?: BreadcrumbItem[];
   homeIcon?: boolean;
   className?: string;
+  separator?: React.ReactNode;
 }
 
 export const BreadcrumbNavigation = ({ 
   items = [], 
   homeIcon = true,
-  className 
+  className,
+  separator = <ChevronRight className="h-4 w-4 mx-1" aria-hidden="true" />
 }: BreadcrumbsProps) => {
   const location = useLocation();
   const pathSegments = location.pathname.split("/").filter(Boolean);
@@ -30,13 +32,15 @@ export const BreadcrumbNavigation = ({
     return {
       label: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " "),
       path,
-      // Don't include an icon for auto-generated items
     };
   });
 
   return (
-    <nav aria-label="Breadcrumb" className={cn("flex text-sm text-gray-500", className)}>
-      <ol className="flex items-center space-x-1">
+    <nav 
+      aria-label="Breadcrumb" 
+      className={cn("flex text-sm text-gray-500 overflow-x-auto", className)}
+    >
+      <ol className="flex items-center space-x-1 flex-nowrap min-w-0">
         <li>
           <Link 
             to="/" 
@@ -50,20 +54,25 @@ export const BreadcrumbNavigation = ({
         {breadcrumbItems.map((item, index) => (
           <React.Fragment key={item.path}>
             <li className="flex items-center">
-              <ChevronRight className="h-4 w-4 mx-1" aria-hidden="true" />
+              {separator}
             </li>
-            <li>
+            <li className="min-w-0">
               {index === breadcrumbItems.length - 1 ? (
-                <span className="font-medium text-gray-900" aria-current="page">
-                  {item.icon && <span className="mr-1">{item.icon}</span>}
+                <span 
+                  className="font-medium text-gray-900 truncate block" 
+                  aria-current="page"
+                  title={item.label}
+                >
+                  {item.icon && <span className="mr-1 inline-flex items-center">{item.icon}</span>}
                   {item.label}
                 </span>
               ) : (
                 <Link 
                   to={item.path} 
-                  className="hover:text-primary transition-colors"
+                  className="hover:text-primary transition-colors truncate block"
+                  title={item.label}
                 >
-                  {item.icon && <span className="mr-1">{item.icon}</span>}
+                  {item.icon && <span className="mr-1 inline-flex items-center">{item.icon}</span>}
                   {item.label}
                 </Link>
               )}

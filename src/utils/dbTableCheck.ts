@@ -14,7 +14,12 @@ export type ValidTableName =
   | "property_alerts" 
   | "property_images" 
   | "search_queries" 
-  | "user_rewards";
+  | "user_rewards"
+  | "chat_messages"
+  | "chat_conversations"
+  | "chat_user_info"
+  | "conversations"
+  | "customer_inquiries";
 
 // This function validates if the provided string is a valid table name
 export const isValidTableName = (tableName: string): tableName is ValidTableName => {
@@ -29,7 +34,12 @@ export const isValidTableName = (tableName: string): tableName is ValidTableName
     "property_alerts",
     "property_images",
     "search_queries",
-    "user_rewards"
+    "user_rewards",
+    "chat_messages",
+    "chat_conversations",
+    "chat_user_info",
+    "conversations",
+    "customer_inquiries"
   ];
   
   return validTables.includes(tableName as ValidTableName);
@@ -38,6 +48,8 @@ export const isValidTableName = (tableName: string): tableName is ValidTableName
 interface TableCheckOptions {
   silent?: boolean;
   customErrorMessage?: string;
+  retries?: number;
+  retryDelay?: number;
 }
 
 // This function provides a simpler way to check if a table can be accessed
@@ -45,32 +57,54 @@ export const checkTableExists = async (
   tableName: string, 
   options: TableCheckOptions = {}
 ): Promise<boolean> => {
-  try {
-    // First, validate if the tableName is valid
-    if (!isValidTableName(tableName)) {
+  const { retries = 2, retryDelay = 1000 } = options;
+  let attempts = 0;
+  
+  while (attempts <= retries) {
+    try {
+      // First, validate if the tableName is valid
+      if (!isValidTableName(tableName)) {
+        if (!options.silent) {
+          console.error(`Invalid table name: ${tableName}`);
+        }
+        return false;
+      }
+
+      // Now that we've validated the table name, we can safely query it
+      const { error } = await supabase
+        .from(tableName)
+        .select('*', { count: 'exact', head: true });
+      
+      // If there's no error, the table exists and is accessible
+      if (!error) {
+        return true;
+      }
+      
       if (!options.silent) {
-        console.error(`Invalid table name: ${tableName}`);
+        console.warn(`Attempt ${attempts + 1}/${retries + 1} - Error accessing table ${tableName}:`, error.message);
+      }
+      
+      attempts++;
+      
+      // If we've reached max retries, return false
+      if (attempts > retries) {
+        if (!options.silent) {
+          console.error(`All ${retries + 1} attempts to access table ${tableName} failed`);
+        }
+        return false;
+      }
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    } catch (error) {
+      if (!options.silent) {
+        console.error(`Error checking table ${tableName}:`, error);
       }
       return false;
     }
-
-    // Now that we've validated the table name, we can safely query it
-    const { error } = await supabase
-      .from(tableName)
-      .select('*', { count: 'exact', head: true });
-    
-    // If there's no error, the table exists and is accessible
-    if (error && !options.silent) {
-      console.error(`Error accessing table ${tableName}:`, error.message);
-    }
-    
-    return !error;
-  } catch (error) {
-    if (!options.silent) {
-      console.error(`Error checking table ${tableName}:`, error);
-    }
-    return false;
   }
+  
+  return false;
 };
 
 // Function to provide feedback for table existence
