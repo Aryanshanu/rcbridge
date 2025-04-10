@@ -39,7 +39,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const previousUser = user;
       const currentUser = session?.user ?? null;
       
-      setUser(currentUser);
+      if (event === 'SIGNED_OUT') {
+        console.log('User signed out, clearing user state');
+        setUser(null);
+      } else {
+        setUser(currentUser);
+      }
       
       // If user wasn't logged in before and now is, show welcome animation
       if (!previousUser && currentUser) {
@@ -189,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: error.message || "There was a problem signing out. Please try again.",
         variant: "destructive",
       });
+      throw error; // Re-throw the error so the calling component can handle it
     }
   };
 
