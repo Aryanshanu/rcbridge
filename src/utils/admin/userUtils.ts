@@ -1,55 +1,56 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { UserRole, UserProfile } from "@/types/user";
-import { format } from "date-fns";
+import { UserRole } from "@/types/user";
 
-// Format date for display
-export const formatDate = (dateString: string) => {
-  if (!dateString) return "Unknown";
+// Function to get user's role from profile
+export const getUserRole = async (): Promise<UserRole | null> => {
   try {
-    return format(new Date(dateString), 'MMM d, yyyy');
-  } catch (error) {
-    console.error("Error formatting date:", error);
-    return "Invalid date";
-  }
-};
-
-// Get all users from the profiles table
-export const getAllUsers = async (): Promise<UserProfile[]> => {
-  try {
+    // Get the current session to get the user ID
+    const { data: sessionData } = await supabase.auth.getSession();
+    
+    if (!sessionData?.session?.user) {
+      console.log("No active session found");
+      return null;
+    }
+    
+    const userId = sessionData.session.user.id;
+    
+    // Check if role is cached in sessionStorage
+    const cachedRole = sessionStorage.getItem('userRole');
+    if (cachedRole) {
+      console.log("Using cached role:", cachedRole);
+      return cachedRole as UserRole;
+    }
+    
+    // If no cached role, fetch from profile
     const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
     
     if (error) {
-      console.error("Error fetching users:", error);
-      throw error;
+      console.error("Error fetching user role:", error);
+      return null;
     }
     
-    return data || [];
+    if (!data) {
+      console.log("No profile found for user");
+      return null;
+    }
+    
+    // Cache the role for subsequent checks
+    sessionStorage.setItem('userRole', data.role);
+    
+    return data.role as UserRole;
   } catch (error) {
-    console.error("Error in getAllUsers:", error);
-    return [];
+    console.error("Error in getUserRole:", error);
+    return null;
   }
 };
 
-// Update a user's role in the profiles table
-export const updateUserRole = async (userId: string, newRole: UserRole): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from("profiles")
-      .update({ role: newRole })
-      .eq("id", userId);
-    
-    if (error) {
-      console.error("Error updating user role:", error);
-      throw error;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error("Error in updateUserRole:", error);
-    return false;
-  }
+// Function to check if current user has admin permissions
+export const isAdminUser = async (): Promise<boolean> => {
+  const role = await getUserRole();
+  return role === "admin" || role === "developer" || role === "maintainer";
 };

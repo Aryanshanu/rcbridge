@@ -1,11 +1,10 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Building, Home, LogIn, MapPin, Phone, Users, Shield, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
-import { getUserRole } from "@/utils/admin";
+import { getUserRole } from "@/utils/admin/userUtils";
 import { UserRole } from "@/types/user";
 import { toast } from "sonner";
 
