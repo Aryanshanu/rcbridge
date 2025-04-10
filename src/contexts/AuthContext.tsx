@@ -191,6 +191,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
       });
       
+      // Clear session storage items
+      sessionStorage.clear();
+      
       // Call Supabase signOut after clearing storage
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       

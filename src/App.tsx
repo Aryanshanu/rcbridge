@@ -24,9 +24,6 @@ const MyProperties = lazy(() => import("./pages/MyProperties"));
 const SavedSearches = lazy(() => import("./pages/SavedSearches"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
-const Admin = lazy(() => import("./pages/Admin"));
-const AdminInvite = lazy(() => import("./pages/AdminInvite"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
 const PageLoading = () => (
   <div className="w-full h-screen flex items-center justify-center bg-gray-50">
@@ -43,7 +40,7 @@ const ErrorFallback = () => {
   
   useEffect(() => {
     console.error(`Page not found: ${location.pathname}`);
-    console.log('Current available routes: /, /properties, /services, /calculator, /blog, /faq, /contact, /login, /register, /profile, /my-properties, /saved-searches, /admin, /admin-invite, /admin-dashboard');
+    console.log('Current available routes: /, /properties, /services, /calculator, /blog, /faq, /contact, /login, /register, /profile, /my-properties, /saved-searches');
   }, [location.pathname]);
   
   return (
@@ -169,12 +166,9 @@ const App = () => {
                           <Route path="/contact" element={<Contact />} />
                           <Route path="/login" element={<Login />} />
                           <Route path="/register" element={<Register />} />
-                          <Route path="/admin-invite" element={<AdminInvite />} />
-                          <Route path="/admin-dashboard" element={<AdminDashboard />} />
                           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                           <Route path="/my-properties" element={<ProtectedRoute><MyProperties /></ProtectedRoute>} />
                           <Route path="/saved-searches" element={<ProtectedRoute><SavedSearches /></ProtectedRoute>} />
-                          <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
                           <Route path="/lander" element={<Navigate to="/" replace />} />
                           <Route path="*" element={<ErrorFallback />} />
                         </Routes>
