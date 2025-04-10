@@ -12,10 +12,11 @@ import { AdminChatbot } from "@/components/admin/AdminChatbot";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/user";
-import { Shield, AlertCircle, Loader, RefreshCw } from "lucide-react";
+import { Shield, AlertCircle, Loader, RefreshCw, HomeIcon } from "lucide-react";
 import { getUserRole } from "@/utils/admin";
 import { Button } from "@/components/ui/button";
 import { BreadcrumbNavigation } from "@/components/ui/breadcrumb-navigation";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -25,11 +26,12 @@ const AdminPage = () => {
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [retryCount, setRetryCount] = useState(0);
+  const [verificationAttempt, setVerificationAttempt] = useState(0);
 
-  // Clear, direct role check
+  // Improved role check with better error handling
   useEffect(() => {
     const checkAccess = async () => {
-      console.log("Admin page mounted, checking access...");
+      console.log(`Admin page mounted, checking access (attempt ${verificationAttempt + 1})...`);
       
       // Check if user is logged in
       if (!user) {
@@ -43,8 +45,15 @@ const AdminPage = () => {
         setIsLoading(true);
         setIsError(false);
         
-        console.log("Fetching user role...");
-        const role = await getUserRole();
+        console.log(`Fetching user role for user ID: ${user.id}...`);
+        
+        // Add a timeout to prevent hanging indefinitely
+        const rolePromise = getUserRole();
+        const timeoutPromise = new Promise<null>((_, reject) => {
+          setTimeout(() => reject(new Error("Role verification timed out")), 5000);
+        });
+        
+        const role = await Promise.race([rolePromise, timeoutPromise]) as UserRole | null;
         console.log("Fetched role:", role);
         
         if (!role) {
@@ -75,14 +84,14 @@ const AdminPage = () => {
     };
     
     checkAccess();
-  }, [user, navigate, retryCount]);
+  }, [user, navigate, retryCount, verificationAttempt]);
 
   // Handle retry
   const handleRetry = () => {
     console.log("Retrying admin access check");
     setIsError(false);
     setIsLoading(true);
-    setRetryCount(prev => prev + 1);
+    setVerificationAttempt(prev => prev + 1);
   };
 
   // Loading state
@@ -103,7 +112,7 @@ const AdminPage = () => {
     );
   }
 
-  // Error state
+  // Error state with improved details and retry functionality
   if (isError) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -171,7 +180,7 @@ const AdminPage = () => {
     },
   ];
   
-  // Breadcrumb items
+  // Breadcrumb items with proper icon usage
   const breadcrumbItems = [
     { 
       label: "Admin", 
@@ -203,13 +212,13 @@ const AdminPage = () => {
         </div>
         
         {userRole === "maintainer" && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start space-x-3">
-            <AlertCircle className="text-amber-500 mt-0.5" />
-            <div>
-              <h3 className="font-medium text-amber-800">Limited access</h3>
-              <p className="text-amber-700 text-sm">As a Maintainer, you have limited access to the admin panel. You can manage properties and respond to chat messages.</p>
-            </div>
-          </div>
+          <Alert className="mb-6 bg-amber-50 border-amber-200">
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+            <AlertTitle className="text-amber-800">Limited access</AlertTitle>
+            <AlertDescription className="text-amber-700">
+              As a Maintainer, you have limited access to the admin panel. You can manage properties and respond to chat messages.
+            </AlertDescription>
+          </Alert>
         )}
         
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">

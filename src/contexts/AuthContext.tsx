@@ -165,15 +165,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log("Signing out user...");
       
-      // Clear all local storage items related to Supabase
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const keyPrefix = 'sb-' + projectId;
+      // Clear user state first to prevent any race conditions
+      setUser(null);
       
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith(keyPrefix)) {
-          console.log('Removing localStorage item:', key);
-          localStorage.removeItem(key);
+      // Get all localStorage keys related to Supabase
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const keyPrefix = projectId ? `sb-${projectId}` : 'sb-';
+      
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(keyPrefix)) {
+          keysToRemove.push(key);
         }
+      }
+      
+      // Remove all matched keys
+      keysToRemove.forEach(key => {
+        console.log('Removing localStorage item:', key);
+        localStorage.removeItem(key);
+      });
+      
+      // Clear any session cookies
+      document.cookie.split(";").forEach(c => {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
       });
       
       // Call Supabase signOut after clearing storage
@@ -184,13 +199,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
       
-      // Force clear the user state after signout
-      setUser(null);
-      
       // Notify user
       toast.success("Signed out successfully");
       
-      // Redirect to home page with a full page reload
+      // Force page reload to clear any remaining state
       setTimeout(() => {
         window.location.href = '/';
       }, 500);
@@ -201,9 +213,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Attempt a more aggressive approach if normal signout fails
       try {
-        // Force clear all auth state
+        // Force clear all storage
         localStorage.clear();
-        setUser(null);
+        sessionStorage.clear();
+        
+        // Force reload the page
         window.location.href = '/';
       } catch (e) {
         console.error('Final fallback error:', e);

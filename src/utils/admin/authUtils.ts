@@ -83,10 +83,17 @@ export const registerWithInviteCode = async (
   }
 };
 
-// Improved, more reliable getUserRole function
+// Improved, more reliable getUserRole function with caching and better error handling
 export const getUserRole = async (): Promise<UserRole | null> => {
   try {
     console.log("getUserRole: Starting role check");
+    
+    // Check for cached role in sessionStorage to reduce API calls
+    const cachedRole = sessionStorage.getItem('userRole');
+    if (cachedRole) {
+      console.log("getUserRole: Using cached role:", cachedRole);
+      return cachedRole as UserRole;
+    }
     
     // Get current session with retry logic
     let session = null;
@@ -148,9 +155,18 @@ export const getUserRole = async (): Promise<UserRole | null> => {
     }
     
     console.log("getUserRole: Retrieved user role:", profile.role);
+    
+    // Cache the role in sessionStorage for future checks
+    sessionStorage.setItem('userRole', profile.role);
+    
     return profile.role as UserRole;
   } catch (error) {
     console.error("getUserRole: Error in function:", error);
     return null;
   }
+};
+
+// Add a function to clear role cache when needed
+export const clearRoleCache = () => {
+  sessionStorage.removeItem('userRole');
 };
