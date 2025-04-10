@@ -32,6 +32,7 @@ export const BreadcrumbNavigation = ({
     return {
       label: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " "),
       path,
+      icon: undefined // Add the icon property with undefined as default value
     };
   });
 
