@@ -1,12 +1,13 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Building, Home, LogIn, MapPin, Phone, Users, Shield } from "lucide-react";
+import { Building, Home, LogIn, MapPin, Phone, Users, Shield, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
 import { getUserRole } from "@/utils/admin";
 import { UserRole } from "@/types/user";
+import { toast } from "sonner";
 
 interface DesktopMenuProps {
   scrollToPropertyForm: () => void;
@@ -26,6 +27,7 @@ const getInitials = (name: string) => {
 export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: DesktopMenuProps) => {
   const { user, signOut } = useAuth();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   
   // Get user display name and initials
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
@@ -49,6 +51,22 @@ export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: Deskto
   }, [user]);
   
   const isAdminUser = userRole === "admin" || userRole === "developer" || userRole === "maintainer";
+
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (isSigningOut) return;
+    
+    try {
+      setIsSigningOut(true);
+      toast.loading("Signing out...");
+      await signOut();
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      setIsSigningOut(false);
+      toast.error("Failed to sign out. Please try again.");
+    }
+  };
 
   return (
     <div className="hidden md:flex items-center space-x-8">
@@ -108,10 +126,12 @@ export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: Deskto
               )}
               
               <button 
-                onClick={signOut}
-                className="block w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-700"
+                onClick={handleSignOut}
+                disabled={isSigningOut}
+                className="flex w-full items-center text-left px-4 py-2 hover:bg-gray-50 text-red-600"
               >
-                Sign Out
+                <LogOut className="h-4 w-4 mr-1.5" />
+                {isSigningOut ? "Signing out..." : "Sign Out"}
               </button>
             </div>
           </div>

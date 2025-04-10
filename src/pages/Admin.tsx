@@ -15,6 +15,7 @@ import { UserRole } from "@/types/user";
 import { Shield, AlertCircle, Loader, RefreshCw } from "lucide-react";
 import { getUserRole } from "@/utils/admin/authUtils";
 import { Button } from "@/components/ui/button";
+import { BreadcrumbNavigation } from "@/components/ui/breadcrumb-navigation";
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -26,18 +27,17 @@ const AdminPage = () => {
 
   // Clear, direct role check
   useEffect(() => {
-    console.log("Admin page mounted");
-    
-    // Check if user is logged in
-    if (!user) {
-      console.log("No user found, redirecting to login");
-      toast.error("Login required to access admin panel");
-      navigate("/login", { state: { returnTo: "/admin" } });
-      return;
-    }
-    
-    // Function to fetch and verify user role
-    async function fetchUserRole() {
+    const checkAccess = async () => {
+      console.log("Admin page mounted, checking access...");
+      
+      // Check if user is logged in
+      if (!user) {
+        console.log("No user found, redirecting to login");
+        toast.error("Login required to access admin panel");
+        navigate("/login", { state: { returnTo: "/admin" } });
+        return;
+      }
+      
       try {
         setIsLoading(true);
         setIsError(false);
@@ -71,9 +71,9 @@ const AdminPage = () => {
       } finally {
         setIsLoading(false);
       }
-    }
+    };
     
-    fetchUserRole();
+    checkAccess();
   }, [user, navigate]);
 
   // Handle retry
@@ -195,6 +195,15 @@ const AdminPage = () => {
       disabled: false,
     },
   ];
+  
+  // Breadcrumb items
+  const breadcrumbItems = [
+    { 
+      label: "Admin", 
+      path: "/admin",
+      icon: <Shield className="h-4 w-4" />
+    }
+  ];
 
   console.log("Rendering admin page with role:", userRole);
   
@@ -204,6 +213,10 @@ const AdminPage = () => {
       <Navbar />
       
       <main className="container py-8 px-4 mx-auto max-w-7xl">
+        <div className="mb-4">
+          <BreadcrumbNavigation items={breadcrumbItems} />
+        </div>
+        
         <div className="flex items-center mb-8 space-x-3">
           <Shield size={32} className="text-primary" />
           <div>
