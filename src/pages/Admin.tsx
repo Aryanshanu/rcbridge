@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/user";
 import { Shield, AlertCircle, Loader, RefreshCw } from "lucide-react";
-import { getUserRole } from "@/utils/admin/authUtils";
+import { getUserRole } from "@/utils/admin";
 import { Button } from "@/components/ui/button";
 import { BreadcrumbNavigation } from "@/components/ui/breadcrumb-navigation";
 
@@ -24,6 +24,7 @@ const AdminPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [retryCount, setRetryCount] = useState(0);
 
   // Clear, direct role check
   useEffect(() => {
@@ -49,7 +50,7 @@ const AdminPage = () => {
         if (!role) {
           console.log("No role found");
           setIsError(true);
-          setErrorMessage("Could not verify your access level");
+          setErrorMessage("Could not verify your access level. Please try again.");
           return;
         }
         
@@ -74,40 +75,14 @@ const AdminPage = () => {
     };
     
     checkAccess();
-  }, [user, navigate]);
+  }, [user, navigate, retryCount]);
 
   // Handle retry
   const handleRetry = () => {
     console.log("Retrying admin access check");
     setIsError(false);
     setIsLoading(true);
-    
-    async function retryRoleCheck() {
-      try {
-        const role = await getUserRole();
-        console.log("Retry role check result:", role);
-        
-        if (!role) {
-          throw new Error("Could not verify role");
-        }
-        
-        if (role !== "admin" && role !== "developer" && role !== "maintainer") {
-          throw new Error("Insufficient permissions");
-        }
-        
-        setUserRole(role);
-        setIsError(false);
-      } catch (error: any) {
-        console.error("Retry failed:", error);
-        setIsError(true);
-        setErrorMessage(error.message || "Access verification failed");
-        toast.error("Verification failed");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    
-    retryRoleCheck();
+    setRetryCount(prev => prev + 1);
   };
 
   // Loading state

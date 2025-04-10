@@ -62,15 +62,7 @@ export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: Deskto
     try {
       setIsSigningOut(true);
       toast.loading("Signing out...");
-      
-      // Clear any stored session data first
-      localStorage.removeItem('sb-' + import.meta.env.VITE_SUPABASE_PROJECT_ID + '-auth-token');
-      
       await signOut();
-      toast.success("Sign out successful");
-      
-      // Force page reload after sign out to clear any cached state
-      window.location.href = '/';
     } catch (error) {
       console.error("Error during sign out:", error);
       setIsSigningOut(false);

@@ -83,36 +83,67 @@ export const registerWithInviteCode = async (
   }
 };
 
-// Clean, simplified getUserRole function
+// Improved, more reliable getUserRole function
 export const getUserRole = async (): Promise<UserRole | null> => {
   try {
     console.log("getUserRole: Starting role check");
     
-    // Get current session
-    const { data } = await supabase.auth.getSession();
+    // Get current session with retry logic
+    let session = null;
+    let retries = 3;
     
-    if (!data.session || !data.session.user) {
-      console.log("getUserRole: No active session found");
+    while (retries > 0 && !session) {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("Error getting session:", error);
+        retries--;
+        if (retries > 0) {
+          console.log(`Retrying session check, ${retries} attempts left`);
+          await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
+        }
+        continue;
+      }
+      
+      session = data.session;
+      break;
+    }
+    
+    if (!session || !session.user) {
+      console.log("getUserRole: No active session found after retries");
       return null;
     }
     
-    const userId = data.session.user.id;
+    const userId = session.user.id;
     console.log("getUserRole: Checking role for user ID:", userId);
     
-    // Simple, direct query to get user role
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .maybeSingle();
+    // Try to get the user role with retry logic
+    let profile = null;
+    retries = 3;
     
-    if (error) {
-      console.error("getUserRole: Error fetching user role:", error);
-      return null;
+    while (retries > 0 && !profile) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error("getUserRole: Error fetching user role:", error);
+        retries--;
+        if (retries > 0) {
+          console.log(`Retrying profile fetch, ${retries} attempts left`);
+          await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
+        }
+        continue;
+      }
+      
+      profile = data;
+      break;
     }
     
     if (!profile) {
-      console.log("getUserRole: No profile found for user");
+      console.log("getUserRole: No profile found for user after retries");
       return null;
     }
     

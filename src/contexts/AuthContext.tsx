@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useToast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
 
   useEffect(() => {
     // Initial session check
@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error: any) {
       console.error('Error signing in with Google:', error);
-      toast({
+      uiToast({
         title: "Error signing in with Google",
         description: error.message || "Please try again later.",
         variant: "destructive",
@@ -122,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Not returning data
     } catch (error: any) {
       console.error('Error signing in:', error);
-      toast({
+      uiToast({
         title: "Error signing in",
         description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
@@ -152,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Not returning data
     } catch (error: any) {
       console.error('Error signing up:', error);
-      toast({
+      uiToast({
         title: "Error signing up",
         description: error.message || "Please try again later.",
         variant: "destructive",
@@ -165,10 +165,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log("Signing out user...");
       
-      // Clear any stored session data first (belt and suspenders approach)
-      localStorage.removeItem('sb-' + import.meta.env.VITE_SUPABASE_PROJECT_ID + '-auth-token');
+      // Clear all local storage items related to Supabase
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const keyPrefix = 'sb-' + projectId;
       
-      const { error } = await supabase.auth.signOut();
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith(keyPrefix)) {
+          console.log('Removing localStorage item:', key);
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Call Supabase signOut after clearing storage
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
       
       if (error) {
         console.error('Sign out error:', error);
@@ -179,22 +188,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       
       // Notify user
-      toast({
-        title: "Signed out successfully",
-        description: "You have been signed out of your account.",
-      });
+      toast.success("Signed out successfully");
       
-      // Redirect to home page after sign out
-      window.location.href = '/';
+      // Redirect to home page with a full page reload
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
       
     } catch (error: any) {
       console.error('Error signing out:', error);
-      toast({
-        title: "Error signing out",
-        description: error.message || "There was a problem signing out. Please try again.",
-        variant: "destructive",
-      });
-      throw error; // Re-throw the error so the calling component can handle it
+      toast.error("Error signing out: " + (error.message || "Please try again"));
+      
+      // Attempt a more aggressive approach if normal signout fails
+      try {
+        // Force clear all auth state
+        localStorage.clear();
+        setUser(null);
+        window.location.href = '/';
+      } catch (e) {
+        console.error('Final fallback error:', e);
+      }
     }
   };
 
