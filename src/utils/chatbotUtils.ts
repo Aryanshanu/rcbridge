@@ -1,3 +1,4 @@
+
 /**
  * Chatbot utilities for RC Bridge real estate assistant
  */
@@ -350,6 +351,7 @@ const sampleProperties = [
 
 // User conversation history
 let conversationContext: string[] = [];
+let userProfileInfo: Record<string, any> = {};
 
 /**
  * Initializes the chat model - simplified for reliability
@@ -380,32 +382,56 @@ export async function initializeImageModel(): Promise<boolean> {
 }
 
 /**
- * Find matching intent from training data
+ * Improved intent matching with fuzzy search and semantic similarity
  */
 function findIntent(message: string): { intent: string, response: string } | null {
+  if (!message || message.trim() === '') return null;
+  
   // Convert message to lowercase for case-insensitive matching
   const normalizedMessage = message.toLowerCase();
+  
+  // Track best match
+  let bestMatchScore = 0;
+  let bestMatchIntent = null;
   
   // Check each intent in the training data
   for (const intentData of trainingData) {
     for (const example of intentData.examples) {
-      // Simple word matching (can be enhanced with NLP techniques)
-      const exampleWords = example.toLowerCase().split(/\s+/);
-      const messageWords = normalizedMessage.split(/\s+/);
+      // Calculate a similarity score
+      const exampleWords = example.toLowerCase().split(/\s+/).filter(word => word.length > 2);
+      const messageWords = normalizedMessage.split(/\s+/).filter(word => word.length > 2);
       
-      // Check if key words from the example appear in the message
-      const matchingWords = exampleWords.filter(word => 
-        word.length > 3 && messageWords.includes(word)
-      );
+      // Get matching words
+      const matchingWords = exampleWords.filter(word => messageWords.includes(word));
       
-      // If there are enough matching words, return this intent
-      if (matchingWords.length >= 2 || 
-          (exampleWords.length < 4 && matchingWords.length >= 1)) {
-        // Get a random response for this intent
-        const response = intentData.responses[Math.floor(Math.random() * intentData.responses.length)];
-        return { intent: intentData.intent, response };
+      // Calculate score based on matching words and phrase length
+      let score = 0;
+      if (matchingWords.length > 0) {
+        // Score is the ratio of matching words to total words in the example, weighted by how many words matched
+        score = (matchingWords.length / exampleWords.length) * (matchingWords.length / messageWords.length) * matchingWords.length;
+        
+        // Boost score for exact phrase matches
+        if (normalizedMessage.includes(example.toLowerCase())) {
+          score *= 1.5;
+        }
+      }
+      
+      // Update best match if this score is higher
+      if (score > bestMatchScore) {
+        bestMatchScore = score;
+        bestMatchIntent = intentData;
       }
     }
+  }
+  
+  // Return the best match if it's above a threshold
+  if (bestMatchScore > 0.1 && bestMatchIntent) {
+    // Get a random response for this intent
+    const responseIndex = Math.floor(Math.random() * bestMatchIntent.responses.length);
+    return { 
+      intent: bestMatchIntent.intent, 
+      response: bestMatchIntent.responses[responseIndex]
+    };
   }
   
   return null;
@@ -437,6 +463,55 @@ function analyzeIntent(message: string): string {
 }
 
 /**
+ * Helper to add conversational markers to responses
+ */
+function addConversationalElements(response: string, userMessage: string): string {
+  // Don't modify response if it already has conversational elements
+  if (response.includes('!') || response.includes('?') || response.includes('...')) {
+    return response;
+  }
+  
+  const conversationalIntros = [
+    "Absolutely! ",
+    "Great question. ",
+    "I'd be happy to help with that. ",
+    "Thanks for asking. ",
+    "I'm glad you're interested in that. "
+  ];
+  
+  const conversationalFollowUps = [
+    " Is there anything specific you'd like to know about this?",
+    " Would you like more details?",
+    " Does that help with what you're looking for?",
+    " Is there something else you'd like to explore?",
+    " How does that sound to you?"
+  ];
+  
+  // Get user's name if available in profile
+  let personalization = "";
+  if (userProfileInfo.name) {
+    personalization = ` ${userProfileInfo.name}`;
+  }
+  
+  // Add intro based on message length and type
+  let enhancedResponse = response;
+  const isQuestion = userMessage.includes('?');
+  
+  if (Math.random() > 0.5 || isQuestion) {
+    const intro = conversationalIntros[Math.floor(Math.random() * conversationalIntros.length)];
+    enhancedResponse = intro + enhancedResponse;
+  }
+  
+  // Add personalization and follow-up based on message context
+  if (Math.random() > 0.6) {
+    const followUp = conversationalFollowUps[Math.floor(Math.random() * conversationalFollowUps.length)];
+    enhancedResponse = enhancedResponse + followUp;
+  }
+  
+  return enhancedResponse;
+}
+
+/**
  * Generate a response based on user message and context
  */
 export async function generateResponse(message: string): Promise<string> {
@@ -452,11 +527,11 @@ export async function generateResponse(message: string): Promise<string> {
     
     if (intentMatch) {
       console.log(`Found intent match: ${intentMatch.intent}`);
-      return intentMatch.response;
+      return addConversationalElements(intentMatch.response, message);
     }
     
     // If no match, fall back to the legacy intent analysis
-    console.log('No intent match found, using legacy analysis');
+    console.log('No exact intent match found, using contextual analysis');
     const intent = analyzeIntent(message);
     let response = '';
     
@@ -513,7 +588,7 @@ export async function generateResponse(message: string): Promise<string> {
         }
     }
     
-    return response;
+    return addConversationalElements(response, message);
   } catch (error) {
     console.error('Error generating chat response:', error);
     return "I'm currently experiencing technical difficulties. Please try again in a moment, or reach out to our customer service at support@rcbridge.com.";
@@ -541,6 +616,14 @@ export function storeUserInquiry(message: string, context: string[] = []): void 
   } catch (error) {
     console.error('Error storing user inquiry:', error);
   }
+}
+
+/**
+ * Store user profile information for personalization
+ */
+export function updateUserProfile(profileData: Record<string, any>): void {
+  userProfileInfo = { ...userProfileInfo, ...profileData };
+  console.log('Updated user profile:', userProfileInfo);
 }
 
 /**
@@ -575,4 +658,6 @@ export function getConversationContext(): string[] {
 
 export function clearConversationContext(): void {
   conversationContext = [];
+  userProfileInfo = {};
 }
+

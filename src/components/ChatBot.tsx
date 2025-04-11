@@ -11,7 +11,8 @@ import {
   generatePropertyImage,
   storeUserInquiry,
   getConversationContext,
-  clearConversationContext
+  clearConversationContext,
+  updateUserProfile
 } from '@/utils/chatbotUtils';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -273,6 +274,13 @@ export function ChatBot() {
         }))
       });
       localStorage.setItem('userDetailedInquiries', JSON.stringify(inquiries));
+      
+      // Update user profile for personalized responses
+      updateUserProfile({
+        name: inquiryData.name,
+        email: inquiryData.email,
+        phone: inquiryData.phone
+      });
       
       // Thank the user in the chat
       const botMessage: Message = {
@@ -559,3 +567,4 @@ export function ChatBot() {
     </>
   );
 }
+
