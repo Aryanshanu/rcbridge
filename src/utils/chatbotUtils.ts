@@ -386,10 +386,15 @@ const locationBasedProperties = {
   ]
 };
 
-// User conversation history
+// User conversation history with improved tracking
 let conversationContext: string[] = [];
+let previousResponseTopic: string = '';
 let userProfileInfo: Record<string, any> = {};
 let activeConversationTopics: string[] = [];
+let userIntent: string = '';
+let userMentionedBudget: string | null = null;
+let userMentionedTimeline: string | null = null;
+let userMentionedRole: 'buyer' | 'seller' | 'investor' | null = null;
 
 /**
  * Initializes the chat model - simplified for reliability
@@ -527,6 +532,51 @@ function extractPropertyTypes(message: string): string[] {
 }
 
 /**
+ * Extract budget information from user message
+ */
+function extractBudget(message: string): string | null {
+  const budgetRegex = /(\d+(\.\d+)?)\s*(lakhs|lakh|crores|crore|cr)/i;
+  const match = message.match(budgetRegex);
+  
+  if (match) {
+    return match[0];
+  }
+  
+  return null;
+}
+
+/**
+ * Extract timeline information from user message
+ */
+function extractTimeline(message: string): string | null {
+  const timelineRegex = /(\d+)\s*(days|day|weeks|week|months|month|years|year)/i;
+  const match = message.match(timelineRegex);
+  
+  if (match) {
+    return match[0];
+  }
+  
+  return null;
+}
+
+/**
+ * Determine user role (buyer, seller, investor)
+ */
+function determineUserRole(message: string): 'buyer' | 'seller' | 'investor' | null {
+  const normalizedMsg = message.toLowerCase();
+  
+  if (normalizedMsg.includes('buy') || normalizedMsg.includes('buying') || normalizedMsg.includes('purchase')) {
+    return 'buyer';
+  } else if (normalizedMsg.includes('sell') || normalizedMsg.includes('selling')) {
+    return 'seller';
+  } else if (normalizedMsg.includes('invest') || normalizedMsg.includes('roi') || normalizedMsg.includes('return')) {
+    return 'investor';
+  }
+  
+  return null;
+}
+
+/**
  * Legacy intent analysis (as fallback)
  */
 function analyzeIntent(message: string): string {
@@ -555,8 +605,25 @@ function analyzeIntent(message: string): string {
  * Create a personalized response based on conversation context
  */
 function createPersonalizedResponse(userMessage: string): string | null {
+  // Extract key information
   const locations = extractLocations(userMessage);
   const propertyTypes = extractPropertyTypes(userMessage);
+  const extractedBudget = extractBudget(userMessage);
+  const extractedTimeline = extractTimeline(userMessage);
+  const userRole = determineUserRole(userMessage);
+  
+  // Update tracking variables
+  if (extractedBudget) {
+    userMentionedBudget = extractedBudget;
+  }
+  
+  if (extractedTimeline) {
+    userMentionedTimeline = extractedTimeline;
+  }
+  
+  if (userRole) {
+    userMentionedRole = userRole;
+  }
   
   // Update active conversation topics
   if (locations.length > 0) {
@@ -569,26 +636,69 @@ function createPersonalizedResponse(userMessage: string): string | null {
     propertyTypes.forEach(type => activeConversationTopics.push(`type:${type}`));
   }
   
-  // If the user mentioned a location we have specific properties for
-  for (const location of locations) {
-    const propertiesInLocation = locationBasedProperties[location];
-    if (propertiesInLocation) {
-      const property = propertiesInLocation[Math.floor(Math.random() * propertiesInLocation.length)];
-      let response = `Great! I have several options in ${location.charAt(0).toUpperCase() + location.slice(1)}. `;
+  // Handle role-specific responses
+  if (userRole === 'buyer' || userMessage.toLowerCase().includes('buy') || userMessage.toLowerCase().includes('buying')) {
+    // If just "buying" without other context but we have previous context
+    if (userMessage.toLowerCase() === 'buying' || userMessage.toLowerCase() === 'buy') {
+      if (userMentionedBudget) {
+        return `Great! I understand you're looking to buy a property with a budget of ${userMentionedBudget}${userMentionedTimeline ? ` within ${userMentionedTimeline}` : ''}. What type of property are you interested in? (Apartment, Villa, Plot, etc.)`;
+      } else {
+        return "I'd be happy to help you find a property to buy. Could you share your budget and what type of property you're looking for? (Apartment, Villa, Plot, etc.)";
+      }
+    }
+    
+    // If buyer mentioned budget and/or timeline in this message
+    if (extractedBudget || extractedTimeline) {
+      let response = `Thank you for sharing that information. `;
       
-      if (propertyTypes.length > 0) {
-        response += `For ${propertyTypes.join('/')} properties, `;
+      if (locations.length > 0) {
+        const location = locations[0];
+        response += `Looking for properties in ${location} `;
+      } else {
+        response += `Looking for properties in Hyderabad `;
       }
       
-      response += `one excellent choice is the "${property.title}" priced at ${property.price}. ${property.description}`;
+      response += `with a budget of ${extractedBudget || userMentionedBudget || "your budget"}`;
       
-      // Add a follow-up question
-      response += "\n\nWould you like to know more about this property or see other options in this area?";
+      if (extractedTimeline || userMentionedTimeline) {
+        response += ` within ${extractedTimeline || userMentionedTimeline}`;
+      }
+      
+      response += `. What type of property are you interested in? (Apartment, Villa, Plot, etc.)`;
       return response;
-    } else {
-      // If we don't have specific properties for this location
-      return `I see you're interested in properties in ${location.charAt(0).toUpperCase() + location.slice(1)}. This is a great area in Hyderabad! What kind of property are you looking for? I can help you find apartments, villas, or plots in this location.`;
     }
+    
+    // If the user has mentioned a specific location
+    for (const location of locations) {
+      const propertiesInLocation = locationBasedProperties[location];
+      if (propertiesInLocation) {
+        const property = propertiesInLocation[Math.floor(Math.random() * propertiesInLocation.length)];
+        let response = `Great! I have several options in ${location.charAt(0).toUpperCase() + location.slice(1)}. `;
+        
+        if (propertyTypes.length > 0) {
+          response += `For ${propertyTypes.join('/')} properties, `;
+        }
+        
+        response += `one excellent choice is the "${property.title}" priced at ${property.price}. ${property.description}`;
+        
+        // Add budget context if available
+        if (userMentionedBudget) {
+          response += `\n\nIs this within your budget of ${userMentionedBudget}?`;
+        } else {
+          response += "\n\nWould you like to know more about this property or see other options in this area?";
+        }
+        return response;
+      }
+    }
+  } else if (userRole === 'seller' || userMessage.toLowerCase().includes('sell') || userMessage.toLowerCase() === 'sellers') {
+    return "As a seller, RC Bridge offers you premium listing services with zero brokerage. We connect you directly with serious buyers, handle viewings, and provide market valuation to ensure you get the best price. What kind of property are you looking to sell?";
+  } else if (userRole === 'investor') {
+    return "For investors, RC Bridge offers high-ROI properties with typical returns of 12%+ annually through a combination of rental income and appreciation. Would you like me to explain our investment opportunities in specific areas of Hyderabad?";
+  }
+  
+  // If we're talking about market trends
+  if (userMessage.toLowerCase().includes('market') || userMessage.toLowerCase().includes('trend')) {
+    return "Hyderabad's real estate market has shown robust growth with 15-20% annual appreciation in premium areas. The IT corridor (HITEC City, Financial District) continues to drive demand, while areas like Kokapet and Tellapur are emerging as high-potential zones. Would you like to know about specific area trends?";
   }
   
   // Check if we have an active location from previous messages
@@ -648,7 +758,7 @@ function addConversationalElements(response: string, userMessage: string): strin
   }
   
   // Add personalization and follow-up based on message context
-  if (Math.random() > 0.6) {
+  if (Math.random() > 0.6 && !enhancedResponse.includes("?")) {
     const followUp = conversationalFollowUps[Math.floor(Math.random() * conversationalFollowUps.length)];
     enhancedResponse = enhancedResponse + followUp;
   }
@@ -667,9 +777,44 @@ export async function generateResponse(message: string): Promise<string> {
       conversationContext.shift(); // Keep only recent context
     }
     
+    // Check for short messages that need context
+    if (message.length < 10) {
+      // Handle very short messages by checking previous context
+      if (message.toLowerCase() === 'buying' || message.toLowerCase() === 'buy') {
+        userMentionedRole = 'buyer';
+        return "Great! I'd be happy to help you find a property to buy. Could you tell me your budget range and what areas of Hyderabad you're interested in?";
+      } else if (message.toLowerCase() === 'selling' || message.toLowerCase() === 'sell' || message.toLowerCase() === 'sellers') {
+        userMentionedRole = 'seller';
+        return "As a seller, RC Bridge offers you premium listing services with zero brokerage. We connect you directly with serious buyers, handle viewings, and provide market valuation. What kind of property are you looking to sell?";
+      } else if (message.toLowerCase() === 'investing' || message.toLowerCase() === 'invest' || message.toLowerCase() === 'investment') {
+        userMentionedRole = 'investor';
+        return "For investors, RC Bridge offers high-ROI properties with typical returns of 12%+ annually through a combination of rental income and appreciation. Would you like me to explore investment opportunities based on your capital range?";
+      }
+    }
+    
+    // Budget + Timeline detection for better personalization
+    const extractedBudget = extractBudget(message);
+    const extractedTimeline = extractTimeline(message);
+    
+    if (extractedBudget && extractedTimeline) {
+      userMentionedBudget = extractedBudget;
+      userMentionedTimeline = extractedTimeline;
+      
+      return `Thank you for sharing your budget of ${extractedBudget} and timeline of ${extractedTimeline}. This helps me find the right properties for you. Are you looking for residential or commercial properties?`;
+    } else if (extractedBudget) {
+      userMentionedBudget = extractedBudget;
+      
+      return `I've noted your budget of ${extractedBudget}. What type of property are you looking for and in which area of Hyderabad are you interested?`;
+    } else if (extractedTimeline) {
+      userMentionedTimeline = extractedTimeline;
+      
+      return `I understand you're looking to move forward within ${extractedTimeline}. What's your budget range and property type preference?`;
+    }
+    
     // Check for personalized response based on location/property type
     const personalizedResponse = createPersonalizedResponse(message);
     if (personalizedResponse) {
+      previousResponseTopic = 'personalized';
       return personalizedResponse;
     }
     
@@ -678,6 +823,8 @@ export async function generateResponse(message: string): Promise<string> {
     
     if (intentMatch) {
       console.log(`Found intent match: ${intentMatch.intent}`);
+      userIntent = intentMatch.intent;
+      previousResponseTopic = intentMatch.intent;
       return addConversationalElements(intentMatch.response, message);
     }
     
@@ -689,10 +836,12 @@ export async function generateResponse(message: string): Promise<string> {
     // Generate contextual responses based on intent
     switch (intent) {
       case 'greeting':
+        previousResponseTopic = 'greeting';
         response = knowledgeBase.greetings[Math.floor(Math.random() * knowledgeBase.greetings.length)];
         response += "\n\nAre you looking to buy, sell, or invest in properties? I can provide information about available properties, market trends, and connect you with the right opportunities.";
         break;
       case 'property':
+        previousResponseTopic = 'property';
         // If asking about specific property features
         if (message.includes('bedroom') || message.includes('bath') || message.includes('sq ft') || message.includes('size')) {
           response = "We have properties ranging from 2-bedroom apartments to 5-bedroom luxury villas. The sizes range from 1200 sq ft to 8000+ sq ft depending on the type and location. Would you like me to recommend properties based on specific requirements?";
@@ -705,47 +854,67 @@ export async function generateResponse(message: string): Promise<string> {
         }
         break;
       case 'agricultural':
+        previousResponseTopic = 'agricultural';
         const agriProperty = sampleProperties[3]; // Agricultural property
         response = `We have several agricultural property options available. For example, we have "${agriProperty.title}" in ${agriProperty.location} priced at ${agriProperty.price}. ${agriProperty.description}\n\nAre you looking for any specific features in agricultural land?`;
         break;
       case 'investment':
+        previousResponseTopic = 'investment';
         response = knowledgeBase.investment[Math.floor(Math.random() * knowledgeBase.investment.length)];
         response += "\n\nWould you like to learn more about specific investment opportunities or ROI calculations?";
         break;
       case 'financing':
+        previousResponseTopic = 'financing';
         response = knowledgeBase.financing[Math.floor(Math.random() * knowledgeBase.financing.length)];
         response += "\n\nI can connect you with our finance experts for personalized advice if you're interested.";
         break;
       case 'location':
+        previousResponseTopic = 'location';
         response = knowledgeBase.locations[Math.floor(Math.random() * knowledgeBase.locations.length)];
         response += "\n\nDo you have a specific area of Hyderabad in mind for your property search?";
         break;
       case 'process':
+        previousResponseTopic = 'process';
         response = knowledgeBase.process[Math.floor(Math.random() * knowledgeBase.process.length)];
         response += "\n\nWould you like to tell me more about what you're looking for so I can help you get started?";
         break;
       default:
         // Check for questions about price ranges
         if (message.includes('price') || message.includes('cost') || message.includes('budget') || message.includes('afford')) {
+          previousResponseTopic = 'pricing';
           response = "Our properties range from ₹80 lakhs for apartments in developing areas to ₹20+ crores for luxury villas in premium localities. Commercial properties start at ₹2 crores. What budget range are you considering?";
         } 
         // Check for timing-related questions
         else if (message.includes('when') || message.includes('how long') || message.includes('time') || message.includes('duration')) {
+          previousResponseTopic = 'timing';
           response = "The typical property transaction through RC Bridge takes about 30-45 days from selection to possession. Premium properties might involve customized timelines based on your requirements. How soon are you looking to move forward?";
         }
         // Short, simple user responses (like "yes", "no", "ok")
         else if (message.length < 5) {
           // Check last bot message for context
-          const lastBotMessage = conversationContext[conversationContext.length - 2] || "";
+          const lastUserMessage = conversationContext[conversationContext.length - 2] || "";
           
           if (message.toLowerCase() === "yes" || message.toLowerCase() === "yeah") {
-            response = "Great! To better assist you, could you tell me more about your preferences? Are you looking for a specific type of property or location in Hyderabad?";
+            if (previousResponseTopic === 'personalized' || previousResponseTopic === 'property') {
+              response = "Great! To proceed further, I'd need a bit more information. Could you share your contact details so our team can get in touch with you about these properties? Or would you like to explore more options first?";
+            } else {
+              response = "Excellent! To better assist you, could you tell me more about your preferences? Are you looking for a specific type of property or location in Hyderabad?";
+            }
           } else if (message.toLowerCase() === "no" || message.toLowerCase() === "nope") {
-            response = "I understand. Let me know what you're interested in, and I'll be happy to help you explore other options.";
+            response = "I understand. Let me know what you're interested in, and I'll be happy to help you explore other options that better match your requirements.";
           } else if (message.toLowerCase() === "ok" || message.toLowerCase() === "sure") {
             response = "Wonderful! Please let me know what specific information you're looking for, and I'll provide relevant details about properties in Hyderabad.";
           } else {
-            response = "I'd love to help you find the perfect property. Could you share more details about what you're looking for in terms of location, budget, or property type?";
+            // Check if we have role context to provide a relevant response
+            if (userMentionedRole === 'buyer') {
+              response = "I'd love to help you find the perfect property to buy. Could you share more details about your preferred location in Hyderabad, budget, and property type?";
+            } else if (userMentionedRole === 'seller') {
+              response = "I'd be happy to help you sell your property. Could you share more details about the type of property, location, and your expected price?";
+            } else if (userMentionedRole === 'investor') {
+              response = "For investment opportunities, I'd need to know your capital range and investment timeline. Would you prefer residential or commercial properties for investment?";
+            } else {
+              response = "I'd be happy to help you with your real estate needs. Are you looking to buy, sell, or invest in properties in Hyderabad?";
+            }
           }
         }
         // General fallback response
@@ -825,4 +994,10 @@ export function getConversationContext(): string[] {
 export function clearConversationContext(): void {
   conversationContext = [];
   userProfileInfo = {};
+  userIntent = '';
+  previousResponseTopic = '';
+  activeConversationTopics = [];
+  userMentionedBudget = null;
+  userMentionedTimeline = null;
+  userMentionedRole = null;
 }
