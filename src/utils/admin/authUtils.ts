@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { UserRole } from "@/types/user";
 import { validateInviteCode, markInviteCodeAsUsed } from "./inviteUtils";
 
 // Function to register a new user with an invite code
