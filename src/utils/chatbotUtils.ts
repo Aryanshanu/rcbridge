@@ -1,4 +1,3 @@
-
 /**
  * Chatbot utilities for RC Bridge real estate assistant
  */
@@ -349,9 +348,48 @@ const sampleProperties = [
   }
 ];
 
+// Specific location-based properties to provide more relevant responses
+const locationBasedProperties = {
+  "pocharam": [
+    {
+      id: "p1",
+      title: "Modern Apartment in Pocharam",
+      location: "Pocharam, Hyderabad",
+      price: "₹72 Lakhs",
+      description: "Spacious 2-bedroom apartment in a gated community with amenities like swimming pool, gym, and children's play area."
+    },
+    {
+      id: "p2",
+      title: "Independent House in Pocharam",
+      location: "Pocharam, Hyderabad",
+      price: "₹1.2 Cr",
+      description: "Beautiful 3-bedroom independent house with garden space, modern interiors, and close to IT parks."
+    }
+  ],
+  "gachibowli": [
+    {
+      id: "g1",
+      title: "Premium Apartment in Gachibowli",
+      location: "Gachibowli, Hyderabad",
+      price: "₹1.45 Cr",
+      description: "Luxurious 3-bedroom apartment with premium fittings, close to Financial District."
+    }
+  ],
+  "jubilee hills": [
+    {
+      id: "j1",
+      title: "Luxury Villa in Jubilee Hills",
+      location: "Jubilee Hills, Hyderabad",
+      price: "₹4.85 Cr",
+      description: "Magnificent 4-bedroom villa with private garden, swimming pool, and smart home features."
+    }
+  ]
+};
+
 // User conversation history
 let conversationContext: string[] = [];
 let userProfileInfo: Record<string, any> = {};
+let activeConversationTopics: string[] = [];
 
 /**
  * Initializes the chat model - simplified for reliability
@@ -438,6 +476,57 @@ function findIntent(message: string): { intent: string, response: string } | nul
 }
 
 /**
+ * Extract location mentions from user message
+ */
+function extractLocations(message: string): string[] {
+  const locations = [];
+  const normalizedMessage = message.toLowerCase();
+  
+  // Check for location mentions
+  for (const location in locationBasedProperties) {
+    if (normalizedMessage.includes(location.toLowerCase())) {
+      locations.push(location);
+    }
+  }
+  
+  // Check for common Hyderabad locations not in our database
+  const commonLocations = [
+    "pocharam", "gachibowli", "jubilee hills", "banjara hills", "hitech city", 
+    "kondapur", "madhapur", "kukatpally", "miyapur", "manikonda", "secunderabad",
+    "financial district", "uppal", "nallagandla", "chandanagar"
+  ];
+  
+  for (const location of commonLocations) {
+    if (normalizedMessage.includes(location) && !locations.includes(location)) {
+      locations.push(location);
+    }
+  }
+  
+  return locations;
+}
+
+/**
+ * Extract property types from user message
+ */
+function extractPropertyTypes(message: string): string[] {
+  const propertyTypes = [];
+  const normalizedMessage = message.toLowerCase();
+  
+  const commonPropertyTypes = [
+    "house", "apartment", "flat", "villa", "plot", "land", 
+    "commercial", "shop", "office", "warehouse", "agricultural"
+  ];
+  
+  for (const type of commonPropertyTypes) {
+    if (normalizedMessage.includes(type)) {
+      propertyTypes.push(type);
+    }
+  }
+  
+  return propertyTypes;
+}
+
+/**
  * Legacy intent analysis (as fallback)
  */
 function analyzeIntent(message: string): string {
@@ -460,6 +549,62 @@ function analyzeIntent(message: string): string {
   } else {
     return 'general';
   }
+}
+
+/**
+ * Create a personalized response based on conversation context
+ */
+function createPersonalizedResponse(userMessage: string): string | null {
+  const locations = extractLocations(userMessage);
+  const propertyTypes = extractPropertyTypes(userMessage);
+  
+  // Update active conversation topics
+  if (locations.length > 0) {
+    activeConversationTopics = activeConversationTopics.filter(t => !t.startsWith('location:'));
+    locations.forEach(loc => activeConversationTopics.push(`location:${loc}`));
+  }
+  
+  if (propertyTypes.length > 0) {
+    activeConversationTopics = activeConversationTopics.filter(t => !t.startsWith('type:'));
+    propertyTypes.forEach(type => activeConversationTopics.push(`type:${type}`));
+  }
+  
+  // If the user mentioned a location we have specific properties for
+  for (const location of locations) {
+    const propertiesInLocation = locationBasedProperties[location];
+    if (propertiesInLocation) {
+      const property = propertiesInLocation[Math.floor(Math.random() * propertiesInLocation.length)];
+      let response = `Great! I have several options in ${location.charAt(0).toUpperCase() + location.slice(1)}. `;
+      
+      if (propertyTypes.length > 0) {
+        response += `For ${propertyTypes.join('/')} properties, `;
+      }
+      
+      response += `one excellent choice is the "${property.title}" priced at ${property.price}. ${property.description}`;
+      
+      // Add a follow-up question
+      response += "\n\nWould you like to know more about this property or see other options in this area?";
+      return response;
+    } else {
+      // If we don't have specific properties for this location
+      return `I see you're interested in properties in ${location.charAt(0).toUpperCase() + location.slice(1)}. This is a great area in Hyderabad! What kind of property are you looking for? I can help you find apartments, villas, or plots in this location.`;
+    }
+  }
+  
+  // Check if we have an active location from previous messages
+  const activeLocationTopic = activeConversationTopics.find(t => t.startsWith('location:'));
+  if (activeLocationTopic) {
+    const location = activeLocationTopic.split(':')[1];
+    const propertiesInLocation = locationBasedProperties[location];
+    
+    if (propertiesInLocation && propertyTypes.length > 0) {
+      // User previously mentioned a location and now mentions a property type
+      const property = propertiesInLocation[Math.floor(Math.random() * propertiesInLocation.length)];
+      return `For ${propertyTypes.join('/')} properties in ${location}, I recommend checking out "${property.title}" priced at ${property.price}. ${property.description}\n\nDoes this match what you're looking for?`;
+    }
+  }
+  
+  return null;
 }
 
 /**
@@ -522,6 +667,12 @@ export async function generateResponse(message: string): Promise<string> {
       conversationContext.shift(); // Keep only recent context
     }
     
+    // Check for personalized response based on location/property type
+    const personalizedResponse = createPersonalizedResponse(message);
+    if (personalizedResponse) {
+      return personalizedResponse;
+    }
+    
     // First try to match from the training data
     const intentMatch = findIntent(message);
     
@@ -581,6 +732,21 @@ export async function generateResponse(message: string): Promise<string> {
         // Check for timing-related questions
         else if (message.includes('when') || message.includes('how long') || message.includes('time') || message.includes('duration')) {
           response = "The typical property transaction through RC Bridge takes about 30-45 days from selection to possession. Premium properties might involve customized timelines based on your requirements. How soon are you looking to move forward?";
+        }
+        // Short, simple user responses (like "yes", "no", "ok")
+        else if (message.length < 5) {
+          // Check last bot message for context
+          const lastBotMessage = conversationContext[conversationContext.length - 2] || "";
+          
+          if (message.toLowerCase() === "yes" || message.toLowerCase() === "yeah") {
+            response = "Great! To better assist you, could you tell me more about your preferences? Are you looking for a specific type of property or location in Hyderabad?";
+          } else if (message.toLowerCase() === "no" || message.toLowerCase() === "nope") {
+            response = "I understand. Let me know what you're interested in, and I'll be happy to help you explore other options.";
+          } else if (message.toLowerCase() === "ok" || message.toLowerCase() === "sure") {
+            response = "Wonderful! Please let me know what specific information you're looking for, and I'll provide relevant details about properties in Hyderabad.";
+          } else {
+            response = "I'd love to help you find the perfect property. Could you share more details about what you're looking for in terms of location, budget, or property type?";
+          }
         }
         // General fallback response
         else {
@@ -660,4 +826,3 @@ export function clearConversationContext(): void {
   conversationContext = [];
   userProfileInfo = {};
 }
-

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { MessageCircle, X, Send, Loader2, Image, ChevronDown, User, Bot } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, Image, ChevronDown, User, Bot, MapPin } from 'lucide-react';
 import { 
   initializeChatModel, 
   generateResponse, 
@@ -25,6 +25,7 @@ interface Message {
   sender: 'user' | 'bot';
   timestamp: Date;
   imageUrl?: string;
+  location?: string;
 }
 
 type InquiryData = {
@@ -56,6 +57,8 @@ export function ChatBot() {
     phone: '',
     message: '',
   });
+  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [userMentionedLocation, setUserMentionedLocation] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -122,49 +125,77 @@ export function ChatBot() {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
+    // Extract potential location from user input
+    const locationKeywords = [
+      "pocharam", "gachibowli", "jubilee hills", "banjara hills", "hitech city", 
+      "kondapur", "madhapur", "kukatpally", "miyapur", "manikonda"
+    ];
+    
+    const inputLower = input.toLowerCase();
+    const mentionedLocation = locationKeywords.find(loc => inputLower.includes(loc));
+    if (mentionedLocation) {
+      setUserMentionedLocation(mentionedLocation);
+    }
+
     const userMessage: Message = {
       id: messages.length,
       text: input.trim(),
       sender: 'user',
       timestamp: new Date(),
+      location: mentionedLocation || undefined
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
+    // Add a small delay to mimic thinking/typing for more natural conversation
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
+    // Simulate typing delay (300-1200ms) based on response length
+    const typingDelay = Math.min(300 + input.length * 20, 1200);
+    
     try {
       // Store user inquiry for later analysis
       storeUserInquiry(input.trim(), getConversationContext());
       
       const botResponse = await generateResponse(input.trim());
       
-      const botMessage: Message = {
-        id: messages.length + 1,
-        text: botResponse,
-        sender: 'bot',
-        timestamp: new Date(),
-      };
+      // Add typing indicator
+      const timeout = setTimeout(() => {
+        const botMessage: Message = {
+          id: messages.length + 1,
+          text: botResponse,
+          sender: 'bot',
+          timestamp: new Date(),
+          location: mentionedLocation || undefined
+        };
 
-      setMessages((prev) => [...prev, botMessage]);
+        setMessages((prev) => [...prev, botMessage]);
+        setIsLoading(false);
+        
+        // If the user is asking about properties, suggest showing an image
+        if (
+          input.toLowerCase().includes('property') || 
+          input.toLowerCase().includes('house') || 
+          input.toLowerCase().includes('villa') || 
+          input.toLowerCase().includes('apartment') ||
+          input.toLowerCase().includes('agricultural') ||
+          input.toLowerCase().includes('farm') ||
+          input.toLowerCase().includes('land')
+        ) {
+          setTimeout(() => {
+            toast({
+              title: "Tip",
+              description: "Click the image button to see property visualizations",
+            });
+          }, 2000);
+        }
+      }, typingDelay);
       
-      // If the user is asking about properties, suggest showing an image
-      if (
-        input.toLowerCase().includes('property') || 
-        input.toLowerCase().includes('house') || 
-        input.toLowerCase().includes('villa') || 
-        input.toLowerCase().includes('apartment') ||
-        input.toLowerCase().includes('agricultural') ||
-        input.toLowerCase().includes('farm') ||
-        input.toLowerCase().includes('land')
-      ) {
-        setTimeout(() => {
-          toast({
-            title: "Tip",
-            description: "Click the image button to see property visualizations",
-          });
-        }, 2000);
-      }
+      setTypingTimeout(timeout);
     } catch (error) {
       console.error('Error in chat:', error);
       
@@ -176,7 +207,6 @@ export function ChatBot() {
       };
 
       setMessages((prev) => [...prev, errorMessage]);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -197,14 +227,19 @@ export function ChatBot() {
       // Create a more targeted description for property visualization
       let propertyDescription = "Real estate property in Hyderabad";
       
+      // Use mentioned location if available
+      if (userMentionedLocation) {
+        propertyDescription = `Property in ${userMentionedLocation}, Hyderabad`;
+      }
+      
       if (recentMessages.toLowerCase().includes('villa') || recentMessages.toLowerCase().includes('luxury')) {
-        propertyDescription = "Luxury villa in Hyderabad with garden and swimming pool";
+        propertyDescription = `Luxury villa in ${userMentionedLocation || 'Hyderabad'} with garden and swimming pool`;
       } else if (recentMessages.toLowerCase().includes('apartment') || recentMessages.toLowerCase().includes('flat')) {
-        propertyDescription = "Modern apartment in a high-rise building in Hyderabad";
+        propertyDescription = `Modern apartment in a high-rise building in ${userMentionedLocation || 'Hyderabad'}`;
       } else if (recentMessages.toLowerCase().includes('commercial') || recentMessages.toLowerCase().includes('office')) {
-        propertyDescription = "Commercial building in HITEC City, Hyderabad";
+        propertyDescription = `Commercial building in ${userMentionedLocation || 'HITEC City'}, Hyderabad`;
       } else if (recentMessages.toLowerCase().includes('agricultural') || recentMessages.toLowerCase().includes('farm') || recentMessages.toLowerCase().includes('land')) {
-        propertyDescription = "Agricultural land in Hyderabad outskirts with green fields";
+        propertyDescription = `Agricultural land in ${userMentionedLocation || 'Hyderabad outskirts'} with green fields`;
       }
       
       const imageUrl = await generatePropertyImage(propertyDescription);
@@ -212,10 +247,11 @@ export function ChatBot() {
       if (imageUrl) {
         const imageMessage: Message = {
           id: messages.length,
-          text: "Here's a visualization based on our conversation:",
+          text: `Here's a visualization of a property in ${userMentionedLocation || 'Hyderabad'} based on our conversation:`,
           sender: 'bot',
           timestamp: new Date(),
-          imageUrl: imageUrl
+          imageUrl: imageUrl,
+          location: userMentionedLocation || undefined
         };
         
         setMessages((prev) => [...prev, imageMessage]);
@@ -415,6 +451,13 @@ export function ChatBot() {
                 >
                   <p className="text-sm whitespace-pre-line">{message.text}</p>
                   
+                  {message.location && message.sender === 'bot' && (
+                    <div className="mt-2 text-xs flex items-center text-primary">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      {message.location.charAt(0).toUpperCase() + message.location.slice(1)}
+                    </div>
+                  )}
+                  
                   {message.imageUrl && (
                     <div className="mt-2 rounded-md overflow-hidden">
                       <img 
@@ -440,6 +483,22 @@ export function ChatBot() {
                 )}
               </div>
             ))}
+            
+            {isLoading && (
+              <div className="flex justify-start mb-3">
+                <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center flex-shrink-0 mt-1">
+                  <Bot size={14} className="text-accent-foreground" />
+                </div>
+                <div className="max-w-[80%] rounded-lg p-3 bg-muted">
+                  <div className="flex space-x-2">
+                    <div className="w-2 h-2 rounded-full bg-accent/60 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 rounded-full bg-accent/60 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="w-2 h-2 rounded-full bg-accent/60 animate-bounce" style={{ animationDelay: '600ms' }}></div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div ref={messagesEndRef} />
           </div>
 
@@ -567,4 +626,3 @@ export function ChatBot() {
     </>
   );
 }
-
