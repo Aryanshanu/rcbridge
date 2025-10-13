@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/card';
 import { MessageCircle, X, Send, Loader2, Image, ChevronDown, User, Bot, MapPin } from 'lucide-react';
 import { 
   initializeChatModel, 
-  generateResponse, 
   initializeImageModel, 
   generatePropertyImage,
   storeUserInquiry,
@@ -149,65 +148,154 @@ export function ChatBot() {
     setInput('');
     setIsLoading(true);
 
-    // Add a small delay to mimic thinking/typing for more natural conversation
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-    }
-
-    // Simulate typing delay (300-1200ms) based on response length
-    const typingDelay = Math.min(300 + input.length * 20, 1200);
-    
     try {
       // Store user inquiry for later analysis
       storeUserInquiry(input.trim(), getConversationContext());
       
-      const botResponse = await generateResponse(input.trim());
-      
-      // Add typing indicator
-      const timeout = setTimeout(() => {
-        const botMessage: Message = {
-          id: messages.length + 1,
-          text: botResponse,
-          sender: 'bot',
-          timestamp: new Date(),
-          location: mentionedLocation || undefined
-        };
+      // Prepare conversation history for AI (last 15 messages for context)
+      const conversationHistory = [...messages, userMessage].map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.text
+      })).slice(-15);
 
-        setMessages((prev) => [...prev, botMessage]);
-        setIsLoading(false);
-        
-        // If the user is asking about properties, suggest showing an image
-        if (
-          input.toLowerCase().includes('property') || 
-          input.toLowerCase().includes('house') || 
-          input.toLowerCase().includes('villa') || 
-          input.toLowerCase().includes('apartment') ||
-          input.toLowerCase().includes('agricultural') ||
-          input.toLowerCase().includes('farm') ||
-          input.toLowerCase().includes('land')
-        ) {
-          setTimeout(() => {
-            toast({
-              title: "Tip",
-              description: "Click the image button to see property visualizations",
-            });
-          }, 2000);
+      // Call streaming edge function
+      const response = await fetch(
+        `https://hchtekfbtcbfsfxkjyfi.supabase.co/functions/v1/chat-assistant`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ messages: conversationHistory }),
         }
-      }, typingDelay);
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      if (!response.body) {
+        throw new Error('Response body is null');
+      }
+
+      // Handle streaming response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantMessage = "";
+      let textBuffer = "";
+      let streamDone = false;
+
+      // Create initial empty bot message
+      const botMessageId = messages.length + 1;
+      const botMessage: Message = {
+        id: botMessageId,
+        text: "",
+        sender: 'bot',
+        timestamp: new Date(),
+        location: mentionedLocation || undefined
+      };
+      setMessages((prev) => [...prev, botMessage]);
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        textBuffer += decoder.decode(value, { stream: true });
+
+        // Process line-by-line as data arrives
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") {
+            streamDone = true;
+            break;
+          }
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantMessage += content;
+              // Update the bot message in real-time
+              setMessages((prev) => 
+                prev.map((msg) => 
+                  msg.id === botMessageId 
+                    ? { ...msg, text: assistantMessage }
+                    : msg
+                )
+              );
+            }
+          } catch (parseError) {
+            // Incomplete JSON, put it back and wait for more data
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Final flush for any remaining buffered lines
+      if (textBuffer.trim()) {
+        for (let raw of textBuffer.split("\n")) {
+          if (!raw || raw.startsWith(":") || raw.trim() === "") continue;
+          if (!raw.startsWith("data: ")) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantMessage += content;
+              setMessages((prev) => 
+                prev.map((msg) => 
+                  msg.id === botMessageId 
+                    ? { ...msg, text: assistantMessage }
+                    : msg
+                )
+              );
+            }
+          } catch { /* ignore partial leftovers */ }
+        }
+      }
+
+      setIsLoading(false);
       
-      setTypingTimeout(timeout);
+      // If the user is asking about properties, suggest showing an image
+      if (
+        input.toLowerCase().includes('property') || 
+        input.toLowerCase().includes('house') || 
+        input.toLowerCase().includes('villa') || 
+        input.toLowerCase().includes('apartment') ||
+        input.toLowerCase().includes('agricultural') ||
+        input.toLowerCase().includes('farm') ||
+        input.toLowerCase().includes('land')
+      ) {
+        setTimeout(() => {
+          toast({
+            title: "Tip",
+            description: "Click the image button to see property visualizations",
+          });
+        }, 2000);
+      }
+
     } catch (error) {
       console.error('Error in chat:', error);
+      setIsLoading(false);
       
       const errorMessage: Message = {
         id: messages.length + 1,
-        text: "I'm sorry, I couldn't process your request. Please try again.",
+        text: "I apologize, but I'm having trouble connecting right now. Please try again in a moment or contact us directly at aryan@rcbridge.co.",
         sender: 'bot',
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, errorMessage]);
-      setIsLoading(false);
     }
   };
   
