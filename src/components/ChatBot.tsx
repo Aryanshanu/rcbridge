@@ -3,7 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { MessageCircle, X, Send, Loader2, Image, ChevronDown, User, Bot, MapPin } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { MessageCircle, X, Send, Loader2, Image, ChevronDown, User, Bot, MapPin, RefreshCw } from 'lucide-react';
 import { 
   initializeChatModel, 
   initializeImageModel, 
@@ -11,7 +12,12 @@ import {
   storeUserInquiry,
   getConversationContext,
   clearConversationContext,
-  updateUserProfile
+  updateUserProfile,
+  extractBudget,
+  extractTimeline,
+  extractLocations,
+  addToConversationContext,
+  loadConversationContext
 } from '@/utils/chatbotUtils';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -56,7 +62,13 @@ export function ChatBot() {
     phone: '',
     message: '',
   });
-  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+  
+  // Track extracted information
+  const [extractedBudget, setExtractedBudget] = useState<string | null>(null);
+  const [extractedLocation, setExtractedLocation] = useState<string | null>(null);
+  const [extractedTimeline, setExtractedTimeline] = useState<string | null>(null);
+  const [showQuickReplies, setShowQuickReplies] = useState(true);
+  const [failureCount, setFailureCount] = useState(0);
   const [userMentionedLocation, setUserMentionedLocation] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -79,6 +91,7 @@ export function ChatBot() {
       }
     };
     loadModels();
+    loadConversationContext();
     
     // Load previous conversations from localStorage if available
     const savedMessages = localStorage.getItem('chatMessages');
@@ -86,11 +99,24 @@ export function ChatBot() {
       try {
         const parsedMessages = JSON.parse(savedMessages);
         // Convert string dates back to Date objects
-        const formattedMessages = parsedMessages.map(msg => ({
+        const formattedMessages = parsedMessages.map((msg: any) => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
         }));
         setMessages(formattedMessages);
+        
+        // Extract info from saved messages
+        parsedMessages.forEach((msg: Message) => {
+          if (msg.sender === 'user') {
+            const budget = extractBudget(msg.text);
+            const timeline = extractTimeline(msg.text);
+            const locations = extractLocations(msg.text);
+            
+            if (budget) setExtractedBudget(budget);
+            if (timeline) setExtractedTimeline(timeline);
+            if (locations.length > 0) setExtractedLocation(locations[0]);
+          }
+        });
       } catch (error) {
         console.error('Error loading saved messages:', error);
       }
@@ -124,36 +150,40 @@ export function ChatBot() {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    // Extract potential location from user input
-    const locationKeywords = [
-      "pocharam", "gachibowli", "jubilee hills", "banjara hills", "hitech city", 
-      "kondapur", "madhapur", "kukatpally", "miyapur", "manikonda"
-    ];
+    const userMessage = input.trim();
+    setInput('');
+    setShowQuickReplies(false);
+
+    // Extract information from user message
+    const budget = extractBudget(userMessage);
+    const timeline = extractTimeline(userMessage);
+    const locations = extractLocations(userMessage);
     
-    const inputLower = input.toLowerCase();
-    const mentionedLocation = locationKeywords.find(loc => inputLower.includes(loc));
-    if (mentionedLocation) {
-      setUserMentionedLocation(mentionedLocation);
+    if (budget && !extractedBudget) setExtractedBudget(budget);
+    if (timeline && !extractedTimeline) setExtractedTimeline(timeline);
+    if (locations.length > 0) {
+      setExtractedLocation(locations[0]);
+      setUserMentionedLocation(locations[0]);
     }
 
-    const userMessage: Message = {
+    const newUserMessage: Message = {
       id: messages.length,
-      text: input.trim(),
+      text: userMessage,
       sender: 'user',
       timestamp: new Date(),
-      location: mentionedLocation || undefined
+      location: locations[0] || undefined
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput('');
+    setMessages((prev) => [...prev, newUserMessage]);
+    addToConversationContext('user', userMessage);
     setIsLoading(true);
 
     try {
       // Store user inquiry for later analysis
-      storeUserInquiry(input.trim(), getConversationContext());
+      storeUserInquiry(userMessage, getConversationContext());
       
       // Prepare conversation history for AI (last 15 messages for context)
-      const conversationHistory = [...messages, userMessage].map(msg => ({
+      const conversationHistory = [...messages, newUserMessage].map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.text
       })).slice(-15);
@@ -171,6 +201,8 @@ export function ChatBot() {
       );
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Edge function error:', response.status, errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -192,7 +224,7 @@ export function ChatBot() {
         text: "",
         sender: 'bot',
         timestamp: new Date(),
-        location: mentionedLocation || undefined
+        location: locations[0] || undefined
       };
       setMessages((prev) => [...prev, botMessage]);
 
@@ -264,17 +296,20 @@ export function ChatBot() {
         }
       }
 
+      // Add to conversation context
+      addToConversationContext('assistant', assistantMessage);
       setIsLoading(false);
+      setFailureCount(0); // Reset failure count on success
       
       // If the user is asking about properties, suggest showing an image
       if (
-        input.toLowerCase().includes('property') || 
-        input.toLowerCase().includes('house') || 
-        input.toLowerCase().includes('villa') || 
-        input.toLowerCase().includes('apartment') ||
-        input.toLowerCase().includes('agricultural') ||
-        input.toLowerCase().includes('farm') ||
-        input.toLowerCase().includes('land')
+        userMessage.toLowerCase().includes('property') || 
+        userMessage.toLowerCase().includes('house') || 
+        userMessage.toLowerCase().includes('villa') || 
+        userMessage.toLowerCase().includes('apartment') ||
+        userMessage.toLowerCase().includes('agricultural') ||
+        userMessage.toLowerCase().includes('farm') ||
+        userMessage.toLowerCase().includes('land')
       ) {
         setTimeout(() => {
           toast({
@@ -284,29 +319,34 @@ export function ChatBot() {
         }, 2000);
       }
 
-    } catch (error) {
-      console.error('Error in chat:', error);
+    } catch (error: any) {
+      console.error('Error calling chat assistant:', error);
+      setFailureCount(prev => prev + 1);
       setIsLoading(false);
       
       // Enhanced error handling with specific messages
-      let errorText = "I apologize, but I'm having trouble connecting right now. Please try again in a moment or contact us directly at aryan@rcbridge.co.";
+      let errorText = "I apologize, but I'm having trouble connecting right now.";
       let toastTitle = "Connection Error";
       let toastDescription = "Please try again";
       
-      if (error instanceof Error) {
-        if (error.message.includes('429')) {
-          errorText = "I'm currently handling many conversations. Please wait a moment and try again.";
-          toastTitle = "High Traffic";
-          toastDescription = "Please wait 30-60 seconds before trying again";
-        } else if (error.message.includes('503')) {
-          errorText = "The AI assistant is starting up. This takes about 20-30 seconds. Please try your message again shortly.";
-          toastTitle = "AI Model Loading";
-          toastDescription = "Please wait 20-30 seconds";
-        } else if (error.message.includes('401') || error.message.includes('403')) {
-          errorText = "There's a configuration issue with the AI service. Please contact support at aryan@rcbridge.co.";
-          toastTitle = "Service Configuration Error";
-          toastDescription = "Please contact support";
-        }
+      // Check for specific error codes
+      if (error.message?.includes('429')) {
+        errorText = "Our AI assistant is currently at capacity. Please try again in a few moments, or use the 'Want to know more?' button to submit your inquiry directly.";
+        toastTitle = "High Traffic";
+        toastDescription = "Please wait 30-60 seconds before trying again";
+      } else if (error.message?.includes('503')) {
+        errorText = "The AI model is currently loading. This takes about 20-30 seconds. Please try your message again shortly.";
+        toastTitle = "AI Model Loading";
+        toastDescription = "Please wait 20-30 seconds";
+      } else if (error.message?.includes('401') || error.message?.includes('403')) {
+        errorText = "Our AI assistant is temporarily unavailable due to a configuration issue. Please contact support at aryan@rcbridge.co";
+        toastTitle = "Service Configuration Error";
+        toastDescription = "Please contact support";
+      } else if (failureCount >= 2) {
+        // After 3 failures, offer alternatives
+        errorText = "I apologize for the technical difficulty. Here are some ways to continue:\n\n📧 Email: aryan@rcbridge.co\n📝 Fill the inquiry form below\n🔄 Try asking in a different way\n\nWhat works best for you?";
+        toastTitle = "Service Unavailable";
+        toastDescription = "Multiple connection attempts failed";
       }
       
       toast({
@@ -418,6 +458,9 @@ export function ChatBot() {
       inquiries.push({
         ...inquiryData,
         timestamp: new Date().toISOString(),
+        extractedBudget,
+        extractedLocation,
+        extractedTimeline,
         conversationHistory: messages.map(msg => ({
           text: msg.text,
           sender: msg.sender,
@@ -478,10 +521,25 @@ export function ChatBot() {
     ]);
     clearConversationContext();
     localStorage.removeItem('chatMessages');
+    setExtractedBudget(null);
+    setExtractedLocation(null);
+    setExtractedTimeline(null);
+    setShowQuickReplies(true);
+    setFailureCount(0);
+    setUserMentionedLocation(null);
     toast({
       title: "Chat Cleared",
       description: "Starting a fresh conversation",
     });
+  };
+  
+  const handleQuickReply = (message: string) => {
+    setInput(message);
+    setShowQuickReplies(false);
+    // Trigger form submission after a brief delay
+    setTimeout(() => {
+      inputRef.current?.form?.requestSubmit();
+    }, 100);
   };
 
   return (
@@ -504,31 +562,54 @@ export function ChatBot() {
       >
         <Card className="flex flex-col h-[500px] max-h-[70vh] overflow-hidden shadow-xl border-accent/20">
           {/* Chat header */}
-          <div className="bg-accent text-accent-foreground p-3 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <MessageCircle size={20} />
-              <h3 className="font-medium">RC Bridge Assistant</h3>
+          <div className="flex flex-col border-b bg-accent text-accent-foreground">
+            <div className="flex items-center justify-between p-3">
+              <div className="flex items-center gap-2">
+                <MessageCircle size={20} />
+                <h3 className="font-medium">RC Bridge Assistant</h3>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-8 w-8 text-accent-foreground hover:text-accent-foreground/80"
+                  onClick={clearChat}
+                  title="Clear chat"
+                >
+                  <RefreshCw size={16} />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-8 w-8 text-accent-foreground hover:text-accent-foreground/80"
+                  onClick={() => setIsOpen(false)}
+                  title="Close chat"
+                >
+                  <X size={18} />
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="h-8 w-8 text-accent-foreground hover:text-accent-foreground/80"
-                onClick={clearChat}
-                title="Clear chat"
-              >
-                <ChevronDown size={18} />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="h-8 w-8 text-accent-foreground hover:text-accent-foreground/80"
-                onClick={() => setIsOpen(false)}
-                title="Close chat"
-              >
-                <X size={18} />
-              </Button>
-            </div>
+            
+            {/* Extracted Information Badges */}
+            {(extractedBudget || extractedLocation || extractedTimeline) && (
+              <div className="flex flex-wrap gap-2 px-3 pb-2 border-t border-accent-foreground/20 pt-2">
+                {extractedBudget && (
+                  <Badge variant="secondary" className="bg-accent-foreground/20 text-accent-foreground border-0 text-xs">
+                    💰 {extractedBudget}
+                  </Badge>
+                )}
+                {extractedLocation && (
+                  <Badge variant="secondary" className="bg-accent-foreground/20 text-accent-foreground border-0 text-xs">
+                    📍 {extractedLocation}
+                  </Badge>
+                )}
+                {extractedTimeline && (
+                  <Badge variant="secondary" className="bg-accent-foreground/20 text-accent-foreground border-0 text-xs">
+                    ⏱️ {extractedTimeline}
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Chat messages */}
@@ -617,8 +698,46 @@ export function ChatBot() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Chat footer with input and buttons */}
+          {/* Chat footer with quick replies and input */}
           <div className="p-3 border-t">
+            {/* Quick Reply Buttons */}
+            {showQuickReplies && messages.length <= 2 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => handleQuickReply("I want to buy a property")}
+                  className="text-xs"
+                >
+                  🏠 Buy
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => handleQuickReply("I want to sell my property")}
+                  className="text-xs"
+                >
+                  💰 Sell
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => handleQuickReply("Tell me about market trends")}
+                  className="text-xs"
+                >
+                  📈 Trends
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => handleQuickReply("Show me investment opportunities")}
+                  className="text-xs"
+                >
+                  💼 Invest
+                </Button>
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit} className="flex gap-2 mb-2">
               <div className="flex-1 flex gap-2">
                 <Input
