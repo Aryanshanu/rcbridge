@@ -288,9 +288,36 @@ export function ChatBot() {
       console.error('Error in chat:', error);
       setIsLoading(false);
       
+      // Enhanced error handling with specific messages
+      let errorText = "I apologize, but I'm having trouble connecting right now. Please try again in a moment or contact us directly at aryan@rcbridge.co.";
+      let toastTitle = "Connection Error";
+      let toastDescription = "Please try again";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('429')) {
+          errorText = "I'm currently handling many conversations. Please wait a moment and try again.";
+          toastTitle = "High Traffic";
+          toastDescription = "Please wait 30-60 seconds before trying again";
+        } else if (error.message.includes('503')) {
+          errorText = "The AI assistant is starting up. This takes about 20-30 seconds. Please try your message again shortly.";
+          toastTitle = "AI Model Loading";
+          toastDescription = "Please wait 20-30 seconds";
+        } else if (error.message.includes('401') || error.message.includes('403')) {
+          errorText = "There's a configuration issue with the AI service. Please contact support at aryan@rcbridge.co.";
+          toastTitle = "Service Configuration Error";
+          toastDescription = "Please contact support";
+        }
+      }
+      
+      toast({
+        title: toastTitle,
+        description: toastDescription,
+        variant: "destructive"
+      });
+      
       const errorMessage: Message = {
         id: messages.length + 1,
-        text: "I apologize, but I'm having trouble connecting right now. Please try again in a moment or contact us directly at aryan@rcbridge.co.",
+        text: errorText,
         sender: 'bot',
         timestamp: new Date(),
       };

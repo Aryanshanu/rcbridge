@@ -18,15 +18,20 @@ COMPANY CONTEXT:
 
 YOUR CORE CAPABILITIES:
 1. Understand natural conversation flow and remember context from previous messages
-2. Extract and remember key information:
-   - Budget (e.g., "80 lakhs", "2 crores")
-   - Timeline (e.g., "1 month", "3 weeks")
-   - Location (e.g., "Pocharam", "Gachibowli", "Jubilee Hills")
-   - Property type (apartment, villa, plot, commercial, agricultural)
-   - User role (buyer, seller, investor)
+2. Extract and remember key information EXPLICITLY:
+   - Budget: When user mentions "80 lakhs", "2 crores", "50L", store this as their budget
+   - Timeline: When user mentions "1 month", "urgent", "3 weeks", store this as their timeline
+   - Location: When user mentions "Pocharam", "Gachibowli", "Jubilee Hills", store this as their preferred area
+   - Property type: apartment, villa, plot, commercial, agricultural
+   - User role: buyer, seller, investor
 3. Provide relevant property suggestions based on extracted information
-4. Guide users naturally toward scheduling consultation or submitting inquiry
+4. Guide users naturally toward scheduling consultation or submitting inquiry when they show interest
 5. Answer questions about market trends, ROI, and investment opportunities
+
+CRITICAL: Always acknowledge extracted information in your responses. For example:
+- If user mentions budget: "Great! So you're looking in the ₹80 lakhs range..."
+- If user mentions location: "Pocharam is an excellent choice..."
+- If user mentions timeline: "I understand you need this within 1 month..."
 
 CONVERSATION GUIDELINES:
 - Be conversational and empathetic, like a knowledgeable friend
@@ -148,40 +153,110 @@ serve(async (req) => {
 
     console.log('Calling Hugging Face API with', messages.length, 'messages');
 
-    // Call Hugging Face Inference API with Llama 3.3 70B
-    const response = await fetch(
-      "https://api-inference.huggingface.co/models/meta-llama/Llama-3.3-70B-Instruct/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${HF_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            ...messages
-          ],
-          max_tokens: 500,
-          stream: true,
-        }),
-      }
-    );
+    // Retry logic with exponential backoff
+    let retries = 3;
+    let delay = 1000; // Start with 1 second delay
+    let response: Response | null = null;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Hugging Face API error:', response.status, errorText);
-      
-      // Handle rate limits
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Too many requests. Please wait a moment and try again.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        // Call Hugging Face Inference API with Llama 3.3 70B
+        response = await fetch(
+          "https://api-inference.huggingface.co/models/meta-llama/Llama-3.3-70B-Instruct/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${HF_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              messages: [
+                { role: "system", content: SYSTEM_PROMPT },
+                ...messages
+              ],
+              max_tokens: 500,
+              temperature: 0.7,
+              stream: true,
+            }),
+          }
         );
+
+        if (response.ok) {
+          break; // Success, exit retry loop
+        }
+
+        const errorText = await response.text();
+        console.error(`Hugging Face API error (attempt ${attempt}/${retries}):`, response.status, errorText);
+        
+        // Handle specific errors
+        if (response.status === 429) {
+          console.log(`Rate limit hit, retrying in ${delay}ms...`);
+          if (attempt < retries) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2; // Exponential backoff
+            continue;
+          }
+          return new Response(
+            JSON.stringify({ 
+              error: 'Our AI assistant is currently at capacity. Please try again in a few moments.',
+              retryAfter: 60 
+            }),
+            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        if (response.status === 401 || response.status === 403) {
+          console.error('Authentication error with Hugging Face API');
+          return new Response(
+            JSON.stringify({ 
+              error: 'AI service configuration error. Please contact support.',
+              code: 'AUTH_ERROR'
+            }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        if (response.status === 503) {
+          console.log(`Model loading (attempt ${attempt}/${retries}), retrying in ${delay}ms...`);
+          if (attempt < retries) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2;
+            continue;
+          }
+          return new Response(
+            JSON.stringify({ 
+              error: 'AI model is currently loading. Please try again in 20-30 seconds.',
+              code: 'MODEL_LOADING'
+            }),
+            { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        // Generic error after retries exhausted
+        if (attempt === retries) {
+          return new Response(
+            JSON.stringify({ 
+              error: 'AI service temporarily unavailable. Please try again later.',
+              code: 'SERVICE_ERROR'
+            }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+      } catch (fetchError) {
+        console.error(`Network error (attempt ${attempt}/${retries}):`, fetchError);
+        if (attempt < retries) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 2;
+          continue;
+        }
+        throw fetchError;
       }
-      
+    }
+
+    if (!response || !response.ok) {
       return new Response(
-        JSON.stringify({ error: 'AI service temporarily unavailable' }),
+        JSON.stringify({ error: 'Failed to connect to AI service' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
