@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { InvestmentForm, CalculatorFormData } from "@/components/InvestmentForm";
 import { InvestmentResults, CalculationResult } from "@/components/InvestmentResults";
 import { useAuth } from "@/contexts/AuthContext";
+import { investmentCalculationSchema } from "@/utils/validation/schemas";
+import { z } from "zod";
 
 export function InvestmentCalculator() {
   const { toast } = useToast();
@@ -70,11 +72,10 @@ export function InvestmentCalculator() {
       
       setCalculationResult(result);
       
-      // Save calculation to database if user is logged in
+      // SECURITY FIX: Validate data before saving to database
       if (user) {
         try {
-          // Using the table we created in Supabase
-          await supabase.from('investment_calculations').insert({
+          const calculationData = {
             user_id: user.id,
             property_price: data.propertyPrice,
             rental_income: data.rentalIncome,
@@ -83,9 +84,23 @@ export function InvestmentCalculator() {
             timeframe: data.timeframe,
             appreciation_rate: appreciationRate,
             calculation_result: result
-          });
+          };
+
+          // Validate before inserting
+          investmentCalculationSchema.parse(calculationData);
+          
+          await supabase.from('investment_calculations').insert(calculationData);
         } catch (saveError) {
-          console.error("Error saving calculation:", saveError);
+          if (saveError instanceof z.ZodError) {
+            console.error("Validation error:", saveError.errors);
+            toast({
+              title: "Validation Error",
+              description: saveError.errors[0]?.message || "Invalid calculation data",
+              variant: "destructive",
+            });
+          } else {
+            console.error("Error saving calculation:", saveError);
+          }
           // Continue even if saving fails
         }
       }

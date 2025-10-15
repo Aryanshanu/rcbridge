@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { searchQuerySchema } from "@/utils/validation/schemas";
+import { z } from "zod";
 
 // Common locations in Hyderabad
 const popularLocations = [
@@ -102,17 +104,34 @@ export const EnhancedSearch = ({
     }
 
     try {
-      // Save search query to Supabase if user is logged in
+      // SECURITY FIX: Validate and sanitize search query before saving
       if (user) {
-        await supabase.from("search_queries").insert({
-          query: searchQuery,
-          user_id: user.id || null,
-          location: searchQuery.includes("in") ? searchQuery.split("in")[1]?.trim() : null,
-          property_type: 
-            searchQuery.toLowerCase().includes("apartment") ? "residential" :
-            searchQuery.toLowerCase().includes("commercial") ? "commercial" :
-            searchQuery.toLowerCase().includes("land") ? "undeveloped" : null
-        });
+        try {
+          const searchData = {
+            query: searchQuery,
+            user_id: user.id,
+            location: searchQuery.includes("in") ? searchQuery.split("in")[1]?.trim() : null,
+            property_type: 
+              searchQuery.toLowerCase().includes("apartment") ? "residential" as const :
+              searchQuery.toLowerCase().includes("commercial") ? "commercial" as const :
+              searchQuery.toLowerCase().includes("land") ? "undeveloped" as const : null
+          };
+          
+          searchQuerySchema.parse(searchData);
+          
+          await supabase.from("search_queries").insert(searchData);
+        } catch (validationError) {
+          if (validationError instanceof z.ZodError) {
+            console.error("Validation error:", validationError.errors);
+            toast({
+              title: "Invalid Search",
+              description: validationError.errors[0]?.message || "Search query is invalid",
+              variant: "destructive",
+            });
+            return;
+          }
+          throw validationError;
+        }
       }
 
       // Build query parameters

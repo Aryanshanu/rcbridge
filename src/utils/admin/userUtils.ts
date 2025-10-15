@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/user";
 
-// Function to get user's role from profile
+// Function to get user's role from the secure user_roles table
 export const getUserRole = async (): Promise<UserRole | null> => {
   try {
     // Get the current session to get the user ID
@@ -15,18 +15,12 @@ export const getUserRole = async (): Promise<UserRole | null> => {
     
     const userId = sessionData.session.user.id;
     
-    // Check if role is cached in sessionStorage
-    const cachedRole = sessionStorage.getItem('userRole');
-    if (cachedRole) {
-      console.log("Using cached role:", cachedRole);
-      return cachedRole as UserRole;
-    }
-    
-    // If no cached role, fetch from profile
+    // SECURITY FIX: Always fetch from database - no client-side caching
+    // This prevents privilege escalation attacks via browser storage manipulation
     const { data, error } = await supabase
-      .from('profiles')
+      .from('user_roles')
       .select('role')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .single();
     
     if (error) {
@@ -35,12 +29,9 @@ export const getUserRole = async (): Promise<UserRole | null> => {
     }
     
     if (!data) {
-      console.log("No profile found for user");
+      console.log("No role found for user");
       return null;
     }
-    
-    // Cache the role for subsequent checks
-    sessionStorage.setItem('userRole', data.role);
     
     return data.role as UserRole;
   } catch (error) {

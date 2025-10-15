@@ -47,14 +47,27 @@ export const registerWithInviteCode = async (
 
     console.log("User created successfully:", authData.user.id);
 
-    // Update the profile with role information
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ 
-        role: validation.role,
-        invite_used: inviteCode
+    // Update the user's profile with their name
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        full_name: fullName,
       })
-      .eq("id", authData.user.id);
+      .eq('id', authData.user.id);
+
+    if (profileError) {
+      console.error('Error updating profile:', profileError);
+    }
+
+    // SECURITY FIX: Use separate user_roles table instead of profiles
+    // Insert role into user_roles table for secure role management
+    const { error: updateError } = await supabase
+      .from('user_roles')
+      .insert({
+        user_id: authData.user.id,
+        role: validation.role,
+        granted_at: new Date().toISOString()
+      });
 
     if (updateError) {
       console.error("Error updating user role:", updateError);
@@ -80,9 +93,4 @@ export const registerWithInviteCode = async (
       message: error.message || "An error occurred during registration"
     };
   }
-};
-
-// Add a function to clear role cache when needed
-export const clearRoleCache = () => {
-  sessionStorage.removeItem('userRole');
 };

@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { propertyAlertSchema } from "@/utils/validation/schemas";
+import { z } from "zod";
 
 type PropertyType = 'residential' | 'commercial' | 'agricultural' | 'undeveloped';
 type ListingType = 'sale' | 'rent' | 'development_partnership';
@@ -132,26 +134,39 @@ export const NotificationButton = () => {
     setIsSubmitting(true);
     
     try {
-      // For each property type, create an alert
+      // SECURITY FIX: Validate and sanitize inputs before saving
       for (const propertyType of propertyTypes) {
-        const alertData = {
-          user_id: user.id,
-          location,
-          property_type: propertyType,
-          listing_type: listingType || null,
-          min_price: minPrice ? parseFloat(minPrice) : null,
-          max_price: maxPrice ? parseFloat(maxPrice) : null,
-          is_active: true,
-          created_at: new Date().toISOString()
-        };
+        try {
+          const alertData = {
+            user_id: user.id,
+            location,
+            property_type: propertyType,
+            listing_type: listingType || null,
+            min_price: minPrice ? parseFloat(minPrice) : null,
+            max_price: maxPrice ? parseFloat(maxPrice) : null,
+            is_active: true
+          };
 
-        console.log("Saving alert:", alertData);
-        
-        const { error } = await supabase.from('property_alerts').insert(alertData);
-        
-        if (error) {
-          console.error('Error saving alert:', error);
-          throw new Error(error.message);
+          // Validate data before inserting
+          propertyAlertSchema.parse(alertData);
+          
+          const { error } = await supabase.from('property_alerts').insert(alertData);
+          
+          if (error) {
+            console.error('Error saving alert:', error);
+            throw new Error(error.message);
+          }
+        } catch (validationError) {
+          if (validationError instanceof z.ZodError) {
+            console.error("Validation error:", validationError.errors);
+            toast({
+              title: "Invalid Input",
+              description: validationError.errors[0]?.message || "Please check your inputs",
+              variant: "destructive",
+            });
+            return;
+          }
+          throw validationError;
         }
       }
       
