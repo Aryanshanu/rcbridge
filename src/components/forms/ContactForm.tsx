@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { z } from "zod";
+import { contactFormSchema } from "@/utils/validation/schemas";
 
 export const ContactForm = () => {
   const { toast } = useToast();
@@ -27,20 +29,21 @@ export const ContactForm = () => {
     setIsSubmitting(true);
     
     try {
-      console.log("Submitting contact form:", formData);
+      // Validate input data
+      const validatedData = contactFormSchema.parse(formData);
+      
+      console.log("Submitting contact form:", validatedData);
       
       // Store the contact form data in Supabase
       const { error } = await supabase
         .from('contact_messages')
-        .insert([
-          { 
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            subject: formData.subject,
-            message: formData.message
-          }
-        ]);
+        .insert([{
+          name: validatedData.name,
+          email: validatedData.email,
+          phone: validatedData.phone,
+          subject: validatedData.subject,
+          message: validatedData.message
+        }]);
         
       if (error) throw error;
       
@@ -58,11 +61,20 @@ export const ContactForm = () => {
       });
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast({
-        title: "Error",
-        description: "There was a problem sending your message. Please try again.",
-        variant: "destructive"
-      });
+      
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Validation Error",
+          description: error.errors[0].message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "There was a problem sending your message. Please try again.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

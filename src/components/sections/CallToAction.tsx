@@ -6,6 +6,19 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+// Validation schema for demo requests
+const demoRequestSchema = z.object({
+  name: z.string()
+    .min(1, "Name is required")
+    .max(100, "Name too long")
+    .trim(),
+  email: z.string()
+    .email("Invalid email address")
+    .max(255, "Email too long")
+    .trim()
+});
 
 export const CallToAction = () => {
   const [isSchedulingDemo, setIsSchedulingDemo] = useState(false);
@@ -17,11 +30,17 @@ export const CallToAction = () => {
   const handleDemoRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Validate input data
+      const validatedData = demoRequestSchema.parse({
+        name: demoName,
+        email: demoEmail
+      });
+
       const { error } = await supabase
         .from('demo_requests')
         .insert({
-          name: demoName,
-          email: demoEmail,
+          name: validatedData.name,
+          email: validatedData.email,
           status: 'pending'
         });
 
@@ -38,13 +57,22 @@ export const CallToAction = () => {
       
       console.log("Demo requested for:", { demoName, demoEmail });
       
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error scheduling demo:", error);
-      toast({
-        title: "Error",
-        description: "Failed to schedule demo. Please try again.",
-        variant: "destructive",
-      });
+      
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Validation Error",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to schedule demo. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 

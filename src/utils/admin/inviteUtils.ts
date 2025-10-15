@@ -1,55 +1,58 @@
-
 import { UserRole } from "@/types/user";
+import { supabase } from "@/integrations/supabase/client";
 
-// Pre-defined invite codes with role assignments
-const INVITE_CODES = [
-  { code: "ADMIN-123456", role: "admin", expiryDate: "2025-12-31", used: false },
-  { code: "DEV-789012", role: "developer", expiryDate: "2025-12-31", used: false },
-  { code: "MAINT-345678", role: "maintainer", expiryDate: "2025-12-31", used: false },
-  { code: "ADMIN-987654", role: "admin", expiryDate: "2025-12-31", used: false },
-  { code: "DEV-654321", role: "developer", expiryDate: "2025-12-31", used: false },
-  { code: "MAINT-111222", role: "maintainer", expiryDate: "2025-12-31", used: false },
-  { code: "ADMIN-333444", role: "admin", expiryDate: "2025-12-31", used: false },
-  { code: "DEV-555666", role: "developer", expiryDate: "2025-12-31", used: false },
-  { code: "MAINT-777888", role: "maintainer", expiryDate: "2025-12-31", used: false },
-  { code: "ADMIN-999000", role: "admin", expiryDate: "2025-12-31", used: false }
-];
+interface InviteValidationResponse {
+  valid: boolean;
+  message: string;
+  role?: string;
+}
 
-// Function to validate invite code
-export const validateInviteCode = (code: string) => {
-  const inviteCode = INVITE_CODES.find(
-    (invite) => invite.code === code && !invite.used
-  );
+// Secure database-backed invite code validation
+export const validateInviteCode = async (code: string, userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .rpc('validate_and_consume_invite_code', {
+        _code: code,
+        _user_id: userId
+      });
 
-  if (!inviteCode) {
+    if (error) {
+      console.error("Error validating invite code:", error);
+      return {
+        valid: false,
+        message: "Failed to validate invite code",
+        role: null
+      };
+    }
+
+    // Type guard to ensure data is in the expected format
+    if (typeof data === 'object' && data !== null && 'valid' in data && 'message' in data) {
+      const response = data as unknown as InviteValidationResponse;
+      return {
+        valid: response.valid,
+        message: response.message,
+        role: response.role as UserRole | null
+      };
+    }
+
     return {
       valid: false,
-      message: "Invalid or already used invite code",
+      message: "Unexpected response format",
+      role: null
+    };
+  } catch (error) {
+    console.error("Error in validateInviteCode:", error);
+    return {
+      valid: false,
+      message: "An error occurred",
       role: null
     };
   }
-
-  const expiryDate = new Date(inviteCode.expiryDate);
-  if (expiryDate < new Date()) {
-    return {
-      valid: false,
-      message: "This invite code has expired",
-      role: null
-    };
-  }
-
-  return {
-    valid: true,
-    message: "Invite code valid",
-    role: inviteCode.role as UserRole
-  };
 };
 
-export const markInviteCodeAsUsed = (code: string) => {
-  const codeIndex = INVITE_CODES.findIndex(item => item.code === code);
-  if (codeIndex >= 0) {
-    INVITE_CODES[codeIndex].used = true;
-    return true;
-  }
-  return false;
+// No longer needed - handled by database
+export const markInviteCodeAsUsed = async (code: string) => {
+  // This function is deprecated - the database handles marking codes as used
+  // automatically through validate_and_consume_invite_code function
+  return true;
 };

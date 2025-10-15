@@ -12,16 +12,7 @@ export const registerWithInviteCode = async (
   try {
     console.log("Starting registration with invite code:", { email, inviteCode, hasFullName: !!fullName });
     
-    const validation = validateInviteCode(inviteCode);
-    console.log("Invite code validation result:", validation);
-    
-    if (!validation.valid) {
-      return {
-        success: false,
-        message: validation.message
-      };
-    }
-
+    // First create the user
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -46,6 +37,19 @@ export const registerWithInviteCode = async (
     }
 
     console.log("User created successfully:", authData.user.id);
+    
+    // Validate invite code with user ID
+    const validation = await validateInviteCode(inviteCode, authData.user.id);
+    console.log("Invite code validation result:", validation);
+    
+    if (!validation.valid) {
+      // Delete the user if invite code is invalid
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      return {
+        success: false,
+        message: validation.message
+      };
+    }
 
     // Update the user's profile with their name
     const { error: profileError } = await supabase
@@ -77,9 +81,8 @@ export const registerWithInviteCode = async (
       };
     }
 
-    // Mark the invite code as used
-    const inviteMarked = markInviteCodeAsUsed(inviteCode);
-    console.log("Invite code marked as used:", inviteMarked);
+    // Invite code is already marked as used by the database function
+    console.log("User registered successfully with role:", validation.role);
 
     return {
       success: true,
