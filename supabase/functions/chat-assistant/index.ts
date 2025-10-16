@@ -221,9 +221,9 @@ serve(async (req) => {
 
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        // Call Hugging Face Inference API with Llama 3.3 70B
+        // Call Hugging Face Router API with Llama 3.3 70B (OpenAI-compatible endpoint)
         response = await fetch(
-          "https://api-inference.huggingface.co/models/meta-llama/Llama-3.3-70B-Instruct/v1/chat/completions",
+          "https://router.huggingface.co/v1/chat/completions",
           {
             method: "POST",
             headers: {
@@ -231,6 +231,7 @@ serve(async (req) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
+              model: "meta-llama/Llama-3.3-70B-Instruct",
               messages: [
                 { role: "system", content: SYSTEM_PROMPT },
                 ...recentMessages
