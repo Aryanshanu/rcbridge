@@ -6,6 +6,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiting configuration
+const rateLimits = new Map<string, { count: number; resetAt: number }>();
+const MAX_REQUESTS_PER_MINUTE = 10;
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+
+// Clean up old rate limit entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, limit] of rateLimits.entries()) {
+    if (now > limit.resetAt) {
+      rateLimits.delete(ip);
+    }
+  }
+}, 300000);
+
 const SYSTEM_PROMPT = `You are the RC Bridge real estate assistant for Hyderabad properties. You are conversational, empathetic, and helpful.
 
 COMPANY CONTEXT:
@@ -140,7 +155,53 @@ serve(async (req) => {
   }
 
   try {
+    // Rate limiting based on IP address
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
+               req.headers.get('x-real-ip') || 
+               'unknown';
+    
+    const now = Date.now();
+    const limit = rateLimits.get(ip);
+    
+    if (limit) {
+      if (now < limit.resetAt) {
+        if (limit.count >= MAX_REQUESTS_PER_MINUTE) {
+          console.log(`Rate limit exceeded for IP: ${ip}`);
+          return new Response(
+            JSON.stringify({ 
+              error: 'Too many requests. Please wait a moment before trying again.',
+              retryAfter: Math.ceil((limit.resetAt - now) / 1000)
+            }),
+            { 
+              status: 429, 
+              headers: { 
+                ...corsHeaders, 
+                'Content-Type': 'application/json',
+                'Retry-After': Math.ceil((limit.resetAt - now) / 1000).toString()
+              } 
+            }
+          );
+        }
+        limit.count++;
+      } else {
+        rateLimits.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+      }
+    } else {
+      rateLimits.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    }
+
     const { messages } = await req.json();
+    
+    // Input validation
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid request: messages must be a non-empty array' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Limit message history to prevent abuse (max 20 messages)
+    const recentMessages = messages.slice(-20);
     const HF_API_KEY = Deno.env.get('HUGGINGFACE_API_KEY');
     
     if (!HF_API_KEY) {
@@ -172,7 +233,7 @@ serve(async (req) => {
             body: JSON.stringify({
               messages: [
                 { role: "system", content: SYSTEM_PROMPT },
-                ...messages
+                ...recentMessages
               ],
               max_tokens: 500,
               temperature: 0.7,
