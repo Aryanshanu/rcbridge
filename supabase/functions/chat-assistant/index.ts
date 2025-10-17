@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { searchDuckDuckGo, formatSearchResults } from './duckduckgo.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +21,11 @@ const rateLimits = new Map<string, { count: number; resetAt: number }>();
 const MAX_REQUESTS_PER_MINUTE = 10;
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
 
+// Search rate limiting - separate limit for search operations
+const searchRateLimits = new Map<string, { count: number; resetAt: number }>();
+const MAX_SEARCHES_PER_MINUTE = 3;
+const SEARCH_RATE_LIMIT_WINDOW = 60000;
+
 // Clean up old rate limit entries every 5 minutes
 setInterval(() => {
   const now = Date.now();
@@ -28,9 +34,34 @@ setInterval(() => {
       rateLimits.delete(ip);
     }
   }
+  for (const [ip, limit] of searchRateLimits.entries()) {
+    if (now > limit.resetAt) {
+      searchRateLimits.delete(ip);
+    }
+  }
 }, 300000);
 
 const SYSTEM_PROMPT = `You are the RC Bridge real estate assistant for Hyderabad properties. You are conversational, empathetic, and helpful.
+
+YOUR INTERNET SEARCH CAPABILITY:
+You have access to real-time internet search through the search_real_estate_info tool. Use it to provide current, up-to-date information.
+
+WHEN TO USE SEARCH:
+- When users ask about "current", "latest", "recent", "today", "this month/year" information
+- Current property prices, interest rates, or market trends
+- Recent news, regulations, or policy changes in Hyderabad real estate
+- Specific property availability or new listings
+- Updated market conditions or statistics
+- Any information that may have changed recently
+
+DO NOT SEARCH FOR:
+- General area information or neighborhood descriptions (use your existing knowledge)
+- Company information about RC Bridge
+- General real estate concepts or terminology
+- Historical or established facts
+- Questions the user already has answers for
+
+When you receive search results, integrate them naturally into your response and cite sources when relevant (e.g., "According to recent data...").
 
 COMPANY CONTEXT:
 - RC Bridge has facilitated ₹200 Cr+ worth of deals
@@ -249,119 +280,23 @@ serve(async (req) => {
 
     console.log('Calling Hugging Face API with', messages.length, 'messages');
 
-    // Retry logic with exponential backoff
-    let retries = 3;
-    let delay = 1000; // Start with 1 second delay
-    let response: Response | null = null;
-
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        // Call Hugging Face Router API with Llama 3.3 70B (OpenAI-compatible endpoint)
-        response = await fetch(
-          "https://router.huggingface.co/v1/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${HF_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "meta-llama/Llama-3.3-70B-Instruct",
-              messages: [
-                { role: "system", content: SYSTEM_PROMPT },
-                ...recentMessages
-              ],
-              max_tokens: 500,
-              temperature: 0.7,
-              stream: true,
-            }),
-          }
-        );
-
-        if (response.ok) {
-          break; // Success, exit retry loop
-        }
-
-        const errorText = await response.text();
-        console.error(`Hugging Face API error (attempt ${attempt}/${retries}):`, response.status, errorText);
-        
-        // Handle specific errors
-        if (response.status === 429) {
-          console.log(`Rate limit hit, retrying in ${delay}ms...`);
-          if (attempt < retries) {
-            await new Promise(resolve => setTimeout(resolve, delay));
-            delay *= 2; // Exponential backoff
-            continue;
-          }
-          return new Response(
-            JSON.stringify({ 
-              error: 'Our AI assistant is currently at capacity. Please try again in a few moments.',
-              retryAfter: 60 
-            }),
-            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        
-        if (response.status === 401 || response.status === 403) {
-          console.error('Authentication error with Hugging Face API');
-          return new Response(
-            JSON.stringify({ 
-              error: 'AI service configuration error. Please contact support.',
-              code: 'AUTH_ERROR'
-            }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        if (response.status === 503) {
-          console.log(`Model loading (attempt ${attempt}/${retries}), retrying in ${delay}ms...`);
-          if (attempt < retries) {
-            await new Promise(resolve => setTimeout(resolve, delay));
-            delay *= 2;
-            continue;
-          }
-          return new Response(
-            JSON.stringify({ 
-              error: 'AI model is currently loading. Please try again in 20-30 seconds.',
-              code: 'MODEL_LOADING'
-            }),
-            { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        
-        // Generic error after retries exhausted
-        if (attempt === retries) {
-          return new Response(
-            JSON.stringify({ 
-              error: 'AI service temporarily unavailable. Please try again later.',
-              code: 'SERVICE_ERROR'
-            }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-      } catch (fetchError) {
-        console.error(`Network error (attempt ${attempt}/${retries}):`, fetchError);
-        if (attempt < retries) {
-          await new Promise(resolve => setTimeout(resolve, delay));
-          delay *= 2;
-          continue;
-        }
-        throw fetchError;
-      }
-    }
-
-    if (!response || !response.ok) {
+    // Call API with function calling support
+    const apiResponse = await callHuggingFaceWithFunctionCalling(recentMessages, HF_API_KEY, ip);
+    
+    if (!apiResponse.ok) {
+      const errorText = await apiResponse.text();
+      console.error('API call failed:', apiResponse.status, errorText);
       return new Response(
-        JSON.stringify({ error: 'Failed to connect to AI service' }),
+        JSON.stringify({ error: 'AI service error' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Return streaming response
-    return new Response(response.body, {
+    return new Response(apiResponse.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
+
 
   } catch (error) {
     console.error("Error in chat-assistant function:", error);
@@ -371,3 +306,306 @@ serve(async (req) => {
     );
   }
 });
+
+/**
+ * Call Hugging Face API with function calling support for search
+ */
+async function callHuggingFaceWithFunctionCalling(
+  messages: Array<{ role: string; content: string }>,
+  apiKey: string,
+  clientIp: string,
+  retries = 3
+): Promise<Response> {
+  // Define search tool for function calling
+  const tools = [
+    {
+      type: "function",
+      function: {
+        name: "search_real_estate_info",
+        description: "Search the internet for current, up-to-date information about Hyderabad real estate market, property prices, interest rates, news, regulations, or availability. Use when users ask about 'latest', 'current', 'recent', 'today' information.",
+        parameters: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "Search query focused on Hyderabad real estate. Be specific and include location/property type. Example: 'current property prices in Gachibowli Hyderabad 2025'"
+            }
+          },
+          required: ["query"]
+        }
+      }
+    }
+  ];
+
+  let delay = 1000;
+  
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(
+        "https://router.huggingface.co/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "meta-llama/Llama-3.3-70B-Instruct",
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              ...messages
+            ],
+            max_tokens: 500,
+            temperature: 0.7,
+            tools: tools,
+            tool_choice: "auto",
+            stream: true,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`API error (attempt ${attempt}/${retries}):`, response.status, errorText);
+        
+        if (response.status === 429 || response.status === 503) {
+          if (attempt < retries) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2;
+            continue;
+          }
+        }
+        return response;
+      }
+
+      // Check if response contains function calls
+      const processedResponse = await processFunctionCalls(response, messages, apiKey, clientIp);
+      return processedResponse;
+
+    } catch (error) {
+      console.error(`Network error (attempt ${attempt}/${retries}):`, error);
+      if (attempt < retries) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2;
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw new Error('Max retries exceeded');
+}
+
+/**
+ * Process streaming response to detect and execute function calls
+ */
+async function processFunctionCalls(
+  response: Response,
+  conversationMessages: Array<{ role: string; content: string }>,
+  apiKey: string,
+  clientIp: string
+): Promise<Response> {
+  const reader = response.body?.getReader();
+  if (!reader) return response;
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let toolCalls: any[] = [];
+  let hasToolCall = false;
+  let assistantMessage = '';
+
+  try {
+    // Read the stream to detect function calls
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.trim() || line.startsWith(':')) continue;
+        if (!line.startsWith('data: ')) continue;
+
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') continue;
+
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed.choices?.[0]?.delta;
+
+          // Accumulate assistant message
+          if (delta?.content) {
+            assistantMessage += delta.content;
+          }
+
+          // Check for tool calls
+          if (delta?.tool_calls) {
+            hasToolCall = true;
+            for (const toolCall of delta.tool_calls) {
+              const index = toolCall.index ?? 0;
+              if (!toolCalls[index]) {
+                toolCalls[index] = {
+                  id: toolCall.id || `call_${Date.now()}`,
+                  type: 'function',
+                  function: {
+                    name: toolCall.function?.name || '',
+                    arguments: toolCall.function?.arguments || ''
+                  }
+                };
+              } else {
+                if (toolCall.function?.name) {
+                  toolCalls[index].function.name += toolCall.function.name;
+                }
+                if (toolCall.function?.arguments) {
+                  toolCalls[index].function.arguments += toolCall.function.arguments;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+    }
+
+    // If no function calls detected, return original response stream
+    if (!hasToolCall || toolCalls.length === 0) {
+      // Re-create response with accumulated data
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          if (assistantMessage) {
+            const sseData = `data: ${JSON.stringify({
+              choices: [{
+                delta: { content: assistantMessage },
+                finish_reason: null
+              }]
+            })}\n\n`;
+            controller.enqueue(encoder.encode(sseData));
+          }
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        }
+      });
+      return new Response(stream, {
+        headers: { 'Content-Type': 'text/event-stream' }
+      });
+    }
+
+    // Execute function calls
+    console.log('[Function Call] Executing tool calls:', toolCalls.map(tc => tc.function.name));
+    
+    const toolResponses: Array<{ role: string; content: string; tool_call_id: string }> = [];
+
+    for (const toolCall of toolCalls) {
+      if (toolCall.function.name === 'search_real_estate_info') {
+        try {
+          const args = JSON.parse(toolCall.function.arguments);
+          const query = args.query;
+
+          // Check search rate limit
+          const now = Date.now();
+          const searchLimit = searchRateLimits.get(clientIp);
+          
+          if (searchLimit) {
+            if (now < searchLimit.resetAt) {
+              if (searchLimit.count >= MAX_SEARCHES_PER_MINUTE) {
+                console.log(`[Search] Rate limit exceeded for IP: ${clientIp}`);
+                toolResponses.push({
+                  role: 'tool',
+                  content: 'Search rate limit reached. Using available knowledge.',
+                  tool_call_id: toolCall.id
+                });
+                continue;
+              }
+              searchLimit.count++;
+            } else {
+              searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
+            }
+          } else {
+            searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
+          }
+
+          console.log(`[Search] Executing: "${query}"`);
+          const searchResults = await searchDuckDuckGo(query);
+          const formattedResults = formatSearchResults(query, searchResults);
+
+          toolResponses.push({
+            role: 'tool',
+            content: formattedResults,
+            tool_call_id: toolCall.id
+          });
+
+          console.log(`[Search] Found ${searchResults.length} results`);
+        } catch (error) {
+          console.error('[Search] Error:', error);
+          toolResponses.push({
+            role: 'tool',
+            content: 'Search temporarily unavailable. Using available knowledge.',
+            tool_call_id: toolCall.id
+          });
+        }
+      }
+    }
+
+    // Make second API call with tool responses
+    const updatedMessages: any[] = [
+      ...conversationMessages,
+      {
+        role: 'assistant',
+        content: assistantMessage || '',
+        tool_calls: toolCalls
+      },
+      ...toolResponses
+    ];
+
+    console.log('[Function Call] Making second API call with tool responses');
+    
+    // Recursive call with tool responses (no function calling this time)
+    const finalResponse = await fetch(
+      "https://router.huggingface.co/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "meta-llama/Llama-3.3-70B-Instruct",
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            ...updatedMessages
+          ],
+          max_tokens: 500,
+          temperature: 0.7,
+          stream: true,
+        }),
+      }
+    );
+
+    return finalResponse;
+
+  } catch (error) {
+    console.error('[Function Call] Error processing:', error);
+    // Return error response
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        const errorData = `data: ${JSON.stringify({
+          choices: [{
+            delta: { content: 'I apologize, but I encountered an error. Please try again.' },
+            finish_reason: 'stop'
+          }]
+        })}\n\n`;
+        controller.enqueue(encoder.encode(errorData));
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
+      }
+    });
+    return new Response(stream, {
+      headers: { 'Content-Type': 'text/event-stream' }
+    });
+  }
+}
