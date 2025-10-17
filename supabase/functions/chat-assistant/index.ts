@@ -1,10 +1,19 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const chatMessageSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant', 'system']),
+    content: z.string().min(1, 'Message cannot be empty').max(1000, 'Message too long (max 1000 characters)')
+  })).min(1, 'At least one message required').max(20, 'Too many messages (max 20)')
+});
 
 // Rate limiting configuration
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
@@ -163,6 +172,19 @@ serve(async (req) => {
   }
 
   try {
+    // Check request size limit (50KB max)
+    const contentLength = req.headers.get('content-length');
+    if (contentLength) {
+      const size = parseInt(contentLength);
+      if (size > 50000) {
+        console.log(`Payload too large: ${size} bytes from IP: ${ip}`);
+        return new Response(
+          JSON.stringify({ error: 'Request payload too large (max 50KB)' }),
+          { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Rate limiting based on IP address
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
                req.headers.get('x-real-ip') || 
@@ -198,17 +220,22 @@ serve(async (req) => {
       rateLimits.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
     }
 
-    const { messages } = await req.json();
+    const requestBody = await req.json();
     
-    // Input validation
-    if (!Array.isArray(messages) || messages.length === 0) {
+    // Comprehensive input validation with zod
+    const validation = chatMessageSchema.safeParse(requestBody);
+    if (!validation.success) {
+      console.log(`Validation error from IP ${ip}:`, validation.error.format());
       return new Response(
-        JSON.stringify({ error: 'Invalid request: messages must be a non-empty array' }),
+        JSON.stringify({ 
+          error: 'Invalid request format',
+          details: validation.error.issues[0].message
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
-    // Limit message history to prevent abuse (max 20 messages)
+    const { messages } = validation.data;
     const recentMessages = messages.slice(-20);
     const HF_API_KEY = Deno.env.get('HUGGINGFACE_API_KEY');
     

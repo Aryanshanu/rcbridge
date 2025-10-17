@@ -1,10 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2'
+import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2';
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
+
+// Input validation schema - require property-related keywords
+const imagePromptSchema = z.object({
+  prompt: z.string()
+    .min(10, 'Prompt too short (min 10 characters)')
+    .max(500, 'Prompt too long (max 500 characters)')
+    .regex(
+      /property|house|home|building|real estate|apartment|villa|residential|commercial|land|plot/i,
+      'Prompt must be property-related (include words like property, house, apartment, etc.)'
+    )
+});
 
 // Simple rate limiting
 const rateLimits = new Map<string, { count: number; resetTime: number }>();
@@ -51,13 +63,35 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt } = await req.json();
-    if (!prompt || typeof prompt !== 'string') {
-      return new Response(JSON.stringify({ error: 'Invalid prompt' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // Check request size limit (10KB max for image generation)
+    const contentLength = req.headers.get('content-length');
+    if (contentLength) {
+      const size = parseInt(contentLength);
+      if (size > 10000) {
+        console.log(`Payload too large: ${size} bytes from IP: ${clientIP}`);
+        return new Response(
+          JSON.stringify({ error: 'Request payload too large (max 10KB)' }),
+          { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
+
+    const requestBody = await req.json();
+    
+    // Comprehensive input validation with zod
+    const validation = imagePromptSchema.safeParse(requestBody);
+    if (!validation.success) {
+      console.log(`Validation error from IP ${clientIP}:`, validation.error.format());
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid request format',
+          details: validation.error.issues[0].message
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { prompt } = validation.data;
 
     const hfApiKey = Deno.env.get('HUGGINGFACE_API_KEY');
     if (!hfApiKey) {
