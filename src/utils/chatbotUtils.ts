@@ -103,24 +103,16 @@ export async function generatePropertyImage(
 }
 
 /**
- * Store user inquiry in conversation context for analytics (legacy compatibility)
+ * Store user inquiry - removed localStorage PII storage for security
+ * Data should be stored in Supabase with proper RLS instead
  */
 export function storeUserInquiry(
   message: string,
   context?: Array<{ role: string; content: string }>
 ): void {
-  try {
-    const inquiries = JSON.parse(localStorage.getItem('user_inquiries') || '[]');
-    inquiries.push({
-      message,
-      timestamp: new Date().toISOString(),
-      conversationContext: context || conversationContext.slice(-5)
-    });
-    localStorage.setItem('user_inquiries', JSON.stringify(inquiries));
-    console.log('User inquiry stored successfully');
-  } catch (error) {
-    console.error('Error storing user inquiry:', error);
-  }
+  // Legacy function - no longer stores PII in localStorage
+  // All user data should be stored in Supabase with proper RLS
+  console.log('User inquiry processing - using database storage');
 }
 
 /**
@@ -131,7 +123,7 @@ export function getConversationContext(): Array<{ role: string; content: string 
 }
 
 /**
- * Add message to conversation context
+ * Add message to conversation context (in-memory only for session)
  */
 export function addToConversationContext(role: 'user' | 'assistant', content: string): void {
   conversationContext.push({ role, content });
@@ -141,26 +133,15 @@ export function addToConversationContext(role: 'user' | 'assistant', content: st
     conversationContext = conversationContext.slice(-15);
   }
   
-  // Save to localStorage
-  try {
-    localStorage.setItem('conversation_context', JSON.stringify(conversationContext));
-  } catch (error) {
-    console.error('Error saving conversation context:', error);
-  }
+  // No longer save to localStorage - use in-memory only for better security
 }
 
 /**
- * Load conversation context from localStorage
+ * Load conversation context (no-op now, context is in-memory only)
  */
 export function loadConversationContext(): void {
-  try {
-    const saved = localStorage.getItem('conversation_context');
-    if (saved) {
-      conversationContext = JSON.parse(saved);
-    }
-  } catch (error) {
-    console.error('Error loading conversation context:', error);
-  }
+  // No longer load from localStorage - context is session-only
+  conversationContext = [];
 }
 
 /**
@@ -168,40 +149,21 @@ export function loadConversationContext(): void {
  */
 export function clearConversationContext(): void {
   conversationContext = [];
-  try {
-    localStorage.removeItem('conversation_context');
-  } catch (error) {
-    console.error('Error clearing conversation context:', error);
-  }
 }
 
 /**
- * Update user profile information
+ * Update user profile information - removed localStorage PII storage
+ * Should be stored in Supabase profiles table instead
  */
 export function updateUserProfile(profileData: Record<string, any>): void {
   userProfileInfo = { ...userProfileInfo, ...profileData };
-  
-  try {
-    localStorage.setItem('user_profile', JSON.stringify(userProfileInfo));
-    console.log('User profile updated:', userProfileInfo);
-  } catch (error) {
-    console.error('Error updating user profile:', error);
-  }
+  // No longer store PII in localStorage - use Supabase profiles table
+  console.log('User profile updated in memory only');
 }
 
 /**
- * Get user profile information
+ * Get user profile information (in-memory only)
  */
 export function getUserProfile(): Record<string, any> {
-  if (Object.keys(userProfileInfo).length === 0) {
-    try {
-      const saved = localStorage.getItem('user_profile');
-      if (saved) {
-        userProfileInfo = JSON.parse(saved);
-      }
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-    }
-  }
   return userProfileInfo;
 }

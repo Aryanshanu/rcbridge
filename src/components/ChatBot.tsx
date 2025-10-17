@@ -70,14 +70,15 @@ export function ChatBot() {
   const [failureCount, setFailureCount] = useState(0);
   const [userMentionedLocation, setUserMentionedLocation] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Initialize the models when the component mounts
-    const loadModels = async () => {
+    const initializeChat = async () => {
+      // Initialize models
       const chatReady = await initializeChatModel();
       const imageReady = await initializeImageModel();
       setModelReady(chatReady);
@@ -89,65 +90,98 @@ export function ChatBot() {
           description: "Ask me about real estate properties and investments in Hyderabad",
         });
       }
-    };
-    loadModels();
-    loadConversationContext();
-    
-    // Initialize or load conversation from Supabase and fetch messages
-    (async () => {
+
+      loadConversationContext();
+
       try {
-        let convId = localStorage.getItem('conversation_id');
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id || null;
+        setIsAuthenticated(!!userId);
 
-        if (!convId) {
-          const { data, error } = await supabase
+        // For authenticated users: try to load existing conversation
+        if (userId) {
+          const { data: existingConversation } = await supabase
             .from('chat_conversations')
-            .insert([{ user_id: null }])
             .select('id')
-            .single();
-          if (error) throw error;
-          convId = data.id;
-          localStorage.setItem('conversation_id', convId);
-        }
-        setConversationId(convId);
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-        // Fetch existing messages
-        const { data: dbMessages, error: fetchErr } = await supabase
-          .from('chat_messages')
-          .select('created_at, sender_type, content')
-          .eq('conversation_id', convId)
-          .order('created_at', { ascending: true });
+          if (existingConversation) {
+            setConversationId(existingConversation.id);
+            localStorage.setItem('chat_conversation_id', existingConversation.id);
 
-        if (fetchErr) throw fetchErr;
+            // Load existing messages
+            const { data: dbMessages } = await supabase
+              .from('chat_messages')
+              .select('*')
+              .eq('conversation_id', existingConversation.id)
+              .order('created_at', { ascending: true });
 
-        if (dbMessages && dbMessages.length > 0) {
-          const mapped = dbMessages.map((m: any, idx: number) => ({
-            id: idx,
-            text: m.content,
-            sender: m.sender_type === 'user' ? 'user' : 'bot',
-            timestamp: new Date(m.created_at),
-          })) as Message[];
+            if (dbMessages && dbMessages.length > 0) {
+              const mapped = dbMessages.map((m: any, idx: number) => ({
+                id: idx,
+                text: m.content,
+                sender: m.sender_type === 'user' ? 'user' : 'bot',
+                timestamp: new Date(m.created_at),
+              })) as Message[];
+              setMessages(mapped);
 
-          setMessages(prev => {
-            // Keep the initial welcome only if no db messages
-            return mapped.length > 0 ? mapped : prev;
-          });
-
-          // Extract info from user messages
-          for (const msg of mapped) {
-            if (msg.sender === 'user') {
-              const b = extractBudget(msg.text);
-              const t = extractTimeline(msg.text);
-              const locs = extractLocations(msg.text);
-              if (b && !extractedBudget) setExtractedBudget(b);
-              if (t && !extractedTimeline) setExtractedTimeline(t);
-              if (locs.length > 0 && !extractedLocation) setExtractedLocation(locs[0]);
+              // Extract info from user messages
+              for (const msg of mapped) {
+                if (msg.sender === 'user') {
+                  const b = extractBudget(msg.text);
+                  const t = extractTimeline(msg.text);
+                  const locs = extractLocations(msg.text);
+                  if (b && !extractedBudget) setExtractedBudget(b);
+                  if (t && !extractedTimeline) setExtractedTimeline(t);
+                  if (locs.length > 0 && !extractedLocation) setExtractedLocation(locs[0]);
+                }
+              }
             }
+            return;
           }
         }
-      } catch (e) {
-        console.error('Failed to init conversation/messages:', e);
+
+        // Generate conversation ID client-side (works for both anon and auth)
+        const savedConvId = localStorage.getItem('chat_conversation_id');
+        let newConvId = savedConvId;
+        
+        if (!newConvId) {
+          newConvId = crypto.randomUUID();
+        }
+
+        // Create new conversation in DB with the generated ID
+        const { error } = await supabase
+          .from('chat_conversations')
+          .insert([{ id: newConvId, user_id: userId }]);
+
+        if (error) {
+          console.error('Failed to create conversation:', error);
+          toast({
+            title: "Connection Issue",
+            description: "Could not establish chat session. Using local session.",
+            variant: "destructive"
+          });
+          // Still use the conversation ID locally for this session
+          setConversationId(newConvId);
+          localStorage.setItem('chat_conversation_id', newConvId);
+          return;
+        }
+
+        setConversationId(newConvId);
+        localStorage.setItem('chat_conversation_id', newConvId);
+      } catch (error) {
+        console.error('Error initializing conversation:', error);
+        // Fallback to ephemeral session
+        const ephemeralId = crypto.randomUUID();
+        setConversationId(ephemeralId);
+        localStorage.setItem('chat_conversation_id', ephemeralId);
       }
-    })();
+    };
+
+    initializeChat();
   }, [toast]);
 
   // removed localStorage persistence of messages
@@ -197,27 +231,23 @@ export function ChatBot() {
     setIsLoading(true);
 
     try {
-      // Ensure a conversation exists
-      let convId = conversationId;
-      if (!convId) {
-        const { data: convData, error: convErr } = await supabase
-          .from('chat_conversations')
-          .insert([{ user_id: null }])
-          .select('id')
-          .single();
-        if (convErr) throw convErr;
-        convId = convData.id;
-        setConversationId(convId);
-        localStorage.setItem('conversation_id', convId);
-      }
+      // Save user message to database (works for both anon and auth with new RLS)
+      if (conversationId) {
+        const { error: userMsgError } = await supabase
+          .from('chat_messages')
+          .insert([
+            {
+              conversation_id: conversationId,
+              sender_type: 'user',
+              content: userMessage,
+              message_type: 'text',
+            }
+          ]);
 
-      // Persist user message
-      await supabase.from('chat_messages').insert({
-        conversation_id: convId,
-        sender_type: 'user',
-        content: userMessage,
-        message_type: 'text',
-      });
+        if (userMsgError) {
+          console.error('Failed to save user message:', userMsgError);
+        }
+      }
       
       // Prepare conversation history for AI (last 15 messages for context)
       const conversationHistory = [...messages, newUserMessage].map(msg => ({
@@ -225,9 +255,9 @@ export function ChatBot() {
         content: msg.text
       })).slice(-15);
 
-      // Call streaming edge function (correct domain)
+      // Call streaming edge function
       const response = await fetch(
-        `https://hchtekfbtcbfsfxkjyfi.functions.supabase.co/functions/v1/chat-assistant`,
+        `https://hchtekfbtcbfsfxkjyfi.functions.supabase.co/chat-assistant`,
         {
           method: "POST",
           headers: {
@@ -240,6 +270,14 @@ export function ChatBot() {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Edge function error:', response.status, errorText);
+        
+        if (response.status === 429) {
+          throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+        }
+        if (response.status === 402) {
+          throw new Error('Service credits exhausted. Please contact support.');
+        }
+        
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -576,17 +614,29 @@ export function ChatBot() {
   
   const clearChat = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id || null;
+      
+      const newConvId = crypto.randomUUID();
+      
+      const { error } = await supabase
         .from('chat_conversations')
-        .insert([{ user_id: null }])
-        .select('id')
-        .single();
-      if (error) throw error;
-      const newId = data.id;
-      setConversationId(newId);
-      localStorage.setItem('conversation_id', newId);
+        .insert([{ id: newConvId, user_id: userId }]);
+
+      if (error) {
+        console.error('Failed to create new conversation:', error);
+      }
+      
+      setConversationId(newConvId);
+      localStorage.setItem('chat_conversation_id', newConvId);
     } catch (e) {
       console.error('Failed to create new conversation on clear:', e);
+      toast({
+        title: "Error",
+        description: "Could not clear chat. Please refresh the page.",
+        variant: "destructive"
+      });
+      return;
     }
 
     setMessages([

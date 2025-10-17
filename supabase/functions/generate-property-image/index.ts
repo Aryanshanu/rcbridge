@@ -6,10 +6,48 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Simple rate limiting
+const rateLimits = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 5; // requests per minute
+const RATE_WINDOW = 60000; // 1 minute in ms
+
+// Clean up old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, limit] of rateLimits.entries()) {
+    if (now > limit.resetTime) {
+      rateLimits.delete(ip);
+    }
+  }
+}, RATE_WINDOW);
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
+  }
+
+  // Rate limiting
+  const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  const now = Date.now();
+  const userLimit = rateLimits.get(clientIP);
+
+  if (userLimit && now < userLimit.resetTime) {
+    if (userLimit.count >= RATE_LIMIT) {
+      console.log(`Rate limit exceeded for IP: ${clientIP}`);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Rate limit exceeded. Please wait a moment before generating another image.' 
+        }),
+        { 
+          status: 429, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    userLimit.count++;
+  } else {
+    rateLimits.set(clientIP, { count: 1, resetTime: now + RATE_WINDOW });
   }
 
   try {
