@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-import { searchDuckDuckGo, formatSearchResults } from './duckduckgo.ts';
+import { searchTavily, formatSearchResults } from './tavily.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,7 +44,7 @@ setInterval(() => {
 const SYSTEM_PROMPT = `You are the RC Bridge real estate assistant for Hyderabad properties. You are conversational, empathetic, and helpful.
 
 YOUR INTERNET SEARCH CAPABILITY:
-You have access to real-time internet search through the search_real_estate_info tool. Use it to provide current, up-to-date information.
+You have access to real-time internet search through Tavily Search API via the search_real_estate_info tool. Tavily provides highly relevant, AI-optimized search results. Use it to provide current, up-to-date information.
 
 WHEN TO USE SEARCH:
 - When users ask about "current", "latest", "recent", "today", "this month/year" information
@@ -529,7 +529,7 @@ async function processFunctionCalls(
           }
 
           console.log(`[Search] Executing: "${query}"`);
-          const searchResults = await searchDuckDuckGo(query);
+          const searchResults = await searchTavily(query);
           const formattedResults = formatSearchResults(query, searchResults);
 
           toolResponses.push({
