@@ -4,10 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, X, Send, Loader2, Image, ChevronDown, User, Bot, MapPin, RefreshCw } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, ChevronDown, User, Bot, MapPin, RefreshCw } from 'lucide-react';
 import { 
   initializeChatModel, 
-  initializeImageModel, 
   getConversationContext,
   clearConversationContext,
   updateUserProfile,
@@ -52,8 +51,6 @@ export function ChatBot() {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [modelReady, setModelReady] = useState(false);
-  const [imageGenReady, setImageGenReady] = useState(false);
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [showInquiryForm, setShowInquiryForm] = useState(false);
   const [inquiryData, setInquiryData] = useState<InquiryData>({
     name: '',
@@ -81,11 +78,9 @@ export function ChatBot() {
 
   useEffect(() => {
     const initializeChat = async () => {
-      // Initialize models
+      // Initialize chat model
       const chatReady = await initializeChatModel();
-      const imageReady = await initializeImageModel();
       setModelReady(chatReady);
-      setImageGenReady(imageReady);
       
       if (chatReady) {
         toast({
@@ -449,78 +444,7 @@ export function ChatBot() {
     }
   };
   
-  const handleGeneratePropertyImage = async () => {
-    if (!imageGenReady || isGeneratingImage) return;
-    
-    setIsGeneratingImage(true);
-    toast({
-      title: "Generating Property Visualization",
-      description: "Please wait while I create a property visualization for you...",
-    });
-    
-    try {
-      // Extract a description from recent messages
-      const recentMessages = messages.slice(-3).map(msg => msg.text).join(' ');
-      
-      // Create a more targeted description for property visualization
-      let propertyDescription = "Real estate property in Hyderabad";
-      
-      // Use mentioned location if available
-      if (userMentionedLocation) {
-        propertyDescription = `Property in ${userMentionedLocation}, Hyderabad`;
-      }
-      
-      if (recentMessages.toLowerCase().includes('villa') || recentMessages.toLowerCase().includes('luxury')) {
-        propertyDescription = `Luxury villa in ${userMentionedLocation || 'Hyderabad'} with garden and swimming pool`;
-      } else if (recentMessages.toLowerCase().includes('apartment') || recentMessages.toLowerCase().includes('flat')) {
-        propertyDescription = `Modern apartment in a high-rise building in ${userMentionedLocation || 'Hyderabad'}`;
-      } else if (recentMessages.toLowerCase().includes('commercial') || recentMessages.toLowerCase().includes('office')) {
-        propertyDescription = `Commercial building in ${userMentionedLocation || 'HITEC City'}, Hyderabad`;
-      } else if (recentMessages.toLowerCase().includes('agricultural') || recentMessages.toLowerCase().includes('farm') || recentMessages.toLowerCase().includes('land')) {
-        propertyDescription = `Agricultural land in ${userMentionedLocation || 'Hyderabad outskirts'} with green fields`;
-      }
-      
-      // Call edge function to generate image
-      const { data, error } = await supabase.functions.invoke('generate-property-image', {
-        body: { prompt: propertyDescription }
-      });
-      if (error) throw error;
-      const imageUrl = data?.image as string | undefined;
-      
-      if (imageUrl) {
-        const imageMessage: Message = {
-          id: messages.length,
-          text: `Here's a visualization of a property in ${userMentionedLocation || 'Hyderabad'} based on our conversation:`,
-          sender: 'bot',
-          timestamp: new Date(),
-          imageUrl: imageUrl,
-          location: userMentionedLocation || undefined
-        };
-        
-        setMessages((prev) => [...prev, imageMessage]);
-        
-        toast({
-          title: "Visualization Ready",
-          description: "I've created a property visualization for you",
-        });
-      } else {
-        toast({
-          title: "Visualization Failed",
-          description: "I couldn't generate an image. Please try again with more specific details.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Error generating image:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate property visualization",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGeneratingImage(false);
-    }
-  };
+  // Image generation feature has been disabled per user request
   
   const openInquiryForm = () => {
     // Pre-populate message with recent conversation
@@ -861,31 +785,15 @@ export function ChatBot() {
             )}
             
             <form onSubmit={handleSubmit} className="flex gap-2 mb-2">
-              <div className="flex-1 flex gap-2">
-                <Input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Type your message..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  disabled={isLoading || !modelReady}
-                  className="flex-1"
-                />
-                
-                {imageGenReady && (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="outline"
-                    onClick={handleGeneratePropertyImage}
-                    disabled={isGeneratingImage || !imageGenReady}
-                    className="flex-shrink-0"
-                    title="Generate property visualization"
-                  >
-                    {isGeneratingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Image className="h-4 w-4" />}
-                  </Button>
-                )}
-              </div>
+              <Input
+                ref={inputRef}
+                type="text"
+                placeholder="Type your message..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={isLoading || !modelReady}
+                className="flex-1"
+              />
               
               <Button 
                 type="submit" 

@@ -1,10 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
-import { generatePropertyImage } from './chatbotUtils';
 import { useToast } from '@/hooks/use-toast';
 
+// NOTICE: Image generation has been disabled per user request
 // Cache for generated images to avoid repeated API calls
 const imageCache = new Map();
+
+// Placeholder function - image generation is disabled
+const generatePropertyImage = async (description: string): Promise<string | null> => {
+  console.warn('Image generation is disabled');
+  return null;
+};
 
 export async function getPropertyImage(description: string): Promise<string> {
   try {

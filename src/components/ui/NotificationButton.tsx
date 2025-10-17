@@ -211,7 +211,7 @@ export const NotificationButton = () => {
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 bg-primary text-white p-3 rounded-full shadow-lg hover:bg-primary/90 transition-all duration-300 group"
+        className="bg-primary text-white p-3 rounded-full shadow-lg hover:bg-primary/90 transition-all duration-300 group"
         aria-label="Get property notifications"
       >
         <Bell className="h-6 w-6" />
