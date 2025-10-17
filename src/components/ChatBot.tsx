@@ -69,7 +69,10 @@ export function ChatBot() {
   const [showQuickReplies, setShowQuickReplies] = useState(true);
   const [failureCount, setFailureCount] = useState(0);
   const [userMentionedLocation, setUserMentionedLocation] = useState<string | null>(null);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string>(() => {
+    const stored = localStorage.getItem('chat_conversation_id');
+    return stored || crypto.randomUUID();
+  });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -144,34 +147,24 @@ export function ChatBot() {
           }
         }
 
-        // Generate conversation ID client-side (works for both anon and auth)
-        const savedConvId = localStorage.getItem('chat_conversation_id');
-        let newConvId = savedConvId;
-        
-        if (!newConvId) {
-          newConvId = crypto.randomUUID();
-        }
-
-        // Create new conversation in DB with the generated ID
+        // Use upsert instead of insert to avoid duplicate key errors
         const { error } = await supabase
           .from('chat_conversations')
-          .insert([{ id: newConvId, user_id: userId }]);
+          .upsert([{ id: conversationId, user_id: userId }], { 
+            onConflict: 'id',
+            ignoreDuplicates: false 
+          });
 
         if (error) {
-          console.error('Failed to create conversation:', error);
+          console.error('Failed to upsert conversation:', error);
           toast({
-            title: "Connection Issue",
-            description: "Could not establish chat session. Using local session.",
-            variant: "destructive"
+            title: "Chat in ephemeral mode",
+            description: "Messages won't persist. Continuing in-memory.",
+            variant: "default"
           });
-          // Still use the conversation ID locally for this session
-          setConversationId(newConvId);
-          localStorage.setItem('chat_conversation_id', newConvId);
-          return;
+        } else {
+          localStorage.setItem('chat_conversation_id', conversationId);
         }
-
-        setConversationId(newConvId);
-        localStorage.setItem('chat_conversation_id', newConvId);
       } catch (error) {
         console.error('Error initializing conversation:', error);
         // Fallback to ephemeral session
@@ -249,11 +242,11 @@ export function ChatBot() {
         }
       }
       
-      // Prepare conversation history for AI (last 15 messages for context)
+      // Prepare conversation history for AI (last 12 messages for context, optimized)
       const conversationHistory = [...messages, newUserMessage].map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.text
-      })).slice(-15);
+      })).slice(-12);
 
       // Call streaming edge function
       const response = await fetch(
@@ -621,10 +614,13 @@ export function ChatBot() {
       
       const { error } = await supabase
         .from('chat_conversations')
-        .insert([{ id: newConvId, user_id: userId }]);
+        .upsert([{ id: newConvId, user_id: userId }], { 
+          onConflict: 'id',
+          ignoreDuplicates: false 
+        });
 
       if (error) {
-        console.error('Failed to create new conversation:', error);
+        console.error('Failed to upsert new conversation on clear:', error);
       }
       
       setConversationId(newConvId);
@@ -632,11 +628,10 @@ export function ChatBot() {
     } catch (e) {
       console.error('Failed to create new conversation on clear:', e);
       toast({
-        title: "Error",
-        description: "Could not clear chat. Please refresh the page.",
-        variant: "destructive"
+        title: "Chat Cleared",
+        description: "Starting fresh in ephemeral mode",
+        variant: "default"
       });
-      return;
     }
 
     setMessages([
@@ -671,19 +666,19 @@ export function ChatBot() {
 
   return (
     <>
-      {/* Chat button - positioned to not overlap with notification button */}
+      {/* Chat button - fixed bottom-right with proper z-index */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-4 right-4 rounded-full p-3 h-12 w-12 shadow-lg z-50 bg-accent hover:bg-accent/90"
+        className="fixed bottom-6 right-6 rounded-full p-3 h-12 w-12 shadow-lg z-50 bg-accent hover:bg-accent/90"
         aria-label="Chat with us"
       >
         {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
       </Button>
 
-      {/* Chat window */}
+      {/* Chat window - positioned above button */}
       <div
         className={cn(
-          "fixed right-4 bottom-20 w-[calc(100vw-2rem)] max-w-md md:w-96 z-50 transition-all duration-300 ease-in-out transform",
+          "fixed right-6 bottom-24 w-[calc(100vw-2rem)] max-w-md md:w-96 z-[60] transition-all duration-300 ease-in-out transform",
           isOpen ? "translate-y-0 opacity-100 animate-enter" : "translate-y-8 opacity-0 pointer-events-none"
         )}
       >

@@ -154,6 +154,14 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Health check endpoint for pre-warming
+  const url = new URL(req.url);
+  if (req.method === 'GET' && url.searchParams.get('health') === '1') {
+    return new Response(JSON.stringify({ status: 'ok' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     // Rate limiting based on IP address
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 

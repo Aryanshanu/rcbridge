@@ -131,6 +131,11 @@ const App = () => {
     console.log("App initialization started");
     console.log("Current path:", window.location.pathname);
     
+    // Pre-warm chat assistant edge function
+    fetch('https://hchtekfbtcbfsfxkjyfi.functions.supabase.co/chat-assistant?health=1')
+      .then(() => console.log('Chat assistant pre-warmed'))
+      .catch(() => console.log('Chat assistant pre-warm failed (non-critical)'));
+    
     const timer = setTimeout(() => {
       setIsAppReady(true);
       console.log("App ready for navigation");
