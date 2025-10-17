@@ -50,6 +50,35 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_context: {
+        Row: {
+          conversation_id: string
+          entities: Json | null
+          last_action: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          conversation_id: string
+          entities?: Json | null
+          last_action?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          conversation_id?: string
+          entities?: Json | null
+          last_action?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_context_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: true
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversations: {
         Row: {
           created_at: string

@@ -2,6 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { searchTavily, formatSearchResults } from './tavily.ts';
+import { searchPropertiesDatabase } from './propertySearch.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -417,7 +418,7 @@ async function callHuggingFaceWithFunctionCalling(
   systemPromptOverride?: string,
   retries = 3
 ): Promise<Response> {
-  // Define search tool for function calling
+  // Define tools for function calling
   const tools = [
     {
       type: "function",
@@ -433,6 +434,40 @@ async function callHuggingFaceWithFunctionCalling(
             }
           },
           required: ["query"]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "search_properties_db",
+        description: "Search local property database for available listings based on user requirements. Use when user has provided specific criteria like budget, location, property type, or size.",
+        parameters: {
+          type: "object",
+          properties: {
+            budget_min: {
+              type: "number",
+              description: "Minimum budget in rupees (e.g., 5000000 for 50 lakhs)"
+            },
+            budget_max: {
+              type: "number",
+              description: "Maximum budget in rupees"
+            },
+            location: {
+              type: "string",
+              description: "Location/area name (e.g., 'Pocharam', 'Gachibowli')"
+            },
+            property_type: {
+              type: "string",
+              enum: ["residential", "commercial", "agricultural", "plot"],
+              description: "Type of property"
+            },
+            min_area: {
+              type: "number",
+              description: "Minimum area in square feet or yards"
+            }
+          },
+          required: []
         }
       }
     }
@@ -683,7 +718,29 @@ async function processFunctionCalls(
       });
     }
 
-    // Execute function calls (Tier 3: Model-driven search)
+    // Execute function calls (Tier 3: Model-driven function calling)
+    console.log(`[Tier 3] Executing ${toolCalls.length} function call(s)`);
+    const toolResponses = [];
+    
+    for (const toolCall of toolCalls) {
+      const functionName = toolCall.function.name;
+      const functionArgs = JSON.parse(toolCall.function.arguments);
+      
+      if (functionName === 'search_properties_db') {
+        console.log('[Property DB Search] Executing with args:', functionArgs);
+        const properties = await searchPropertiesDatabase(functionArgs);
+        toolResponses.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          name: functionName,
+          content: properties
+        });
+      } else if (functionName === 'search_real_estate_info') {
+        // Existing search logic continues below
+      }
+    }
+    
+    // Original search handling code continues...
     console.log('[Tier 3] Model requested tool calls:', toolCalls.map(tc => tc.function.name));
     
     const toolResponses: Array<{ role: string; content: string; tool_call_id: string }> = [];

@@ -14,7 +14,10 @@ import {
   extractTimeline,
   extractLocations,
   addToConversationContext,
-  loadConversationContext
+  loadConversationContext,
+  updateContextWithMessage,
+  loadContextEntities,
+  type ChatEntities
 } from '@/utils/chatbotUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -71,6 +74,7 @@ export function ChatBot() {
     return stored || crypto.randomUUID();
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [contextEntities, setContextEntities] = useState<ChatEntities>({});
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +99,13 @@ export function ChatBot() {
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id || null;
         setIsAuthenticated(!!userId);
+
+        // Load context entities from database
+        const entities = await loadContextEntities(conversationId);
+        setContextEntities(entities);
+        if (entities.budget) setExtractedBudget(entities.budget);
+        if (entities.location) setExtractedLocation(entities.location);
+        if (entities.timeline) setExtractedTimeline(entities.timeline);
 
         // For authenticated users: try to load existing conversation
         if (userId) {
@@ -216,6 +227,12 @@ export function ChatBot() {
 
     setMessages((prev) => [...prev, newUserMessage]);
     addToConversationContext('user', userMessage);
+    
+    // Update context with new message
+    await updateContextWithMessage(conversationId, userMessage, 'user');
+    const updatedEntities = await loadContextEntities(conversationId);
+    setContextEntities(updatedEntities);
+    
     setIsLoading(true);
 
     try {
@@ -243,7 +260,13 @@ export function ChatBot() {
         content: msg.text
       })).slice(-12);
 
-      // Call streaming edge function
+      // Inject context summary into system message
+      const contextSummary = Object.entries(updatedEntities)
+        .filter(([_, v]) => v)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(', ');
+
+      // Call streaming edge function with context
       const response = await fetch(
         `https://hchtekfbtcbfsfxkjyfi.functions.supabase.co/chat-assistant`,
         {
@@ -251,7 +274,10 @@ export function ChatBot() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ messages: conversationHistory }),
+          body: JSON.stringify({ 
+            messages: conversationHistory,
+            context: contextSummary // Send context summary to backend
+          }),
         }
       );
 
@@ -458,17 +484,34 @@ export function ChatBot() {
   
   // Image generation feature has been disabled per user request
   
-  const openInquiryForm = () => {
-    // Pre-populate message with recent conversation
+  const openInquiryForm = async () => {
+    // Load latest context
+    const entities = await loadContextEntities(conversationId);
+    
+    // Get user profile if authenticated
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    
+    // Pre-populate form with context and user data
     const recentConversation = messages
       .slice(-3)
       .map(msg => `${msg.sender === 'user' ? 'Me' : 'Assistant'}: ${msg.text}`)
       .join('\n');
     
-    setInquiryData(prev => ({
-      ...prev,
-      message: `Based on my conversation with the assistant:\n\n${recentConversation}\n\nI'd like to know more about:`,
-    }));
+    let requirementText = '';
+    if (entities.budget) requirementText += `Budget: ${entities.budget}\n`;
+    if (entities.location) requirementText += `Location: ${entities.location}\n`;
+    if (entities.property_type) requirementText += `Property Type: ${entities.property_type}\n`;
+    if (entities.size) requirementText += `Size: ${entities.size}\n`;
+    if (entities.timeline) requirementText += `Timeline: ${entities.timeline}\n`;
+    requirementText += `\n${recentConversation}\n\nI'd like to know more about:`;
+    
+    setInquiryData({
+      name: entities.name || user?.user_metadata?.full_name || '',
+      email: entities.email || user?.email || '',
+      phone: entities.phone || '',
+      message: requirementText,
+    });
     
     setShowInquiryForm(true);
   };
@@ -585,6 +628,7 @@ export function ChatBot() {
     setShowQuickReplies(true);
     setFailureCount(0);
     setUserMentionedLocation(null);
+    setContextEntities({});
     toast({
       title: "Chat Cleared",
       description: "Starting a fresh conversation",
@@ -649,21 +693,31 @@ export function ChatBot() {
             </div>
             
             {/* Extracted Information Badges */}
-            {(extractedBudget || extractedLocation || extractedTimeline) && (
+            {Object.keys(contextEntities).some(k => contextEntities[k as keyof ChatEntities]) && (
               <div className="flex flex-wrap gap-2 px-3 pb-2 border-t border-accent-foreground/20 pt-2">
-                {extractedBudget && (
+                {contextEntities.budget && (
                   <Badge variant="secondary" className="bg-accent-foreground/20 text-accent-foreground border-0 text-xs">
-                    💰 {extractedBudget}
+                    💰 {contextEntities.budget}
                   </Badge>
                 )}
-                {extractedLocation && (
+                {contextEntities.location && (
                   <Badge variant="secondary" className="bg-accent-foreground/20 text-accent-foreground border-0 text-xs">
-                    📍 {extractedLocation}
+                    📍 {contextEntities.location}
                   </Badge>
                 )}
-                {extractedTimeline && (
+                {contextEntities.property_type && (
                   <Badge variant="secondary" className="bg-accent-foreground/20 text-accent-foreground border-0 text-xs">
-                    ⏱️ {extractedTimeline}
+                    🏠 {contextEntities.property_type}
+                  </Badge>
+                )}
+                {contextEntities.size && (
+                  <Badge variant="secondary" className="bg-accent-foreground/20 text-accent-foreground border-0 text-xs">
+                    📐 {contextEntities.size}
+                  </Badge>
+                )}
+                {contextEntities.timeline && (
+                  <Badge variant="secondary" className="bg-accent-foreground/20 text-accent-foreground border-0 text-xs">
+                    ⏱️ {contextEntities.timeline}
                   </Badge>
                 )}
               </div>

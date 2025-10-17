@@ -3,9 +3,23 @@
  * Clean implementation using AI edge function
  */
 
+import { supabase } from "@/integrations/supabase/client";
+
 // User conversation tracking
 let conversationContext: Array<{ role: string; content: string }> = [];
 let userProfileInfo: Record<string, any> = {};
+
+export interface ChatEntities {
+  budget?: string;
+  location?: string;
+  size?: string;
+  timeline?: string;
+  property_type?: string;
+  intent?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+}
 
 /**
  * Initializes the chat model - simplified for reliability
@@ -81,6 +95,106 @@ export function extractTimeline(message: string): string | null {
   }
   
   return null;
+}
+
+/**
+ * Extract property type from user message
+ */
+export function extractPropertyType(message: string): string | null {
+  const normalizedMessage = message.toLowerCase();
+  
+  const propertyTypes = [
+    { keywords: ['plot', 'land', 'acre', 'sq yard', 'open plot'], type: 'plot' },
+    { keywords: ['apartment', 'flat', 'bhk', '2bhk', '3bhk'], type: 'apartment' },
+    { keywords: ['villa', 'independent house', 'bungalow'], type: 'villa' },
+    { keywords: ['commercial', 'office', 'shop', 'retail'], type: 'commercial' },
+    { keywords: ['agricultural', 'farm land', 'farming'], type: 'agricultural' }
+  ];
+  
+  for (const { keywords, type } of propertyTypes) {
+    if (keywords.some(kw => normalizedMessage.includes(kw))) {
+      return type;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Extract size information from user message
+ */
+export function extractSize(message: string): string | null {
+  const sizeRegex = /(\d+(\.\d+)?)\s*(sq\s*(?:yard|yards|ft|feet|meter|metres?|m)|square\s*(?:yard|yards|feet|foot|meter|metres?)|yard|yards)/i;
+  const match = message.match(sizeRegex);
+  
+  if (match) {
+    return match[0];
+  }
+  
+  return null;
+}
+
+/**
+ * Extract intent from user message (buying, selling, investing)
+ */
+export function extractIntent(message: string): string | null {
+  const normalizedMessage = message.toLowerCase();
+  
+  const intents = [
+    { keywords: ['buy', 'buying', 'purchase', 'looking for'], intent: 'buying' },
+    { keywords: ['sell', 'selling', 'list my property'], intent: 'selling' },
+    { keywords: ['invest', 'investing', 'investment', 'roi'], intent: 'investing' },
+    { keywords: ['rent', 'renting', 'lease', 'tenant'], intent: 'renting' }
+  ];
+  
+  for (const { keywords, intent } of intents) {
+    if (keywords.some(kw => normalizedMessage.includes(kw))) {
+      return intent;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Extract contact information from user message
+ */
+export function extractContactInfo(message: string): { email?: string; phone?: string; name?: string } {
+  const result: { email?: string; phone?: string; name?: string } = {};
+  
+  // Email extraction
+  const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
+  const emailMatch = message.match(emailRegex);
+  if (emailMatch) {
+    result.email = emailMatch[0];
+  }
+  
+  // Phone extraction (Indian format)
+  const phoneRegex = /(\+91|91)?[\s-]?[6-9]\d{9}/;
+  const phoneMatch = message.match(phoneRegex);
+  if (phoneMatch) {
+    result.phone = phoneMatch[0].replace(/[\s-]/g, '');
+  }
+  
+  return result;
+}
+
+/**
+ * Extract all entities from a message
+ */
+export function extractAllEntities(message: string): Partial<ChatEntities> {
+  const contactInfo = extractContactInfo(message);
+  return {
+    budget: extractBudget(message) || undefined,
+    location: extractLocations(message)[0] || undefined,
+    size: extractSize(message) || undefined,
+    timeline: extractTimeline(message) || undefined,
+    property_type: extractPropertyType(message) || undefined,
+    intent: extractIntent(message) || undefined,
+    email: contactInfo.email,
+    phone: contactInfo.phone,
+    name: contactInfo.name
+  };
 }
 
 /**
@@ -166,4 +280,71 @@ export function updateUserProfile(profileData: Record<string, any>): void {
  */
 export function getUserProfile(): Record<string, any> {
   return userProfileInfo;
+}
+
+/**
+ * Persist conversation context to database
+ */
+export async function persistContextToDatabase(
+  conversationId: string,
+  entities: Partial<ChatEntities>,
+  lastAction?: string
+): Promise<void> {
+  try {
+    const { data: existing } = await supabase
+      .from('chat_context')
+      .select('entities')
+      .eq('conversation_id', conversationId)
+      .maybeSingle();
+    
+    const existingEntities = (existing?.entities || {}) as Record<string, any>;
+    const newEntities = Object.fromEntries(
+      Object.entries(entities).filter(([_, v]) => v !== undefined && v !== null)
+    );
+    const mergedEntities = { ...existingEntities, ...newEntities };
+    
+    await supabase
+      .from('chat_context')
+      .upsert({
+        conversation_id: conversationId,
+        entities: mergedEntities,
+        last_action: lastAction
+      });
+  } catch (error) {
+    console.error('Error persisting context:', error);
+  }
+}
+
+/**
+ * Load context entities from database
+ */
+export async function loadContextEntities(conversationId: string): Promise<ChatEntities> {
+  try {
+    const { data } = await supabase
+      .from('chat_context')
+      .select('entities')
+      .eq('conversation_id', conversationId)
+      .maybeSingle();
+    
+    return (data?.entities as ChatEntities) || {};
+  } catch (error) {
+    console.error('Error loading context:', error);
+    return {};
+  }
+}
+
+/**
+ * Update context with new message
+ */
+export async function updateContextWithMessage(
+  conversationId: string,
+  message: string,
+  role: 'user' | 'assistant'
+): Promise<void> {
+  if (role === 'user') {
+    const entities = extractAllEntities(message);
+    if (Object.keys(entities).length > 0) {
+      await persistContextToDatabase(conversationId, entities);
+    }
+  }
 }
