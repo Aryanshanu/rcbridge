@@ -198,7 +198,7 @@ export default function Admin() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <AdminProperties />
+                  <AdminProperties userRole={userRole} />
                 </CardContent>
               </Card>
             </TabsContent>
