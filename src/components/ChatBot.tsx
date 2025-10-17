@@ -8,8 +8,6 @@ import { MessageCircle, X, Send, Loader2, Image, ChevronDown, User, Bot, MapPin,
 import { 
   initializeChatModel, 
   initializeImageModel, 
-  generatePropertyImage,
-  storeUserInquiry,
   getConversationContext,
   clearConversationContext,
   updateUserProfile,
@@ -19,6 +17,7 @@ import {
   addToConversationContext,
   loadConversationContext
 } from '@/utils/chatbotUtils';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
@@ -70,6 +69,7 @@ export function ChatBot() {
   const [showQuickReplies, setShowQuickReplies] = useState(true);
   const [failureCount, setFailureCount] = useState(0);
   const [userMentionedLocation, setUserMentionedLocation] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -93,46 +93,64 @@ export function ChatBot() {
     loadModels();
     loadConversationContext();
     
-    // Load previous conversations from localStorage if available
-    const savedMessages = localStorage.getItem('chatMessages');
-    if (savedMessages) {
+    // Initialize or load conversation from Supabase and fetch messages
+    (async () => {
       try {
-        const parsedMessages = JSON.parse(savedMessages);
-        // Convert string dates back to Date objects
-        const formattedMessages = parsedMessages.map((msg: any) => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
-        }));
-        setMessages(formattedMessages);
-        
-        // Extract info from saved messages
-        parsedMessages.forEach((msg: Message) => {
-          if (msg.sender === 'user') {
-            const budget = extractBudget(msg.text);
-            const timeline = extractTimeline(msg.text);
-            const locations = extractLocations(msg.text);
-            
-            if (budget) setExtractedBudget(budget);
-            if (timeline) setExtractedTimeline(timeline);
-            if (locations.length > 0) setExtractedLocation(locations[0]);
+        let convId = localStorage.getItem('conversation_id');
+
+        if (!convId) {
+          const { data, error } = await supabase
+            .from('chat_conversations')
+            .insert([{ user_id: null }])
+            .select('id')
+            .single();
+          if (error) throw error;
+          convId = data.id;
+          localStorage.setItem('conversation_id', convId);
+        }
+        setConversationId(convId);
+
+        // Fetch existing messages
+        const { data: dbMessages, error: fetchErr } = await supabase
+          .from('chat_messages')
+          .select('created_at, sender_type, content')
+          .eq('conversation_id', convId)
+          .order('created_at', { ascending: true });
+
+        if (fetchErr) throw fetchErr;
+
+        if (dbMessages && dbMessages.length > 0) {
+          const mapped = dbMessages.map((m: any, idx: number) => ({
+            id: idx,
+            text: m.content,
+            sender: m.sender_type === 'user' ? 'user' : 'bot',
+            timestamp: new Date(m.created_at),
+          })) as Message[];
+
+          setMessages(prev => {
+            // Keep the initial welcome only if no db messages
+            return mapped.length > 0 ? mapped : prev;
+          });
+
+          // Extract info from user messages
+          for (const msg of mapped) {
+            if (msg.sender === 'user') {
+              const b = extractBudget(msg.text);
+              const t = extractTimeline(msg.text);
+              const locs = extractLocations(msg.text);
+              if (b && !extractedBudget) setExtractedBudget(b);
+              if (t && !extractedTimeline) setExtractedTimeline(t);
+              if (locs.length > 0 && !extractedLocation) setExtractedLocation(locs[0]);
+            }
           }
-        });
-      } catch (error) {
-        console.error('Error loading saved messages:', error);
+        }
+      } catch (e) {
+        console.error('Failed to init conversation/messages:', e);
       }
-    }
+    })();
   }, [toast]);
 
-  useEffect(() => {
-    // Save messages to localStorage when they change
-    if (messages.length > 1) { // Don't save if it's just the welcome message
-      try {
-        localStorage.setItem('chatMessages', JSON.stringify(messages));
-      } catch (error) {
-        console.error('Error saving messages:', error);
-      }
-    }
-  }, [messages]);
+  // removed localStorage persistence of messages
 
   useEffect(() => {
     // Scroll to the bottom when messages change
@@ -179,8 +197,27 @@ export function ChatBot() {
     setIsLoading(true);
 
     try {
-      // Store user inquiry for later analysis
-      storeUserInquiry(userMessage, getConversationContext());
+      // Ensure a conversation exists
+      let convId = conversationId;
+      if (!convId) {
+        const { data: convData, error: convErr } = await supabase
+          .from('chat_conversations')
+          .insert([{ user_id: null }])
+          .select('id')
+          .single();
+        if (convErr) throw convErr;
+        convId = convData.id;
+        setConversationId(convId);
+        localStorage.setItem('conversation_id', convId);
+      }
+
+      // Persist user message
+      await supabase.from('chat_messages').insert({
+        conversation_id: convId,
+        sender_type: 'user',
+        content: userMessage,
+        message_type: 'text',
+      });
       
       // Prepare conversation history for AI (last 15 messages for context)
       const conversationHistory = [...messages, newUserMessage].map(msg => ({
@@ -188,9 +225,9 @@ export function ChatBot() {
         content: msg.text
       })).slice(-15);
 
-      // Call streaming edge function
+      // Call streaming edge function (correct domain)
       const response = await fetch(
-        `https://hchtekfbtcbfsfxkjyfi.supabase.co/functions/v1/chat-assistant`,
+        `https://hchtekfbtcbfsfxkjyfi.functions.supabase.co/functions/v1/chat-assistant`,
         {
           method: "POST",
           headers: {
@@ -298,6 +335,21 @@ export function ChatBot() {
 
       // Add to conversation context
       addToConversationContext('assistant', assistantMessage);
+
+      // Persist assistant message
+      try {
+        if (conversationId) {
+          await supabase.from('chat_messages').insert({
+            conversation_id: conversationId,
+            sender_type: 'assistant',
+            content: assistantMessage,
+            message_type: 'text',
+          });
+        }
+      } catch (dbErr) {
+        console.error('Failed to persist assistant message:', dbErr);
+      }
+
       setIsLoading(false);
       setFailureCount(0); // Reset failure count on success
       
@@ -397,7 +449,12 @@ export function ChatBot() {
         propertyDescription = `Agricultural land in ${userMentionedLocation || 'Hyderabad outskirts'} with green fields`;
       }
       
-      const imageUrl = await generatePropertyImage(propertyDescription);
+      // Call edge function to generate image
+      const { data, error } = await supabase.functions.invoke('generate-property-image', {
+        body: { prompt: propertyDescription }
+      });
+      if (error) throw error;
+      const imageUrl = data?.image as string | undefined;
       
       if (imageUrl) {
         const imageMessage: Message = {
@@ -449,25 +506,32 @@ export function ChatBot() {
     setShowInquiryForm(true);
   };
   
-  const handleInquirySubmit = (e: React.FormEvent) => {
+  const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      // Store in localStorage for now (would go to a backend in production)
-      const inquiries = JSON.parse(localStorage.getItem('userDetailedInquiries') || '[]');
-      inquiries.push({
-        ...inquiryData,
-        timestamp: new Date().toISOString(),
-        extractedBudget,
-        extractedLocation,
-        extractedTimeline,
-        conversationHistory: messages.map(msg => ({
-          text: msg.text,
-          sender: msg.sender,
-          timestamp: msg.timestamp.toISOString()
-        }))
+      // Ensure conversation
+      let convId = conversationId;
+      if (!convId) {
+        const { data: convData, error: convErr } = await supabase
+          .from('chat_conversations')
+          .insert([{ user_id: null }])
+          .select('id')
+          .single();
+        if (convErr) throw convErr;
+        convId = convData.id;
+        setConversationId(convId);
+        localStorage.setItem('conversation_id', convId);
+      }
+
+      const { error: insertErr } = await supabase.from('chat_user_info').insert({
+        conversation_id: convId,
+        name: inquiryData.name,
+        email: inquiryData.email,
+        phone: inquiryData.phone,
+        requirements: inquiryData.message,
       });
-      localStorage.setItem('userDetailedInquiries', JSON.stringify(inquiries));
+      if (insertErr) throw insertErr;
       
       // Update user profile for personalized responses
       updateUserProfile({
@@ -510,7 +574,21 @@ export function ChatBot() {
     }
   };
   
-  const clearChat = () => {
+  const clearChat = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('chat_conversations')
+        .insert([{ user_id: null }])
+        .select('id')
+        .single();
+      if (error) throw error;
+      const newId = data.id;
+      setConversationId(newId);
+      localStorage.setItem('conversation_id', newId);
+    } catch (e) {
+      console.error('Failed to create new conversation on clear:', e);
+    }
+
     setMessages([
       {
         id: 0,
@@ -520,7 +598,6 @@ export function ChatBot() {
       }
     ]);
     clearConversationContext();
-    localStorage.removeItem('chatMessages');
     setExtractedBudget(null);
     setExtractedLocation(null);
     setExtractedTimeline(null);
@@ -547,7 +624,7 @@ export function ChatBot() {
       {/* Chat button - positioned to not overlap with notification button */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-20 right-4 rounded-full p-3 h-12 w-12 shadow-lg z-50 bg-accent hover:bg-accent/90"
+        className="fixed bottom-4 right-4 rounded-full p-3 h-12 w-12 shadow-lg z-50 bg-accent hover:bg-accent/90"
         aria-label="Chat with us"
       >
         {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
@@ -556,11 +633,11 @@ export function ChatBot() {
       {/* Chat window */}
       <div
         className={cn(
-          "fixed bottom-36 right-4 w-80 md:w-96 z-50 transition-all duration-300 ease-in-out transform",
-          isOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0 pointer-events-none"
+          "fixed right-4 bottom-20 w-[calc(100vw-2rem)] max-w-md md:w-96 z-50 transition-all duration-300 ease-in-out transform",
+          isOpen ? "translate-y-0 opacity-100 animate-enter" : "translate-y-8 opacity-0 pointer-events-none"
         )}
       >
-        <Card className="flex flex-col h-[500px] max-h-[70vh] overflow-hidden shadow-xl border-accent/20">
+        <Card className="flex flex-col h-[calc(100vh-120px)] md:h-[500px] md:max-h-[70vh] overflow-hidden shadow-xl border-accent/20">
           {/* Chat header */}
           <div className="flex flex-col border-b bg-accent text-accent-foreground">
             <div className="flex items-center justify-between p-3">
@@ -613,7 +690,7 @@ export function ChatBot() {
           </div>
 
           {/* Chat messages */}
-          <div className="flex-1 p-3 overflow-y-auto bg-gray-50">
+          <div className="flex-1 p-3 overflow-y-auto bg-background">
             {!modelReady && (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">

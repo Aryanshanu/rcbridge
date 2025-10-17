@@ -2,3 +2,6 @@ project_id = "hchtekfbtcbfsfxkjyfi"
 
 [functions.chat-assistant]
 verify_jwt = false
+
+[functions.generate-property-image]
+verify_jwt = false
