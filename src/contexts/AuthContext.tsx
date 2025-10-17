@@ -27,20 +27,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session ? "User session found" : "No session found");
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
     // Set up auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event, session ? "Session exists" : "No session");
-      
       const previousUser = user;
       const currentUser = session?.user ?? null;
       
       if (event === 'SIGNED_OUT') {
-        console.log('User signed out, clearing user state');
         setUser(null);
       } else {
         setUser(currentUser);
@@ -57,14 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      console.log("Starting Google Sign In process...");
-      
-      // Get the current window location for debugging
-      console.log("Current window location:", window.location.href);
-      
-      // Build and log the redirectTo URL for debugging
       const redirectUrl = window.location.origin;
-      console.log("Redirect URL being used:", redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -78,24 +67,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (error) {
-        console.error('Detailed Google sign-in error:', {
-          message: error.message,
-          status: error.status,
-          name: error.name,
-          stack: error.stack
-        });
         throw error;
       }
       
-      console.log("Google Sign In successful, data:", data);
-      
       // If the URL property exists in the response, redirect the user
       if (data?.url) {
-        console.log("Redirecting to:", data.url);
         window.location.href = data.url;
       }
     } catch (error: any) {
-      console.error('Error signing in with Google:', error);
+      console.error('Error signing in with Google');
       uiToast({
         title: "Error signing in with Google",
         description: error.message || "Please try again later.",
@@ -106,22 +86,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log("Starting email/password sign in process...");
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       
       if (error) {
-        console.error('Sign in error:', error);
         throw error;
       }
-      
-      console.log("Sign in successful:", data);
-      // Not returning data
     } catch (error: any) {
-      console.error('Error signing in:', error);
+      console.error('Error signing in');
       uiToast({
         title: "Error signing in",
         description: error.message || "Please check your credentials and try again.",
@@ -133,9 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, metadata?: { [key: string]: any }) => {
     try {
-      console.log("Starting sign up process...");
-      
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -144,14 +116,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (error) {
-        console.error('Sign up error:', error);
         throw error;
       }
-      
-      console.log("Sign up successful:", data);
-      // Not returning data
     } catch (error: any) {
-      console.error('Error signing up:', error);
+      console.error('Error signing up');
       uiToast({
         title: "Error signing up",
         description: error.message || "Please try again later.",
@@ -163,8 +131,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      console.log("Signing out user...");
-      
       // Clear user state first to prevent any race conditions
       setUser(null);
       
@@ -182,7 +148,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Remove all matched keys
       keysToRemove.forEach(key => {
-        console.log('Removing localStorage item:', key);
         localStorage.removeItem(key);
       });
       
@@ -198,7 +163,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       
       if (error) {
-        console.error('Sign out error:', error);
         throw error;
       }
       
@@ -211,7 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }, 500);
       
     } catch (error: any) {
-      console.error('Error signing out:', error);
+      console.error('Error signing out');
       toast.error("Error signing out: " + (error.message || "Please try again"));
       
       // Attempt a more aggressive approach if normal signout fails
@@ -223,7 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Force reload the page
         window.location.href = '/';
       } catch (e) {
-        console.error('Final fallback error:', e);
+        console.error('Final fallback error');
       }
     }
   };

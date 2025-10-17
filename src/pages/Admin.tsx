@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, MessageSquare, Home as HomeIcon, Users, Shield } from "lucide-react";
 import { SEO } from "@/components/SEO";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Admin() {
   const { user } = useAuth();
@@ -25,14 +26,31 @@ export default function Admin() {
         return;
       }
 
-      const role = await getUserRole();
-      if (!role || (role !== "admin" && role !== "developer" && role !== "maintainer")) {
-        navigate("/");
+      // Server-side role verification
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/login");
         return;
       }
 
-      setUserRole(role);
-      setIsLoading(false);
+      try {
+        const { data, error } = await supabase.functions.invoke('verify-admin', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          }
+        });
+
+        if (error || !data?.authorized) {
+          navigate("/");
+          return;
+        }
+
+        setUserRole(data.role);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Admin verification failed');
+        navigate("/");
+      }
     };
 
     checkAuth();
