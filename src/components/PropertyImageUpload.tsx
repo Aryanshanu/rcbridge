@@ -34,11 +34,44 @@ export const PropertyImageUpload = ({ propertyId, onUploadComplete }: PropertyIm
       return;
     }
 
+    // Security: Validate file size (max 10MB)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      toast({
+        title: "File Too Large",
+        description: "Image must be less than 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Security: Validate MIME type
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Only JPG, PNG, WEBP, and GIF images are allowed",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Security: Validate file extension
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
+    const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    if (!fileExt || !ALLOWED_EXTENSIONS.includes(fileExt)) {
+      toast({
+        title: "Invalid File Extension",
+        description: "Only .jpg, .png, .webp, and .gif files are allowed",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsUploading(true);
       
       // Upload image to Supabase Storage
-      const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       const filePath = `${propertyId}/${fileName}`;
 
@@ -131,7 +164,7 @@ export const PropertyImageUpload = ({ propertyId, onUploadComplete }: PropertyIm
           {isUploading ? "Uploading..." : "Click to upload property image"}
         </span>
         <p className="mt-1 text-xs text-gray-400">
-          Supported formats: JPG, PNG, GIF (Max 5MB)
+          Supported formats: JPG, PNG, WEBP, GIF (Max 10MB)
         </p>
       </label>
     </div>
