@@ -103,6 +103,12 @@ DO NOT USE SEARCH FOR:
 - Property features or amenities explanations
 - Historical facts about Hyderabad areas
 
+CRITICAL OUTPUT RULES:
+- NEVER display tool calls, XML tags, JSON, or <function> tags to users
+- If you need to search, use the tool silently - your final response must be ONLY natural language
+- Users should NEVER see function names, parameters, or any technical markup
+- Your responses must be conversational text only, no code or tags
+
 IMPORTANT: When search results are provided to you (marked as "CURRENT SEARCH RESULTS"), always cite the source. Otherwise, answer confidently from your training data.
 
 COMPANY CONTEXT:
@@ -567,11 +573,95 @@ async function processFunctionCalls(
       }
     }
 
-    // No tool calls detected - return model's response from knowledge base
+    // Sanitizer to remove function tags (defensive measure)
+    const sanitizeContent = (text: string): string => {
+      return text.replace(/<function[^>]*>[\s\S]*?<\/function>/gi, '');
+    };
+
+    // No tool calls detected - check for markup-style fake tool calls
     if (!hasToolCall || toolCalls.length === 0) {
-      console.log('[Tier 1] Answering from knowledge base (no search needed)');
+      console.log('[Tier 1] No proper tool calls - checking for markup-style calls');
       
-      // Re-create response with accumulated data
+      // Detect markup-style tool call like: <function=search_real_estate_info>{"query":"..."}</function>
+      const markupMatch = assistantMessage.match(/<function\s*=\s*search_real_estate_info>\s*({[\s\S]*?})\s*<\/function>/i);
+      
+      if (markupMatch) {
+        console.log('[Tier 2] Detected markup-style tool call - processing');
+        try {
+          const args = JSON.parse(markupMatch[1]);
+          const query = args.query;
+
+          // Check search rate limit
+          const now = Date.now();
+          const searchLimit = searchRateLimits.get(clientIp);
+          
+          let canSearch = true;
+          if (searchLimit) {
+            if (now < searchLimit.resetAt) {
+              if (searchLimit.count >= MAX_SEARCHES_PER_MINUTE) {
+                console.log(`[Search] Rate limit exceeded for IP: ${clientIp}`);
+                canSearch = false;
+              } else {
+                searchLimit.count++;
+              }
+            } else {
+              searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
+            }
+          } else {
+            searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
+          }
+
+          if (canSearch) {
+            console.log(`[Tier 2 Search] Executing: "${query}"`);
+            const searchResults = await searchTavily(query);
+            const formattedResults = formatSearchResults(query, searchResults);
+
+            // Make second API call with search results
+            const updatedMessages = [
+              ...conversationMessages,
+              {
+                role: 'assistant',
+                content: sanitizeContent(assistantMessage) // Remove markup before sending
+              },
+              {
+                role: 'user',
+                content: `CURRENT SEARCH RESULTS for "${query}":\n\n${formattedResults}\n\nPlease answer the user's question using this information.`
+              }
+            ];
+
+            console.log('[Tier 2] Making second API call with search results');
+            const finalResponse = await fetch(
+              "https://router.huggingface.co/v1/chat/completions",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${apiKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  model: "meta-llama/Llama-3.3-70B-Instruct",
+                  messages: [
+                    { role: "system", content: systemPromptOverride || SYSTEM_PROMPT },
+                    ...updatedMessages
+                  ],
+                  max_tokens: 500,
+                  temperature: 0.7,
+                  stream: true,
+                }),
+              }
+            );
+            return finalResponse;
+          }
+        } catch (parseError) {
+          console.error('[Tier 2] Failed to parse markup args:', parseError);
+        }
+      }
+      
+      // No tool calls at all - sanitize and return
+      console.log('[Tier 1] Answering from knowledge base (no search needed)');
+      assistantMessage = sanitizeContent(assistantMessage);
+      
+      // Re-create response with sanitized accumulated data
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         start(controller) {

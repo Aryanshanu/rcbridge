@@ -273,6 +273,11 @@ export function ChatBot() {
         throw new Error('Response body is null');
       }
 
+      // Sanitizer to remove function call tags from model output
+      const sanitizeModelContent = (text: string): string => {
+        return text.replace(/<function[^>]*>[\s\S]*?<\/function>/gi, '');
+      };
+
       // Handle streaming response
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -317,7 +322,9 @@ export function ChatBot() {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
-              assistantMessage += content;
+              // Sanitize content before adding to message
+              const sanitizedContent = sanitizeModelContent(content);
+              assistantMessage += sanitizedContent;
               // Update the bot message in real-time
               setMessages((prev) => 
                 prev.map((msg) => 
@@ -346,7 +353,9 @@ export function ChatBot() {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
-              assistantMessage += content;
+              // Sanitize content before adding to message
+              const sanitizedContent = sanitizeModelContent(content);
+              assistantMessage += sanitizedContent;
               setMessages((prev) => 
                 prev.map((msg) => 
                   msg.id === botMessageId 
@@ -358,6 +367,9 @@ export function ChatBot() {
           } catch { /* ignore partial leftovers */ }
         }
       }
+
+      // Final sanitization pass on complete message
+      assistantMessage = sanitizeModelContent(assistantMessage);
 
       // Add to conversation context
       addToConversationContext('assistant', assistantMessage);
