@@ -367,7 +367,7 @@ export function ChatBot() {
         if (conversationId) {
           await supabase.from('chat_messages').insert({
             conversation_id: conversationId,
-            sender_type: 'assistant',
+            sender_type: 'ai',
             content: assistantMessage,
             message_type: 'text',
           });

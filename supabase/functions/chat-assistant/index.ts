@@ -46,22 +46,22 @@ const SYSTEM_PROMPT = `You are the RC Bridge real estate assistant for Hyderabad
 YOUR INTERNET SEARCH CAPABILITY:
 You have access to real-time internet search through Tavily Search API via the search_real_estate_info tool. Tavily provides highly relevant, AI-optimized search results. Use it to provide current, up-to-date information.
 
-WHEN TO USE SEARCH:
+WHEN TO USE SEARCH (MANDATORY):
+- ANY question about property PRICES, land RATES, per acre costs - ALWAYS search first
+- Current/latest interest rates or loan information
 - When users ask about "current", "latest", "recent", "today", "this month/year" information
-- Current property prices, interest rates, or market trends
 - Recent news, regulations, or policy changes in Hyderabad real estate
 - Specific property availability or new listings
 - Updated market conditions or statistics
-- Any information that may have changed recently
+- Questions about specific locations + property types (e.g., "land in Pocharam")
 
 DO NOT SEARCH FOR:
 - General area information or neighborhood descriptions (use your existing knowledge)
 - Company information about RC Bridge
 - General real estate concepts or terminology
 - Historical or established facts
-- Questions the user already has answers for
 
-When you receive search results, integrate them naturally into your response and cite sources when relevant (e.g., "According to recent data...").
+CRITICAL: For ANY price/rate/cost question, you MUST use search FIRST and cite the source in your answer (e.g., "According to [source], current rates are..."). Do not rely on outdated examples.
 
 COMPANY CONTEXT:
 - RC Bridge has facilitated ₹200 Cr+ worth of deals
@@ -114,21 +114,16 @@ HYDERABAD MARKET INSIGHTS:
 - Residential plots in developing areas have seen up to 20% appreciation in 2 years
 
 KEY LOCATIONS & PROPERTIES:
-**Pocharam**: Excellent connectivity to IT hubs, affordable 2-3 BHK apartments (₹72 lakhs) and independent houses (₹1.2 Cr)
-**Gachibowli**: Premium IT hub location, luxury apartments (₹1.45 Cr), close to Financial District
-**Jubilee Hills**: Most prestigious area, luxury villas (₹4.85 Cr+) with premium amenities
-**Banjara Hills**: Elite residential area, premium apartments (₹2.45 Cr) in gated communities
-**HITEC City**: Commercial hub, modern office spaces (₹16.8 Cr), excellent connectivity
+**Pocharam**: Excellent connectivity to IT hubs, residential properties available
+**Gachibowli**: Premium IT hub location, close to Financial District
+**Jubilee Hills**: Most prestigious area, luxury properties with premium amenities
+**Banjara Hills**: Elite residential area, gated communities
+**HITEC City**: Commercial hub, excellent connectivity
 **Financial District**: New business hub, high rental demand, strong appreciation potential
 **Kokapet & Tellapur**: Emerging high-potential investment zones
+**Ghatkesar**: Growing area with good connectivity and infrastructure development
 
-PRICING RANGES:
-- Apartments in developing areas: ₹80 lakhs+
-- Premium apartments in established areas: ₹1.5-2.5 Cr
-- Independent houses: ₹1-2 Cr
-- Luxury villas: ₹4.5 Cr+
-- Commercial properties: ₹2 Cr+
-- Agricultural land: ₹1.2 Cr per acre
+IMPORTANT: For specific property prices, land rates, or current market rates, ALWAYS use the search tool first to get the most accurate, up-to-date information. Never rely on outdated pricing examples.
 
 FINANCING:
 - Partner with leading banks offering home loans starting at 7.2% interest
@@ -281,7 +276,7 @@ serve(async (req) => {
     console.log('Calling Hugging Face API with', messages.length, 'messages');
 
     // Call API with function calling support
-    const apiResponse = await callHuggingFaceWithFunctionCalling(recentMessages, HF_API_KEY, ip);
+    const apiResponse = await callHuggingFaceWithFunctionCalling(recentMessages, HF_API_KEY, ip, requestBody.messages);
     
     if (!apiResponse.ok) {
       const errorText = await apiResponse.text();
@@ -314,6 +309,7 @@ async function callHuggingFaceWithFunctionCalling(
   messages: Array<{ role: string; content: string }>,
   apiKey: string,
   clientIp: string,
+  originalMessages: Array<{ role: string; content: string }> = [],
   retries = 3
 ): Promise<Response> {
   // Define search tool for function calling
@@ -379,7 +375,7 @@ async function callHuggingFaceWithFunctionCalling(
       }
 
       // Check if response contains function calls
-      const processedResponse = await processFunctionCalls(response, messages, apiKey, clientIp);
+      const processedResponse = await processFunctionCalls(response, messages, apiKey, clientIp, originalMessages);
       return processedResponse;
 
     } catch (error) {
@@ -403,7 +399,8 @@ async function processFunctionCalls(
   response: Response,
   conversationMessages: Array<{ role: string; content: string }>,
   apiKey: string,
-  clientIp: string
+  clientIp: string,
+  originalMessages: Array<{ role: string; content: string }> = []
 ): Promise<Response> {
   const reader = response.body?.getReader();
   if (!reader) return response;
@@ -470,9 +467,91 @@ async function processFunctionCalls(
       }
     }
 
-    // If no function calls detected, return original response stream
+    // Proactive search fallback: If no function calls detected BUT user query mentions pricing/rates
     if (!hasToolCall || toolCalls.length === 0) {
-      // Re-create response with accumulated data
+      const lastUserMessage = (originalMessages.length > 0 ? originalMessages[originalMessages.length - 1] : conversationMessages[conversationMessages.length - 1])?.content?.toLowerCase() || '';
+      const priceKeywords = ['price', 'prices', 'cost', 'per acre', 'acre', 'land', 'plot', 'rate', 'rates', 'interest rate', 'latest', 'current', 'today', 'pocharam', 'ghatkesar', 'hyderabad', 'how much'];
+      const shouldProactiveSearch = priceKeywords.some(keyword => lastUserMessage.includes(keyword));
+
+      if (shouldProactiveSearch) {
+        console.log('[Proactive Search] Detected price-related query without tool call, forcing search');
+        
+        // Construct search query from user message
+        let searchQuery = lastUserMessage;
+        
+        // Enhance query for better results
+        if (!searchQuery.includes('hyderabad')) {
+          searchQuery += ' Hyderabad';
+        }
+        if (!searchQuery.includes('2025')) {
+          searchQuery += ' 2025';
+        }
+        if (searchQuery.includes('land') || searchQuery.includes('acre')) {
+          searchQuery = `current price per acre agricultural land ${searchQuery}`;
+        }
+        
+        // Execute search
+        try {
+          // Check search rate limit
+          const now = Date.now();
+          const searchLimit = searchRateLimits.get(clientIp);
+          let canSearch = true;
+          
+          if (searchLimit) {
+            if (now < searchLimit.resetAt) {
+              if (searchLimit.count >= MAX_SEARCHES_PER_MINUTE) {
+                console.log(`[Proactive Search] Rate limit exceeded for IP: ${clientIp}`);
+                canSearch = false;
+              } else {
+                searchLimit.count++;
+              }
+            } else {
+              searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
+            }
+          } else {
+            searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
+          }
+
+          if (canSearch) {
+            console.log(`[Proactive Search] Executing: "${searchQuery}"`);
+            const searchResults = await searchTavily(searchQuery);
+            const formattedResults = formatSearchResults(searchQuery, searchResults);
+            console.log(`[Proactive Search] Found ${searchResults.length} results`);
+
+            // Make second API call with search results in system context
+            const finalResponse = await fetch(
+              "https://router.huggingface.co/v1/chat/completions",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${apiKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  model: "meta-llama/Llama-3.3-70B-Instruct",
+                  messages: [
+                    { 
+                      role: "system", 
+                      content: `${SYSTEM_PROMPT}\n\n=== CURRENT SEARCH RESULTS ===\n${formattedResults}\n\nIMPORTANT: Use these search results to answer the user's question. Always cite the source when using this data.`
+                    },
+                    ...conversationMessages
+                  ],
+                  max_tokens: 500,
+                  temperature: 0.7,
+                  stream: true,
+                }),
+              }
+            );
+
+            return finalResponse;
+          }
+        } catch (error) {
+          console.error('[Proactive Search] Error:', error);
+          // Fall through to normal response if search fails
+        }
+      }
+
+      // Re-create response with accumulated data (no search or search failed)
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         start(controller) {
@@ -528,7 +607,7 @@ async function processFunctionCalls(
             searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
           }
 
-          console.log(`[Search] Executing: "${query}"`);
+          console.log(`[Tavily Search] Executing: "${query}"`);
           const searchResults = await searchTavily(query);
           const formattedResults = formatSearchResults(query, searchResults);
 
@@ -538,9 +617,9 @@ async function processFunctionCalls(
             tool_call_id: toolCall.id
           });
 
-          console.log(`[Search] Found ${searchResults.length} results`);
+          console.log(`[Tavily Search] Found ${searchResults.length} results`);
         } catch (error) {
-          console.error('[Search] Error:', error);
+          console.error('[Tavily Search] Error:', error);
           toolResponses.push({
             role: 'tool',
             content: 'Search temporarily unavailable. Using available knowledge.',
