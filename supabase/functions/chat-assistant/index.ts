@@ -41,27 +41,69 @@ setInterval(() => {
   }
 }, 300000);
 
+/**
+ * Smart Intent Classifier - Determines if search is mandatory based on semantic analysis
+ * This prevents unnecessary API calls while ensuring accurate data for time-sensitive queries
+ */
+function shouldForceSearch(userQuery: string): boolean {
+  const query = userQuery.toLowerCase();
+  
+  // Time-sensitive keywords that REQUIRE current data
+  const urgentKeywords = ['current', 'latest', 'today', 'this month', 'this year', 'recent', 'now', '2025'];
+  const priceKeywords = ['price', 'prices', 'cost', 'costs', 'rate', 'rates', 'how much', 'per acre', 'per sq'];
+  const locationKeywords = ['pocharam', 'ghatkesar', 'gachibowli', 'kondapur', 'hitech city', 'financial district', 'jubilee hills'];
+  
+  // Exclusion keywords - questions answerable from knowledge base
+  const knowledgeKeywords = ['what is', 'what are', 'how to', 'explain', 'tell me about', 'why', 'benefits of', 'advantages of'];
+  
+  // Rule 1: General knowledge questions = NO SEARCH
+  const isKnowledgeQuery = knowledgeKeywords.some(kw => query.startsWith(kw));
+  if (isKnowledgeQuery) {
+    return false;
+  }
+  
+  // Rule 2: Time-sensitive + Price/Location = MANDATORY SEARCH
+  const hasTimeContext = urgentKeywords.some(kw => query.includes(kw));
+  const hasPriceContext = priceKeywords.some(kw => query.includes(kw));
+  const hasLocationContext = locationKeywords.some(kw => query.includes(kw));
+  
+  if (hasTimeContext && (hasPriceContext || hasLocationContext)) {
+    console.log('[Smart Classifier] FORCE SEARCH: Time-sensitive + Price/Location detected');
+    return true;
+  }
+  
+  // Rule 3: Price + Specific Location (without explicit time) = MANDATORY SEARCH
+  // User asking "price in Pocharam" likely wants current data
+  if (hasPriceContext && hasLocationContext) {
+    console.log('[Smart Classifier] FORCE SEARCH: Price + Location detected');
+    return true;
+  }
+  
+  // Rule 4: Default = Let model decide via tool calling
+  return false;
+}
+
 const SYSTEM_PROMPT = `You are the RC Bridge real estate assistant for Hyderabad properties. You are conversational, empathetic, and helpful.
 
 YOUR INTERNET SEARCH CAPABILITY:
-You have access to real-time internet search through Tavily Search API via the search_real_estate_info tool. Tavily provides highly relevant, AI-optimized search results. Use it to provide current, up-to-date information.
+You have access to real-time internet search through Tavily Search API via the search_real_estate_info tool. Use it ONLY when you need current, time-sensitive information that you don't already know.
 
-WHEN TO USE SEARCH (MANDATORY):
-- ANY question about property PRICES, land RATES, per acre costs - ALWAYS search first
-- Current/latest interest rates or loan information
-- When users ask about "current", "latest", "recent", "today", "this month/year" information
-- Recent news, regulations, or policy changes in Hyderabad real estate
-- Specific property availability or new listings
-- Updated market conditions or statistics
-- Questions about specific locations + property types (e.g., "land in Pocharam")
+WHEN TO USE SEARCH (use the tool):
+- Questions asking for "current", "latest", "recent", "today", "this month/year" data
+- Specific property prices or land rates where accuracy matters
+- Current interest rates or loan information
+- Recent news, regulations, or policy changes
+- Time-sensitive market conditions or statistics
 
-DO NOT SEARCH FOR:
-- General area information or neighborhood descriptions (use your existing knowledge)
-- Company information about RC Bridge
-- General real estate concepts or terminology
-- Historical or established facts
+DO NOT USE SEARCH FOR:
+- General area information or neighborhood descriptions (you already know this)
+- Company information about RC Bridge (provided in your training)
+- General real estate concepts, terminology, or processes
+- Investment advice or ROI calculations (use your knowledge)
+- Property features or amenities explanations
+- Historical facts about Hyderabad areas
 
-CRITICAL: For ANY price/rate/cost question, you MUST use search FIRST and cite the source in your answer (e.g., "According to [source], current rates are..."). Do not rely on outdated examples.
+IMPORTANT: When search results are provided to you (marked as "CURRENT SEARCH RESULTS"), always cite the source. Otherwise, answer confidently from your training data.
 
 COMPANY CONTEXT:
 - RC Bridge has facilitated ₹200 Cr+ worth of deals
@@ -123,7 +165,7 @@ KEY LOCATIONS & PROPERTIES:
 **Kokapet & Tellapur**: Emerging high-potential investment zones
 **Ghatkesar**: Growing area with good connectivity and infrastructure development
 
-IMPORTANT: For specific property prices, land rates, or current market rates, ALWAYS use the search tool first to get the most accurate, up-to-date information. Never rely on outdated pricing examples.
+NOTE: Use the search tool when users specifically ask for current/latest pricing information. Otherwise, provide general guidance and encourage them to contact RC Bridge for accurate quotes.
 
 FINANCING:
 - Partner with leading banks offering home loans starting at 7.2% interest
@@ -275,8 +317,64 @@ serve(async (req) => {
 
     console.log('Calling Hugging Face API with', messages.length, 'messages');
 
-    // Call API with function calling support
-    const apiResponse = await callHuggingFaceWithFunctionCalling(recentMessages, HF_API_KEY, ip, requestBody.messages);
+    // Smart RAG Pipeline: Check if we should force search before model sees the query
+    const lastUserMessage = messages[messages.length - 1]?.content || '';
+    const mustSearch = shouldForceSearch(lastUserMessage);
+    
+    let enhancedSystemPrompt = SYSTEM_PROMPT;
+    
+    if (mustSearch) {
+      console.log('[Smart RAG] Forcing pre-search for time-sensitive query');
+      
+      // Check search rate limit
+      const now = Date.now();
+      const searchLimit = searchRateLimits.get(ip);
+      let canSearch = true;
+      
+      if (searchLimit) {
+        if (now < searchLimit.resetAt) {
+          if (searchLimit.count >= MAX_SEARCHES_PER_MINUTE) {
+            console.log(`[Smart RAG] Search rate limit exceeded for IP: ${ip}`);
+            canSearch = false;
+          } else {
+            searchLimit.count++;
+          }
+        } else {
+          searchRateLimits.set(ip, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
+        }
+      } else {
+        searchRateLimits.set(ip, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
+      }
+      
+      if (canSearch) {
+        try {
+          // Enhance search query
+          let searchQuery = lastUserMessage;
+          if (!searchQuery.includes('hyderabad')) {
+            searchQuery += ' Hyderabad';
+          }
+          if (!searchQuery.includes('2025')) {
+            searchQuery += ' 2025';
+          }
+          
+          console.log(`[Smart RAG] Pre-search executing: "${searchQuery}"`);
+          const searchResults = await searchTavily(searchQuery);
+          const formattedResults = formatSearchResults(searchQuery, searchResults);
+          console.log(`[Smart RAG] Pre-search found ${searchResults.length} results`);
+          
+          // Inject search results into system prompt
+          enhancedSystemPrompt = `${SYSTEM_PROMPT}\n\n=== CURRENT SEARCH RESULTS ===\n${formattedResults}\n\nIMPORTANT: Use these search results to answer the user's question accurately. Always cite the source.`;
+        } catch (error) {
+          console.error('[Smart RAG] Pre-search error:', error);
+          // Continue without search results
+        }
+      }
+    } else {
+      console.log('[Smart RAG] Knowledge-base query, no pre-search needed');
+    }
+
+    // Call API with function calling support (model can still decide to search via tool)
+    const apiResponse = await callHuggingFaceWithFunctionCalling(recentMessages, HF_API_KEY, ip, requestBody.messages, enhancedSystemPrompt);
     
     if (!apiResponse.ok) {
       const errorText = await apiResponse.text();
@@ -310,6 +408,7 @@ async function callHuggingFaceWithFunctionCalling(
   apiKey: string,
   clientIp: string,
   originalMessages: Array<{ role: string; content: string }> = [],
+  systemPromptOverride?: string,
   retries = 3
 ): Promise<Response> {
   // Define search tool for function calling
@@ -348,7 +447,7 @@ async function callHuggingFaceWithFunctionCalling(
           body: JSON.stringify({
             model: "meta-llama/Llama-3.3-70B-Instruct",
             messages: [
-              { role: "system", content: SYSTEM_PROMPT },
+              { role: "system", content: systemPromptOverride || SYSTEM_PROMPT },
               ...messages
             ],
             max_tokens: 500,
@@ -375,7 +474,7 @@ async function callHuggingFaceWithFunctionCalling(
       }
 
       // Check if response contains function calls
-      const processedResponse = await processFunctionCalls(response, messages, apiKey, clientIp, originalMessages);
+      const processedResponse = await processFunctionCalls(response, messages, apiKey, clientIp, originalMessages, systemPromptOverride);
       return processedResponse;
 
     } catch (error) {
@@ -400,7 +499,8 @@ async function processFunctionCalls(
   conversationMessages: Array<{ role: string; content: string }>,
   apiKey: string,
   clientIp: string,
-  originalMessages: Array<{ role: string; content: string }> = []
+  originalMessages: Array<{ role: string; content: string }> = [],
+  systemPromptOverride?: string
 ): Promise<Response> {
   const reader = response.body?.getReader();
   if (!reader) return response;
@@ -467,91 +567,11 @@ async function processFunctionCalls(
       }
     }
 
-    // Proactive search fallback: If no function calls detected BUT user query mentions pricing/rates
+    // No tool calls detected - return model's response from knowledge base
     if (!hasToolCall || toolCalls.length === 0) {
-      const lastUserMessage = (originalMessages.length > 0 ? originalMessages[originalMessages.length - 1] : conversationMessages[conversationMessages.length - 1])?.content?.toLowerCase() || '';
-      const priceKeywords = ['price', 'prices', 'cost', 'per acre', 'acre', 'land', 'plot', 'rate', 'rates', 'interest rate', 'latest', 'current', 'today', 'pocharam', 'ghatkesar', 'hyderabad', 'how much'];
-      const shouldProactiveSearch = priceKeywords.some(keyword => lastUserMessage.includes(keyword));
-
-      if (shouldProactiveSearch) {
-        console.log('[Proactive Search] Detected price-related query without tool call, forcing search');
-        
-        // Construct search query from user message
-        let searchQuery = lastUserMessage;
-        
-        // Enhance query for better results
-        if (!searchQuery.includes('hyderabad')) {
-          searchQuery += ' Hyderabad';
-        }
-        if (!searchQuery.includes('2025')) {
-          searchQuery += ' 2025';
-        }
-        if (searchQuery.includes('land') || searchQuery.includes('acre')) {
-          searchQuery = `current price per acre agricultural land ${searchQuery}`;
-        }
-        
-        // Execute search
-        try {
-          // Check search rate limit
-          const now = Date.now();
-          const searchLimit = searchRateLimits.get(clientIp);
-          let canSearch = true;
-          
-          if (searchLimit) {
-            if (now < searchLimit.resetAt) {
-              if (searchLimit.count >= MAX_SEARCHES_PER_MINUTE) {
-                console.log(`[Proactive Search] Rate limit exceeded for IP: ${clientIp}`);
-                canSearch = false;
-              } else {
-                searchLimit.count++;
-              }
-            } else {
-              searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
-            }
-          } else {
-            searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
-          }
-
-          if (canSearch) {
-            console.log(`[Proactive Search] Executing: "${searchQuery}"`);
-            const searchResults = await searchTavily(searchQuery);
-            const formattedResults = formatSearchResults(searchQuery, searchResults);
-            console.log(`[Proactive Search] Found ${searchResults.length} results`);
-
-            // Make second API call with search results in system context
-            const finalResponse = await fetch(
-              "https://router.huggingface.co/v1/chat/completions",
-              {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${apiKey}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  model: "meta-llama/Llama-3.3-70B-Instruct",
-                  messages: [
-                    { 
-                      role: "system", 
-                      content: `${SYSTEM_PROMPT}\n\n=== CURRENT SEARCH RESULTS ===\n${formattedResults}\n\nIMPORTANT: Use these search results to answer the user's question. Always cite the source when using this data.`
-                    },
-                    ...conversationMessages
-                  ],
-                  max_tokens: 500,
-                  temperature: 0.7,
-                  stream: true,
-                }),
-              }
-            );
-
-            return finalResponse;
-          }
-        } catch (error) {
-          console.error('[Proactive Search] Error:', error);
-          // Fall through to normal response if search fails
-        }
-      }
-
-      // Re-create response with accumulated data (no search or search failed)
+      console.log('[Tier 1] Answering from knowledge base (no search needed)');
+      
+      // Re-create response with accumulated data
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         start(controller) {
@@ -573,8 +593,8 @@ async function processFunctionCalls(
       });
     }
 
-    // Execute function calls
-    console.log('[Function Call] Executing tool calls:', toolCalls.map(tc => tc.function.name));
+    // Execute function calls (Tier 3: Model-driven search)
+    console.log('[Tier 3] Model requested tool calls:', toolCalls.map(tc => tc.function.name));
     
     const toolResponses: Array<{ role: string; content: string; tool_call_id: string }> = [];
 
@@ -607,7 +627,7 @@ async function processFunctionCalls(
             searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
           }
 
-          console.log(`[Tavily Search] Executing: "${query}"`);
+          console.log(`[Tier 3 Search] Executing: "${query}"`);
           const searchResults = await searchTavily(query);
           const formattedResults = formatSearchResults(query, searchResults);
 
@@ -617,9 +637,9 @@ async function processFunctionCalls(
             tool_call_id: toolCall.id
           });
 
-          console.log(`[Tavily Search] Found ${searchResults.length} results`);
+          console.log(`[Tier 3 Search] Found ${searchResults.length} results`);
         } catch (error) {
-          console.error('[Tavily Search] Error:', error);
+          console.error('[Tier 3 Search] Error:', error);
           toolResponses.push({
             role: 'tool',
             content: 'Search temporarily unavailable. Using available knowledge.',
@@ -640,7 +660,7 @@ async function processFunctionCalls(
       ...toolResponses
     ];
 
-    console.log('[Function Call] Making second API call with tool responses');
+    console.log('[Tier 3] Making second API call with tool responses');
     
     // Recursive call with tool responses (no function calling this time)
     const finalResponse = await fetch(
@@ -654,7 +674,7 @@ async function processFunctionCalls(
         body: JSON.stringify({
           model: "meta-llama/Llama-3.3-70B-Instruct",
           messages: [
-            { role: "system", content: SYSTEM_PROMPT },
+            { role: "system", content: systemPromptOverride || SYSTEM_PROMPT },
             ...updatedMessages
           ],
           max_tokens: 500,
