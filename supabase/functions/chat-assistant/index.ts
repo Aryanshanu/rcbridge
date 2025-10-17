@@ -240,6 +240,11 @@ serve(async (req) => {
   }
 
   try {
+    // Rate limiting based on IP address (must be defined first!)
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
+               req.headers.get('x-real-ip') || 
+               'unknown';
+    
     // Check request size limit (50KB max)
     const contentLength = req.headers.get('content-length');
     if (contentLength) {
@@ -252,11 +257,6 @@ serve(async (req) => {
         );
       }
     }
-
-    // Rate limiting based on IP address
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
-               req.headers.get('x-real-ip') || 
-               'unknown';
     
     const now = Date.now();
     const limit = rateLimits.get(ip);
