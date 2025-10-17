@@ -24,6 +24,7 @@ const MyProperties = lazy(() => import("./pages/MyProperties"));
 const SavedSearches = lazy(() => import("./pages/SavedSearches"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
+const Admin = lazy(() => import("./pages/Admin"));
 
 const PageLoading = () => (
   <div className="w-full h-screen flex items-center justify-center bg-gray-50">
@@ -174,6 +175,7 @@ const App = () => {
                           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                           <Route path="/my-properties" element={<ProtectedRoute><MyProperties /></ProtectedRoute>} />
                           <Route path="/saved-searches" element={<ProtectedRoute><SavedSearches /></ProtectedRoute>} />
+                          <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
                           <Route path="/lander" element={<Navigate to="/" replace />} />
                           <Route path="*" element={<ErrorFallback />} />
                         </Routes>
