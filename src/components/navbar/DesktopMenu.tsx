@@ -1,11 +1,12 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, LogIn, MapPin, Phone, LogOut } from "lucide-react";
+import { Home, LogIn, MapPin, Phone, LogOut, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { getUserRole } from "@/utils/admin/userUtils";
 
 interface DesktopMenuProps {
   scrollToPropertyForm: () => void;
@@ -25,10 +26,20 @@ const getInitials = (name: string) => {
 export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: DesktopMenuProps) => {
   const { user, signOut } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   
   // Get user display name and initials
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
   const initials = getInitials(displayName);
+
+  // Fetch user role when user changes
+  useEffect(() => {
+    if (user) {
+      getUserRole().then(role => setUserRole(role));
+    } else {
+      setUserRole(null);
+    }
+  }, [user]);
 
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -96,7 +107,14 @@ export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: Deskto
                 Saved Searches
               </Link>
               
-              <button 
+              {userRole && ['admin', 'developer', 'maintainer'].includes(userRole) && (
+                <Link to="/admin" className="flex items-center px-4 py-2 hover:bg-gray-50 text-gray-700">
+                  <Shield className="h-4 w-4 mr-1.5" />
+                  Admin Dashboard
+                </Link>
+              )}
+              
+              <button
                 onClick={handleSignOut}
                 disabled={isSigningOut}
                 className="flex w-full items-center text-left px-4 py-2 hover:bg-gray-50 text-red-600"

@@ -1,8 +1,12 @@
-
-import { useState, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown, ChevronRight, Shield, LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { getUserRole } from "@/utils/admin/userUtils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -12,17 +16,54 @@ interface MobileMenuProps {
 
 export const MobileMenu = ({ isOpen, scrollToPropertyForm, handleContactClick }: MobileMenuProps) => {
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
-  
-  // Close submenu when main menu closes
+  const { user, signOut } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  // Reset submenu state when main menu closes
   useEffect(() => {
     if (!isOpen) {
       setOpenSubmenu(null);
     }
   }, [isOpen]);
 
+  // Fetch user role when menu opens and user is logged in
+  useEffect(() => {
+    if (user && isOpen) {
+      getUserRole().then(role => setUserRole(role));
+    }
+  }, [user, isOpen]);
+
   const toggleSubmenu = (name: string) => {
     setOpenSubmenu(openSubmenu === name ? null : name);
   };
+
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isSigningOut) return;
+    
+    try {
+      setIsSigningOut(true);
+      toast.loading("Signing out...");
+      await signOut();
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      setIsSigningOut(false);
+      toast.error("Failed to sign out. Please try again.");
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
+  const initials = getInitials(displayName);
 
   const resources = [
     { name: 'Blog', path: '/blog' },
@@ -45,16 +86,16 @@ export const MobileMenu = ({ isOpen, scrollToPropertyForm, handleContactClick }:
   };
   
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          exit="hidden"
-          variants={menuVariants}
-          className="md:hidden absolute top-16 left-0 right-0 bg-white shadow-lg z-50 overflow-hidden"
-        >
-          <div className="p-4 space-y-2 divide-y divide-gray-100">
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={menuVariants}
+            className="md:hidden absolute top-16 left-0 right-0 bg-white shadow-lg z-50 overflow-hidden"
+          >
             <motion.div 
               custom={0}
               variants={itemVariants}
@@ -155,16 +196,53 @@ export const MobileMenu = ({ isOpen, scrollToPropertyForm, handleContactClick }:
               variants={itemVariants}
               className="py-2"
             >
-              <button
-                onClick={scrollToPropertyForm}
-                className="block w-full text-left px-3 py-2 rounded-md bg-primary text-white hover:bg-primary/90 font-medium"
+              <Button 
+                onClick={scrollToPropertyForm} 
+                className="w-full"
               >
                 List Property
-              </button>
+              </Button>
             </motion.div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+
+            {user && userRole && ['admin', 'developer', 'maintainer'].includes(userRole) && (
+              <motion.div custom={6} variants={itemVariants} className="py-2">
+                <Link to="/admin" className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 font-medium">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Admin Dashboard
+                </Link>
+              </motion.div>
+            )}
+
+            {user && (
+              <motion.div custom={7} variants={itemVariants} className="py-2 border-t mt-2">
+                <div className="flex items-center px-3 py-3 mb-2">
+                  <Avatar className="h-8 w-8 bg-primary text-white mr-2">
+                    <AvatarFallback>{initials}</AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium">{displayName}</span>
+                </div>
+                <Link to="/profile" className="block px-3 py-2 rounded-md hover:bg-gray-100">
+                  Profile
+                </Link>
+                <Link to="/my-properties" className="block px-3 py-2 rounded-md hover:bg-gray-100">
+                  My Properties
+                </Link>
+                <Link to="/saved-searches" className="block px-3 py-2 rounded-md hover:bg-gray-100">
+                  Saved Searches
+                </Link>
+                <button 
+                  onClick={handleSignOut} 
+                  disabled={isSigningOut}
+                  className="flex w-full items-center px-3 py-2 rounded-md hover:bg-gray-100 text-red-600"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  {isSigningOut ? "Signing out..." : "Sign Out"}
+                </button>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
