@@ -83,6 +83,8 @@ export function ChatBot() {
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [contextEntities, setContextEntities] = useState<ChatEntities>({});
+  const [messageCount, setMessageCount] = useState(0);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -244,6 +246,20 @@ export function ChatBot() {
     await updateContextWithMessage(conversationId, userMessage, 'user');
     const updatedEntities = await loadContextEntities(conversationId);
     setContextEntities(updatedEntities);
+    
+    // Check if user should be prompted to sign in (after 4-5 messages for anonymous users)
+    if (!isAuthenticated) {
+      const newCount = messageCount + 1;
+      setMessageCount(newCount);
+      if (newCount >= 4) {
+        setShowAuthPrompt(true);
+        toast({
+          title: "Sign in to continue",
+          description: "Please sign in to track your conversations and get personalized recommendations.",
+          duration: 5000,
+        });
+      }
+    }
     
     setIsLoading(true);
 
@@ -660,11 +676,41 @@ export function ChatBot() {
       {/* Chat button - fixed bottom-right with proper z-index */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 rounded-full p-3 h-12 w-12 shadow-lg z-50 bg-accent hover:bg-accent/90"
+        className="fixed bottom-6 right-6 rounded-full p-5 h-18 w-18 shadow-lg z-50 bg-accent hover:bg-accent/90"
         aria-label="Chat with us"
       >
-        {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
+        {isOpen ? <X size={36} /> : <MessageCircle size={36} />}
       </Button>
+
+      {/* Authentication Prompt Dialog */}
+      <Dialog open={showAuthPrompt} onOpenChange={setShowAuthPrompt}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Sign in to continue</DialogTitle>
+            <DialogDescription>
+              To provide you with personalized recommendations and track your conversations, we'd like you to sign in.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4 flex flex-col gap-4">
+            <p className="text-sm text-gray-600">
+              Creating an account helps us:
+            </p>
+            <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
+              <li>Save your conversation history</li>
+              <li>Provide personalized property recommendations</li>
+              <li>Send updates about properties you're interested in</li>
+            </ul>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAuthPrompt(false)}>
+                Continue without signing in
+              </Button>
+              <Button onClick={() => window.location.href = "/login"}>
+                Sign In / Sign Up
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Chat window - positioned above button */}
       <div

@@ -133,12 +133,6 @@ export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: Deskto
               Sign In
             </Button>
           </Link>
-          <Link to="/admin-login">
-            <Button variant="ghost" className="flex items-center" size="sm">
-              <Shield className="mr-2 h-4 w-4" />
-              Admin
-            </Button>
-          </Link>
         </div>
       )}
       

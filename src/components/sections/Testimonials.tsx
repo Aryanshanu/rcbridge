@@ -39,6 +39,55 @@ export const Testimonials = () => {
       content: "The community aspect of RC Bridge is what sets it apart. I've not only found multiple investment properties but also connected with other investors, creating valuable partnerships.",
       image: "/placeholder.svg",
     },
+    {
+      id: 4,
+      name: "Sneha Patel",
+      role: "First-Time Homebuyer",
+      content: "As a first-time buyer, I was overwhelmed by the process. RC Bridge's transparent approach and helpful team made my dream of owning a home a reality. No hidden fees, just genuine support!",
+      image: "/placeholder.svg",
+    },
+    {
+      id: 5,
+      name: "Vikram Singh",
+      role: "Commercial Property Developer",
+      content: "The investment calculator and market insights provided by RC Bridge are exceptional. It helped me make informed decisions on multiple commercial property acquisitions in Hyderabad.",
+      image: "/placeholder.svg",
+    },
+    {
+      id: 6,
+      name: "Anjali Desai",
+      role: "Agricultural Land Investor",
+      content: "RC Bridge's expertise in agricultural land transactions is unmatched. They guided me through the entire process of purchasing farmland, from legal documentation to land verification.",
+      image: "/placeholder.svg",
+    },
+    {
+      id: 7,
+      name: "Karthik Rao",
+      role: "Rental Property Manager",
+      content: "Managing rental properties became so much easier with RC Bridge. Their tenant verification process and rental management tools saved me countless hours and headaches.",
+      image: "/placeholder.svg",
+    },
+    {
+      id: 8,
+      name: "Meera Nair",
+      role: "Luxury Villa Buyer",
+      content: "Looking for a luxury property requires discretion and expertise. RC Bridge delivered on both fronts, helping me find my dream villa in a premium locality with complete privacy.",
+      image: "/placeholder.svg",
+    },
+    {
+      id: 9,
+      name: "Aditya Kumar",
+      role: "Student Housing Investor",
+      content: "RC Bridge identified an excellent opportunity in the student housing market. Their market analysis and ROI projections were spot-on. My investment is performing better than expected!",
+      image: "/placeholder.svg",
+    },
+    {
+      id: 10,
+      name: "Divya Krishnan",
+      role: "Property Flipper",
+      content: "The platform's quick turnaround time for property listings and buyer connections is impressive. I've successfully flipped three properties this year, all thanks to RC Bridge's efficient system.",
+      image: "/placeholder.svg",
+    },
   ];
 
   useEffect(() => {

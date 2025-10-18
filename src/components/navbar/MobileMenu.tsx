@@ -249,12 +249,6 @@ export const MobileMenu = ({ isOpen, scrollToPropertyForm, handleContactClick }:
                     Sign In
                   </Button>
                 </Link>
-                <Link to="/admin-login" className="block">
-                  <Button variant="ghost" className="w-full justify-start">
-                    <Shield className="mr-2 h-4 w-4" />
-                    Admin Login
-                  </Button>
-                </Link>
               </motion.div>
             )}
           </motion.div>

@@ -211,16 +211,16 @@ export const NotificationButton = () => {
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="bg-primary text-white p-3 rounded-full shadow-lg hover:bg-primary/90 transition-all duration-300 group"
+        className="bg-primary text-white p-4 rounded-full shadow-lg hover:bg-primary/90 transition-all duration-300 group relative"
         aria-label="Get property notifications"
       >
-        <Bell className="h-6 w-6" />
+        <Bell className="h-9 w-9" />
         {alertCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
             {alertCount}
           </span>
         )}
-        <span className="absolute left-0 -ml-28 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+        <span className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm py-1 px-3 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
           Property Alerts
         </span>
       </button>
