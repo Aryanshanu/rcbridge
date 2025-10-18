@@ -1,0 +1,103 @@
+name: Security Scanning
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Run weekly on Mondays
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  security-headers:
+    name: Security Headers Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install axios
+      
+      - name: Check security headers
+        run: node scripts/security-headers-check.js https://rcbridge.co
+        continue-on-error: true
+
+  accessibility-audit:
+    name: Accessibility Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Pa11y
+        run: npm install -g pa11y pa11y-reporter-html
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Serve and test
+        run: |
+          npx serve -s dist -l 8080 &
+          sleep 5
+          pa11y http://localhost:8080 --runner axe --reporter html > pa11y-report.html || true
+      
+      - name: Upload accessibility report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accessibility-report
+          path: pa11y-report.html
+          retention-days: 30
+
+  dependency-security:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Run npm audit
+        run: npm audit --audit-level=high --json > npm-audit.json
+        continue-on-error: true
+      
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-report
+          path: npm-audit.json
+          retention-days: 30
+
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript, typescript
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
