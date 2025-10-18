@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Users, MessageSquare, Home, TrendingUp } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useMasterAdmin } from "@/contexts/MasterAdminContext";
 
 interface Analytics {
   totalUsers: number;
   activeConversations: number;
   totalProperties: number;
-  totalContactMessages: number;
-  totalAssistanceRequests: number;
+  contactMessages: number;
+  assistanceRequests: number;
 }
 
 export function AnalyticsTab() {
+  const { sessionToken } = useMasterAdmin();
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -21,21 +23,14 @@ export function AnalyticsTab() {
 
   const fetchAnalytics = async () => {
     try {
-      const [users, conversations, properties, contactMessages, assistanceRequests] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase.from('chat_conversations').select('id', { count: 'exact', head: true }),
-        supabase.from('properties').select('id', { count: 'exact', head: true }),
-        supabase.from('contact_messages').select('id', { count: 'exact', head: true }),
-        supabase.from('assistance_requests').select('id', { count: 'exact', head: true }),
-      ]);
-
-      setAnalytics({
-        totalUsers: users.count || 0,
-        activeConversations: conversations.count || 0,
-        totalProperties: properties.count || 0,
-        totalContactMessages: contactMessages.count || 0,
-        totalAssistanceRequests: assistanceRequests.count || 0,
+      const { data, error } = await supabase.functions.invoke('admin-data', {
+        body: { sessionToken, dataType: 'analytics' }
       });
+
+      if (error) throw error;
+      if (data?.success) {
+        setAnalytics(data.data);
+      }
     } catch (error) {
       console.error('Error fetching analytics:', error);
     } finally {
@@ -72,13 +67,13 @@ export function AnalyticsTab() {
     },
     {
       title: "Contact Messages",
-      value: analytics?.totalContactMessages || 0,
+      value: analytics?.contactMessages || 0,
       icon: TrendingUp,
       description: "Messages received via contact form",
     },
     {
       title: "Assistance Requests",
-      value: analytics?.totalAssistanceRequests || 0,
+      value: analytics?.assistanceRequests || 0,
       icon: TrendingUp,
       description: "Property assistance inquiries",
     },

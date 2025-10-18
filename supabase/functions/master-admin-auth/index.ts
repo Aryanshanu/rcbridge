@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     }
 
     // Verify password using bcrypt
-    const bcrypt = await import('https://deno.land/x/bcrypt@v0.4.1/mod.ts');
+    const bcrypt = await import('https://esm.sh/bcryptjs@2.4.3');
     const isValidPassword = await bcrypt.compare(password, adminData.password_hash);
 
     if (!isValidPassword) {

@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, User, Mail, Phone, Home, DollarSign } from "lucide-react";
+import { Mail, Phone, User, Building2, DollarSign, FileText, Loader2, Home } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { useMasterAdmin } from "@/contexts/MasterAdminContext";
 
 interface AssistanceRequest {
   id: string;
@@ -19,6 +20,7 @@ interface AssistanceRequest {
 }
 
 export function AssistanceRequestsTab() {
+  const { sessionToken } = useMasterAdmin();
   const [requests, setRequests] = useState<AssistanceRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -28,13 +30,14 @@ export function AssistanceRequestsTab() {
 
   const fetchRequests = async () => {
     try {
-      const { data, error } = await supabase
-        .from('assistance_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.functions.invoke('admin-data', {
+        body: { sessionToken, dataType: 'assistance' }
+      });
 
       if (error) throw error;
-      setRequests(data || []);
+      if (data?.success) {
+        setRequests(data.data.requests || []);
+      }
     } catch (error) {
       console.error('Error fetching assistance requests:', error);
     } finally {

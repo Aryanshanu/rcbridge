@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Mail, Phone, MessageSquare } from "lucide-react";
+import { Mail, Phone, User, Loader2, MessageSquare } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { useMasterAdmin } from "@/contexts/MasterAdminContext";
 
 interface ContactMessage {
   id: string;
@@ -17,6 +18,7 @@ interface ContactMessage {
 }
 
 export function ContactMessagesTab() {
+  const { sessionToken } = useMasterAdmin();
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -26,13 +28,14 @@ export function ContactMessagesTab() {
 
   const fetchMessages = async () => {
     try {
-      const { data, error } = await supabase
-        .from('contact_messages')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.functions.invoke('admin-data', {
+        body: { sessionToken, dataType: 'contacts' }
+      });
 
       if (error) throw error;
-      setMessages(data || []);
+      if (data?.success) {
+        setMessages(data.data.messages || []);
+      }
     } catch (error) {
       console.error('Error fetching contact messages:', error);
     } finally {
