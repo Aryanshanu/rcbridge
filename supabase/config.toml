@@ -21,3 +21,6 @@ verify_jwt = false
 [functions.ai-reasoning-k2]
 verify_jwt = false
 
+[functions.submit-chat-info]
+verify_jwt = false
+

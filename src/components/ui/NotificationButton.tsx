@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -9,20 +8,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { propertyAlertSchema } from "@/utils/validation/schemas";
-import { z } from "zod";
+import type { Database } from "@/integrations/supabase/types";
 
-type PropertyType = 'residential' | 'commercial' | 'agricultural' | 'undeveloped';
-type ListingType = 'sale' | 'rent' | 'development_partnership';
+type PropertyType = Database['public']['Enums']['property_type'];
+type ListingType = Database['public']['Enums']['listing_type'];
+
+const propertyTypes = [
+  { value: 'residential' as PropertyType, label: 'Residential' },
+  { value: 'commercial' as PropertyType, label: 'Commercial' },
+  { value: 'agricultural' as PropertyType, label: 'Agricultural' },
+  { value: 'luxury' as PropertyType, label: 'Luxury' },
+];
 
 export const NotificationButton = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [location, setLocation] = useState("");
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
-  const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
-  const [listingType, setListingType] = useState<ListingType | "">("");
+  const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<PropertyType[]>([]);
+  const [listingTypes, setListingTypes] = useState({ sale: false, rent: false });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alertCount, setAlertCount] = useState(0); 
   const [showAuthDialog, setShowAuthDialog] = useState(false);
@@ -30,62 +35,45 @@ export const NotificationButton = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  // Check if a property type is selected
   const isPropertyTypeSelected = (type: PropertyType) => {
-    return propertyTypes.includes(type);
+    return selectedPropertyTypes.includes(type);
   };
 
-  // Toggle property type selection
   const togglePropertyType = (type: PropertyType) => {
     if (isPropertyTypeSelected(type)) {
-      setPropertyTypes(propertyTypes.filter(t => t !== type));
+      setSelectedPropertyTypes(selectedPropertyTypes.filter(t => t !== type));
     } else {
-      setPropertyTypes([...propertyTypes, type]);
+      setSelectedPropertyTypes([...selectedPropertyTypes, type]);
     }
   };
 
-  // Redirect to authentication page
   const redirectToAuth = () => {
     window.location.href = "/login";
   };
 
-  // Fetch user's existing alerts count if logged in
-  useEffect(() => {
-    const fetchAlertCount = async () => {
-      if (user) {
-        const { data, error } = await supabase
-          .from('property_alerts')
-          .select('*')
-          .eq('user_id', user.id);
-        
-        if (error) {
-          console.error('Error fetching alerts:', error);
-          return;
-        }
-        
-        setAlertCount(data?.length || 0);
-        
-        // Pre-fill email if user is logged in
-        if (user.email) {
-          setEmail(user.email);
-        }
-        
-        // Try to get profile data
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-          
-        if (profiles) {
-          // Use any saved preferences if available
-        }
-      } else {
-        // Reset alert count for non-logged in users
-        setAlertCount(0);
+  const fetchAlertCount = async () => {
+    if (user) {
+      const { data, error } = await supabase
+        .from('property_alerts')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Error fetching alerts:', error);
+        return;
       }
-    };
-    
+      
+      setAlertCount(data?.length || 0);
+      
+      if (user.email) {
+        setEmail(user.email);
+      }
+    } else {
+      setAlertCount(0);
+    }
+  };
+
+  useEffect(() => {
     fetchAlertCount();
   }, [user]);
 
@@ -108,7 +96,7 @@ export const NotificationButton = () => {
       return false;
     }
     
-    if (propertyTypes.length === 0) {
+    if (selectedPropertyTypes.length === 0) {
       toast({
         title: "Property type required",
         description: "Please select at least one property type.",
@@ -120,86 +108,146 @@ export const NotificationButton = () => {
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Check if user is logged in
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
     if (!user) {
       setShowAuthDialog(true);
       return;
     }
-    
-    if (!validateForm()) return;
-    
-    setIsSubmitting(true);
-    
-    try {
-      // SECURITY FIX: Validate and sanitize inputs before saving
-      for (const propertyType of propertyTypes) {
-        try {
-          const alertData = {
-            user_id: user.id,
-            location,
-            property_type: propertyType,
-            listing_type: listingType || null,
-            min_price: minPrice ? parseFloat(minPrice) : null,
-            max_price: maxPrice ? parseFloat(maxPrice) : null,
-            is_active: true
-          };
 
-          // Validate data before inserting
-          propertyAlertSchema.parse(alertData);
-          
-          const { error } = await supabase.from('property_alerts').insert(alertData);
-          
-          if (error) {
-            console.error('Error saving alert:', error);
-            throw new Error(error.message);
-          }
-        } catch (validationError) {
-          if (validationError instanceof z.ZodError) {
-            console.error("Validation error:", validationError.errors);
-            toast({
-              title: "Invalid Input",
-              description: validationError.errors[0]?.message || "Please check your inputs",
-              variant: "destructive",
-            });
-            return;
-          }
-          throw validationError;
+    setIsSubmitting(true);
+
+    try {
+      const selectedTypes = propertyTypes.filter(type => 
+        isPropertyTypeSelected(type.value)
+      );
+
+      if (selectedTypes.length === 0) {
+        toast({
+          title: "Selection Required",
+          description: "Please select at least one property type",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validate and coerce prices
+      const minPriceNum = minPrice ? parseFloat(minPrice) : null;
+      const maxPriceNum = maxPrice ? parseFloat(maxPrice) : null;
+
+      if (minPriceNum !== null && isNaN(minPriceNum)) {
+        toast({
+          title: "Invalid Price",
+          description: "Minimum price must be a valid number",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (maxPriceNum !== null && isNaN(maxPriceNum)) {
+        toast({
+          title: "Invalid Price",
+          description: "Maximum price must be a valid number",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (minPriceNum !== null && maxPriceNum !== null && minPriceNum > maxPriceNum) {
+        toast({
+          title: "Invalid Range",
+          description: "Minimum price cannot be greater than maximum price",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const alertsToInsert = selectedTypes.flatMap(type => {
+        const baseAlert = {
+          user_id: user.id,
+          location,
+          min_price: minPriceNum,
+          max_price: maxPriceNum,
+          property_type: type.value,
+          min_size: null,
+          max_size: null,
+          is_active: true,
+        };
+
+        if (listingTypes.sale && listingTypes.rent) {
+          return [
+            { ...baseAlert, listing_type: 'sale' as ListingType },
+            { ...baseAlert, listing_type: 'rent' as ListingType },
+          ];
+        } else if (listingTypes.sale) {
+          return [{ ...baseAlert, listing_type: 'sale' as ListingType }];
+        } else if (listingTypes.rent) {
+          return [{ ...baseAlert, listing_type: 'rent' as ListingType }];
         }
-      }
-      
-      // We're removing the user analytics tracking since the table doesn't exist
-      // This can be added back when the table is created
-      
-      toast({
-        title: "Notification preferences saved",
-        description: "You'll be notified about new properties matching your criteria.",
+        return [];
       });
-      
-      // Reset form and close dialog
-      setIsOpen(false);
-      setLocation("");
-      setMinPrice("");
-      setMaxPrice("");
-      setPropertyTypes([]);
-      setListingType("");
-      
-      // Update alert count
-      const { data } = await supabase
-        .from('property_alerts')
-        .select('*')
-        .eq('user_id', user.id);
-        
-      if (data) {
-        setAlertCount(data.length);
+
+      if (alertsToInsert.length === 0) {
+        toast({
+          title: "Selection Required",
+          description: "Please select at least one listing type (For Sale or For Rent)",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
       }
-    } catch (error: any) {
-      console.error('Error:', error);
+
+      const { error } = await supabase
+        .from('property_alerts')
+        .insert(alertsToInsert);
+
+      if (error) {
+        // Handle enum mismatch gracefully
+        if (error.code === '22P02' && error.message.includes('invalid input value for enum')) {
+          console.warn('Enum mismatch, retrying without listing_type');
+          const fallbackAlerts = alertsToInsert.map(alert => ({
+            ...alert,
+            listing_type: null,
+          }));
+          const { error: retryError } = await supabase
+            .from('property_alerts')
+            .insert(fallbackAlerts);
+          
+          if (retryError) throw retryError;
+          
+          toast({
+            title: "Alert Saved",
+            description: "Your preferences have been saved (listing type excluded)",
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        toast({
+          title: "Alert Saved",
+          description: "We'll notify you when matching properties are available",
+        });
+      }
+
+      setOpen(false);
+      setEmail('');
+      setLocation('');
+      setMinPrice('');
+      setMaxPrice('');
+      setSelectedPropertyTypes([]);
+      setListingTypes({ sale: false, rent: false });
+      
+      fetchAlertCount();
+    } catch (error) {
+      console.error('Error saving alert:', error);
       toast({
-        title: "Error saving preferences",
-        description: error.message || "There was a problem saving your alert preferences.",
+        title: "Error",
+        description: "Failed to save your alert preferences. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -210,7 +258,7 @@ export const NotificationButton = () => {
   return (
     <>
       <button 
-        onClick={() => setIsOpen(true)}
+        onClick={() => setOpen(true)}
         className="bg-primary text-white p-4 rounded-full shadow-lg hover:bg-primary/90 transition-all duration-300 group relative"
         aria-label="Get property notifications"
       >
@@ -225,7 +273,6 @@ export const NotificationButton = () => {
         </span>
       </button>
 
-      {/* Authentication Required Dialog */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -252,7 +299,7 @@ export const NotificationButton = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Get Property Alerts</DialogTitle>
@@ -271,7 +318,7 @@ export const NotificationButton = () => {
             </Alert>
           )}
           
-          <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4 py-4">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
                 Email Address
@@ -327,42 +374,18 @@ export const NotificationButton = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium">Property Type</label>
               <div className="flex flex-wrap gap-3">
-                <Button 
-                  type="button" 
-                  variant={isPropertyTypeSelected("residential") ? "default" : "outline"} 
-                  size="sm" 
-                  className="rounded-full"
-                  onClick={() => togglePropertyType("residential")}
-                >
-                  Residential
-                </Button>
-                <Button 
-                  type="button" 
-                  variant={isPropertyTypeSelected("commercial") ? "default" : "outline"} 
-                  size="sm" 
-                  className="rounded-full"
-                  onClick={() => togglePropertyType("commercial")}
-                >
-                  Commercial
-                </Button>
-                <Button 
-                  type="button" 
-                  variant={isPropertyTypeSelected("agricultural") ? "default" : "outline"} 
-                  size="sm" 
-                  className="rounded-full"
-                  onClick={() => togglePropertyType("agricultural")}
-                >
-                  Agricultural
-                </Button>
-                <Button 
-                  type="button" 
-                  variant={isPropertyTypeSelected("undeveloped") ? "default" : "outline"} 
-                  size="sm" 
-                  className="rounded-full"
-                  onClick={() => togglePropertyType("undeveloped")}
-                >
-                  Undeveloped
-                </Button>
+                {propertyTypes.map((type) => (
+                  <Button 
+                    key={type.value}
+                    type="button" 
+                    variant={isPropertyTypeSelected(type.value) ? "default" : "outline"} 
+                    size="sm" 
+                    className="rounded-full"
+                    onClick={() => togglePropertyType(type.value)}
+                  >
+                    {type.label}
+                  </Button>
+                ))}
               </div>
             </div>
 
@@ -371,30 +394,21 @@ export const NotificationButton = () => {
               <div className="flex flex-wrap gap-3">
                 <Button 
                   type="button" 
-                  variant={listingType === "sale" ? "default" : "outline"} 
+                  variant={listingTypes.sale ? "default" : "outline"} 
                   size="sm" 
                   className="rounded-full"
-                  onClick={() => setListingType(listingType === "sale" ? "" : "sale")}
+                  onClick={() => setListingTypes({ ...listingTypes, sale: !listingTypes.sale })}
                 >
                   For Sale
                 </Button>
                 <Button 
                   type="button" 
-                  variant={listingType === "rent" ? "default" : "outline"} 
+                  variant={listingTypes.rent ? "default" : "outline"} 
                   size="sm" 
                   className="rounded-full"
-                  onClick={() => setListingType(listingType === "rent" ? "" : "rent")}
+                  onClick={() => setListingTypes({ ...listingTypes, rent: !listingTypes.rent })}
                 >
                   For Rent
-                </Button>
-                <Button 
-                  type="button" 
-                  variant={listingType === "development_partnership" ? "default" : "outline"} 
-                  size="sm" 
-                  className="rounded-full"
-                  onClick={() => setListingType(listingType === "development_partnership" ? "" : "development_partnership")}
-                >
-                  Development
                 </Button>
               </div>
             </div>

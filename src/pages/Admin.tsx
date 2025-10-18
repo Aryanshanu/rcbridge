@@ -9,6 +9,7 @@ import { ContactMessagesTab } from "@/components/admin/ContactMessagesTab";
 import { AssistanceRequestsTab } from "@/components/admin/AssistanceRequestsTab";
 import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
 import { CustomerActivityTab } from "@/components/admin/CustomerActivityTab";
+import { AlertsTab } from "@/components/admin/AlertsTab";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Loader2, LogOut } from "lucide-react";
@@ -136,6 +137,7 @@ export default function Admin() {
               <TabsTrigger value="activity">Customer Activity</TabsTrigger>
               <TabsTrigger value="chat">Chat</TabsTrigger>
               <TabsTrigger value="properties">Properties</TabsTrigger>
+              <TabsTrigger value="alerts">Alerts</TabsTrigger>
               <TabsTrigger value="contact">Contacts</TabsTrigger>
               <TabsTrigger value="assistance">Assistance</TabsTrigger>
             </TabsList>
@@ -154,6 +156,10 @@ export default function Admin() {
 
             <TabsContent value="properties">
               <AdminProperties userRole="admin" />
+            </TabsContent>
+
+            <TabsContent value="alerts">
+              <AlertsTab />
             </TabsContent>
 
             <TabsContent value="contact">

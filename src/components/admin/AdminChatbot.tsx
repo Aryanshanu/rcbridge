@@ -81,28 +81,108 @@ export const AdminChatbot = ({ userRole }: AdminChatbotProps) => {
   
   const messageEndRef = useRef<HTMLDivElement>(null);
   
-  // Load conversations from database
-  useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        setError(null);
-        const { data: convos, error: convosError } = await supabase
-          .from('chat_conversations')
-          .select(`
-            id,
-            user_id,
+  const fetchConversations = async () => {
+    try {
+      setError(null);
+      const { data: convos, error: convosError } = await supabase
+        .from('chat_conversations')
+        .select(`
+          id,
+          user_id,
+          created_at,
+          updated_at,
+          chat_messages (
+            content,
             created_at,
-            updated_at,
-            chat_messages (
-              content,
-              created_at,
-              sender_type
-            ),
-            chat_user_info (
-              name,
-              email
-            )
-          `)
+            sender_type
+          ),
+          chat_user_info (
+            name,
+            email
+          )
+        `)
+        .order('updated_at', { ascending: false });
+
+      if (convosError) throw convosError;
+
+      const mapped: Conversation[] = (convos || []).map((c: any) => {
+        const msgs = c.chat_messages || [];
+        const lastMsg = msgs[msgs.length - 1];
+        const userInfo = c.chat_user_info?.[0];
+        
+        return {
+          id: c.id,
+          userName: userInfo?.name || 'Anonymous',
+          userEmail: userInfo?.email || 'No email',
+          lastMessage: lastMsg?.content || 'No messages',
+          lastMessageTime: lastMsg?.created_at || c.created_at,
+          unreadCount: 0,
+          status: 'active'
+        };
+      });
+
+      setConversations(mapped);
+    } catch (err: any) {
+      console.error('Error fetching conversations:', err);
+      setError(err.message);
+    }
+  };
+
+  const fetchMessages = async (conversationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const mapped: Message[] = (data || []).map(m => ({
+        id: m.id,
+        content: m.content,
+        sender: m.sender_type as 'user' | 'admin' | 'bot',
+        timestamp: m.created_at,
+        read: true
+      }));
+
+      setMessages(mapped);
+    } catch (err: any) {
+      console.error('Error fetching messages:', err);
+    }
+  };
+  
+  useEffect(() => {
+    fetchConversations();
+
+    const conversationsChannel = supabase
+      .channel('chat_conversations_admin')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_conversations' }, 
+        () => fetchConversations())
+      .subscribe();
+
+    const messagesChannel = supabase
+      .channel('chat_messages_admin')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, 
+        (payload) => {
+          if (selectedConversation && payload.new.conversation_id === selectedConversation) {
+            fetchMessages(selectedConversation);
+          }
+        })
+      .subscribe();
+
+    const userInfoChannel = supabase
+      .channel('chat_user_info_admin')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_user_info' }, 
+        () => selectedConversation && fetchMessages(selectedConversation))
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(conversationsChannel);
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(userInfoChannel);
+    };
+  }, [selectedConversation])
           .order('updated_at', { ascending: false });
 
         if (convosError) throw convosError;

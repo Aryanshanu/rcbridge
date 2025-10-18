@@ -61,6 +61,8 @@ export function ChatBot() {
     phone: '',
     message: '',
   });
+  const [activeIntent, setActiveIntent] = useState<string | null>(null);
+  const [smartSuggestions, setSmartSuggestions] = useState<string[]>([]);
   
   // Track extracted information
   const [extractedBudget, setExtractedBudget] = useState<string | null>(null);
@@ -211,13 +213,52 @@ export function ChatBot() {
     }
   }, [isOpen]);
 
+  const generateSmartSuggestions = (lastMessage: string, entities: any) => {
+    const msg = lastMessage.toLowerCase();
+    const suggestions: string[] = [];
+
+    // Location-based suggestions
+    if ((msg.includes('house') || msg.includes('property') || msg.includes('apartment')) && msg.includes('hyderabad') && !entities.location) {
+      suggestions.push("Which area? (Banjara Hills)", "Which area? (Gachibowli)", "Which area? (Pocharam)");
+    } else if ((msg.includes('buy') || msg.includes('looking for')) && !entities.budget) {
+      suggestions.push("What's your budget range?");
+    } else if ((msg.includes('invest') || msg.includes('buy')) && msg.includes('pocharam') && !entities.propertyType) {
+      suggestions.push("Residential property?", "Commercial plot?", "Agricultural land?");
+    } else if (msg.includes('rent') && !entities.timeline) {
+      suggestions.push("Short-term rental?", "Long-term rental?");
+    } else if (entities.propertyType && !entities.size) {
+      suggestions.push("What size do you need?", "How many bedrooms?");
+    } else if (entities.location && entities.propertyType && !entities.budget) {
+      suggestions.push("What's your budget?");
+    }
+
+    setSmartSuggestions(suggestions.slice(0, 3));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
     const userMessage = input.trim();
+    
+    // Check anonymous message limit
+    if (!isAuthenticated && messageCount >= 4) {
+      setShowAuthPrompt(true);
+      toast({
+        title: "Sign in Required",
+        description: "Please sign in to continue chatting with us",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setInput('');
     setShowQuickReplies(false);
+
+    // Increment message count for anonymous users
+    if (!isAuthenticated) {
+      setMessageCount(prev => prev + 1);
+    }
 
     // Extract information from user message
     const budget = extractBudget(userMessage);
@@ -246,6 +287,9 @@ export function ChatBot() {
     await updateContextWithMessage(conversationId, userMessage, 'user');
     const updatedEntities = await loadContextEntities(conversationId);
     setContextEntities(updatedEntities);
+
+    // Generate smart suggestions
+    generateSmartSuggestions(userMessage, updatedEntities);
     
     // Check if user should be prompted to sign in (after 4-5 messages for anonymous users)
     if (!isAuthenticated) {
@@ -546,67 +590,51 @@ export function ChatBot() {
   const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    try {
-      // Ensure conversation
-      let convId = conversationId;
-      if (!convId) {
-        const { data: convData, error: convErr } = await supabase
-          .from('chat_conversations')
-          .insert([{ user_id: null }])
-          .select('id')
-          .single();
-        if (convErr) throw convErr;
-        convId = convData.id;
-        setConversationId(convId);
-        localStorage.setItem('conversation_id', convId);
-      }
+    if (!inquiryData.name || !inquiryData.email) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide at least your name and email",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      const { error: insertErr } = await supabase.from('chat_user_info').insert({
-        conversation_id: convId,
-        name: inquiryData.name,
-        email: inquiryData.email,
-        phone: inquiryData.phone,
-        requirements: inquiryData.message,
+    try {
+      const { data, error } = await supabase.functions.invoke('submit-chat-info', {
+        body: {
+          conversation_id: conversationId,
+          session_id: sessionId,
+          name: inquiryData.name,
+          email: inquiryData.email,
+          phone: inquiryData.phone || null,
+          requirements: inquiryData.message || null,
+        }
       });
-      if (insertErr) throw insertErr;
-      
-      // Update user profile for personalized responses
-      updateUserProfile({
-        name: inquiryData.name,
-        email: inquiryData.email,
-        phone: inquiryData.phone
+
+      if (error) throw error;
+
+      toast({
+        title: "Information Submitted",
+        description: "Thank you! We'll get back to you soon.",
       });
-      
-      // Thank the user in the chat
-      const botMessage: Message = {
+
+      setShowInquiryForm(false);
+      setInquiryData({ name: '', email: '', phone: '', message: '' });
+
+      // Add confirmation message to chat
+      const confirmationMessage: Message = {
         id: messages.length + 1,
-        text: `Thank you, ${inquiryData.name}! We've received your inquiry and will contact you soon at ${inquiryData.email} or ${inquiryData.phone}.`,
+        text: "Thank you for providing your information! Our team will reach out to you shortly to discuss your requirements in detail.",
         sender: 'bot',
         timestamp: new Date(),
       };
-      
-      setMessages((prev) => [...prev, botMessage]);
-      
-      toast({
-        title: "Inquiry Submitted",
-        description: "Our team will get back to you shortly!",
-      });
-      
-      setShowInquiryForm(false);
-      
-      // Reset form
-      setInquiryData({
-        name: '',
-        email: '',
-        phone: '',
-        message: '',
-      });
+      setMessages(prev => [...prev, confirmationMessage]);
     } catch (error) {
       console.error('Error submitting inquiry:', error);
       toast({
-        title: "Submission Error",
-        description: "There was an error submitting your inquiry. Please try again.",
-        variant: "destructive"
+        title: "Submission Failed",
+        description: "There was an error submitting your information. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -869,7 +897,72 @@ export function ChatBot() {
 
           {/* Chat footer with quick replies and input */}
           <div className="p-3 border-t">
-            {/* Quick Reply Buttons */}
+            {/* Intent Selection Buttons */}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              <Button
+                size="sm"
+                variant={activeIntent === 'buy' ? "default" : "outline"}
+                onClick={() => {
+                  setActiveIntent('buy');
+                  handleQuickReply("I want to buy a property");
+                }}
+                className="flex-1 min-w-[90px]"
+              >
+                Buy
+              </Button>
+              <Button
+                size="sm"
+                variant={activeIntent === 'sell' ? "default" : "outline"}
+                onClick={() => {
+                  setActiveIntent('sell');
+                  handleQuickReply("I want to sell my property");
+                }}
+                className="flex-1 min-w-[90px]"
+              >
+                Sell
+              </Button>
+              <Button
+                size="sm"
+                variant={activeIntent === 'rent' ? "default" : "outline"}
+                onClick={() => {
+                  setActiveIntent('rent');
+                  handleQuickReply("I want to rent a property");
+                }}
+                className="flex-1 min-w-[90px]"
+              >
+                Rental
+              </Button>
+              <Button
+                size="sm"
+                variant={activeIntent === 'trends' ? "default" : "outline"}
+                onClick={() => {
+                  setActiveIntent('trends');
+                  handleQuickReply("Show me market trends");
+                }}
+                className="flex-1 min-w-[90px]"
+              >
+                Trends
+              </Button>
+            </div>
+
+            {/* Smart Suggestions */}
+            {smartSuggestions.length > 0 && (
+              <div className="flex gap-2 mb-3 flex-wrap">
+                {smartSuggestions.map((suggestion, idx) => (
+                  <Button
+                    key={idx}
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => handleQuickReply(suggestion)}
+                    className="text-xs"
+                  >
+                    {suggestion}
+                  </Button>
+                ))}
+              </div>
+            )}
+            
+            {/* Quick Reply Buttons - only show early in conversation */}
             {showQuickReplies && messages.length <= 2 && (
               <div className="flex flex-wrap gap-2 mb-3">
                 <Button 
@@ -891,18 +984,18 @@ export function ChatBot() {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  onClick={() => handleQuickReply("Tell me about market trends")}
+                  onClick={() => handleQuickReply("I want to rent a property")}
                   className="text-xs"
                 >
-                  📈 Trends
+                  🏘️ Rent
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  onClick={() => handleQuickReply("Show me investment opportunities")}
+                  onClick={() => handleQuickReply("Tell me about market trends")}
                   className="text-xs"
                 >
-                  💼 Invest
+                  📈 Trends
                 </Button>
               </div>
             )}
