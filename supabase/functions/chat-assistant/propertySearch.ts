@@ -3,6 +3,16 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 /**
  * Search properties database based on user criteria
  */
+/**
+ * Sanitize location input to prevent wildcard injection
+ */
+function sanitizeLocation(location: string): string {
+  return location
+    .replace(/[%_]/g, '') // Remove SQL wildcards
+    .trim()
+    .substring(0, 100); // Length limit
+}
+
 export async function searchPropertiesDatabase(args: {
   budget_min?: number;
   budget_max?: number;
@@ -20,7 +30,7 @@ export async function searchPropertiesDatabase(args: {
       .select('title, price, location, area, bedrooms, bathrooms, property_type, listing_type, features')
       .eq('status', 'available');
 
-    // Apply filters
+    // Apply filters with sanitization
     if (args.budget_min) {
       query = query.gte('price', args.budget_min);
     }
@@ -28,7 +38,10 @@ export async function searchPropertiesDatabase(args: {
       query = query.lte('price', args.budget_max);
     }
     if (args.location) {
-      query = query.ilike('location', `%${args.location}%`);
+      const safeLocation = sanitizeLocation(args.location);
+      if (safeLocation.length > 0) {
+        query = query.ilike('location', `%${safeLocation}%`);
+      }
     }
     if (args.property_type) {
       query = query.eq('property_type', args.property_type);
