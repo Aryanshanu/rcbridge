@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronRight, Shield, LogOut } from "lucide-react";
+import { ChevronDown, ChevronRight, Shield, LogOut, LogIn } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -238,6 +238,23 @@ export const MobileMenu = ({ isOpen, scrollToPropertyForm, handleContactClick }:
                   <LogOut className="h-4 w-4 mr-2" />
                   {isSigningOut ? "Signing out..." : "Sign Out"}
                 </button>
+              </motion.div>
+            )}
+
+            {!user && (
+              <motion.div custom={8} variants={itemVariants} className="py-2 border-t mt-2 space-y-2 px-3">
+                <Link to="/login" className="block">
+                  <Button variant="outline" className="w-full justify-start">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/admin-login" className="block">
+                  <Button variant="ghost" className="w-full justify-start">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Admin Login
+                  </Button>
+                </Link>
               </motion.div>
             )}
           </motion.div>

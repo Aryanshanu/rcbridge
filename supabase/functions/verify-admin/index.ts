@@ -51,20 +51,25 @@ Deno.serve(async (req) => {
 
     let effectiveRoles = roles || [];
 
-    // Bootstrap: if no admins exist in the system, grant current user admin
+    // Allowlist check: if user has no role, check if email is in ADMIN_ALLOWLIST_EMAILS
     if (!effectiveRoles.length) {
-      const { count: adminCount } = await supabase
-        .from('user_roles')
-        .select('id', { count: 'exact', head: true })
-        .eq('role', 'admin');
+      const allowlistEnv = Deno.env.get('ADMIN_ALLOWLIST_EMAILS');
+      const allowedEmails = allowlistEnv 
+        ? allowlistEnv.split(',').map(e => e.trim().toLowerCase())
+        : [];
 
-      if ((adminCount ?? 0) === 0) {
-        console.log('No admins found. Bootstrapping current user as admin');
+      const userEmail = user.email?.toLowerCase();
+
+      if (userEmail && allowedEmails.includes(userEmail)) {
+        console.log(`User ${userEmail} is in allowlist. Auto-assigning admin role.`);
         const { error: insertErr } = await supabase
           .from('user_roles')
           .insert({ user_id: user.id, role: 'admin', granted_by: user.id });
+        
         if (!insertErr) {
           effectiveRoles = [{ role: 'admin' } as any];
+        } else {
+          console.error('Failed to auto-assign admin role:', insertErr);
         }
       }
     }
