@@ -46,9 +46,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify password using bcrypt
+    // Verify password using bcryptjs (sync to avoid callback issues)
     const bcrypt = await import('https://esm.sh/bcryptjs@2.4.3');
-    const isValidPassword = await bcrypt.compare(password, adminData.password_hash);
+    const isValidPassword = bcrypt.compareSync(password, adminData.password_hash);
+
 
     if (!isValidPassword) {
       console.error('Invalid password');
