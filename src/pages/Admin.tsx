@@ -1,60 +1,38 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { getUserRole } from "@/utils/admin/userUtils";
-import { UserRole } from "@/types/user";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/sections/Footer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminChatbot } from "@/components/admin/AdminChatbot";
 import { AdminProperties } from "@/components/admin/AdminProperties";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, MessageSquare, Home as HomeIcon, Users, Shield } from "lucide-react";
+import { ContactMessagesTab } from "@/components/admin/ContactMessagesTab";
+import { AssistanceRequestsTab } from "@/components/admin/AssistanceRequestsTab";
+import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
 import { SEO } from "@/components/SEO";
-import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Loader2, LogOut } from "lucide-react";
+import { useMasterAdmin } from "@/contexts/MasterAdminContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Admin() {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, username, logout, isLoading } = useMasterAdmin();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      if (!user) {
-        navigate("/login");
-        return;
-      }
+    if (!isLoading && !isAuthenticated) {
+      navigate('/admin-login');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
-      // Server-side role verification
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/login");
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase.functions.invoke('verify-admin', {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
-        });
-
-        if (error || !data?.authorized) {
-          navigate("/");
-          return;
-        }
-
-        setUserRole(data.role);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Admin verification failed');
-        navigate("/");
-      }
-    };
-
-    checkAuth();
-  }, [user, navigate]);
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged Out",
+      description: "You have been logged out successfully",
+    });
+    navigate('/admin-login');
+  };
 
   if (isLoading) {
     return (
@@ -64,181 +42,66 @@ export default function Admin() {
     );
   }
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <>
       <SEO 
-        title="Admin Dashboard - RC Bridge" 
-        description="Administrative dashboard for RC Bridge real estate platform"
+        title="Master Admin Dashboard - RC Bridge"
+        description="Master admin control panel for managing RC Bridge platform"
+        noindex
       />
       
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        
-        <main className="container mx-auto px-4 py-8 mt-20">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-            <p className="text-muted-foreground">
-              Welcome, {user?.user_metadata?.full_name || user?.email} 
-              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                <Shield className="w-3 h-3 mr-1" />
-                {userRole}
-              </span>
-            </p>
+      <Navbar />
+
+      <main className="min-h-screen py-12 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Master Admin Dashboard</h1>
+              <p className="text-muted-foreground">Welcome back, {username}</p>
+            </div>
+            <Button onClick={handleLogout} variant="outline">
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
           </div>
 
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">
-                <HomeIcon className="w-4 h-4 mr-2" />
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="chat">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Chat Conversations
-              </TabsTrigger>
-              <TabsTrigger value="properties">
-                <HomeIcon className="w-4 h-4 mr-2" />
-                Properties
-              </TabsTrigger>
-              <TabsTrigger value="users">
-                <Users className="w-4 h-4 mr-2" />
-                Users
-              </TabsTrigger>
+          <Tabs defaultValue="analytics" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="chat">Chat Conversations</TabsTrigger>
+              <TabsTrigger value="properties">Properties</TabsTrigger>
+              <TabsTrigger value="contact">Contact Messages</TabsTrigger>
+              <TabsTrigger value="assistance">Assistance Requests</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Total Conversations
-                    </CardTitle>
-                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">100% Observability</div>
-                    <p className="text-xs text-muted-foreground">
-                      All chat conversations saved
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Properties Listed
-                    </CardTitle>
-                    <HomeIcon className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">Full Access</div>
-                    <p className="text-xs text-muted-foreground">
-                      Manage all properties
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      User Management
-                    </CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">Admin Control</div>
-                    <p className="text-xs text-muted-foreground">
-                      Create roles & manage access
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Security
-                    </CardTitle>
-                    <Shield className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">Protected</div>
-                    <p className="text-xs text-muted-foreground">
-                      Role-based access control
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
-                  <CardDescription>
-                    Common administrative tasks
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    • View all chat conversations in the "Chat Conversations" tab
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    • Manage properties and listings
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    • Monitor user activity and assistance requests
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    • Export conversation transcripts for analysis
-                  </p>
-                </CardContent>
-              </Card>
+            <TabsContent value="analytics">
+              <AnalyticsTab />
             </TabsContent>
 
             <TabsContent value="chat">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Chat Conversations</CardTitle>
-                  <CardDescription>
-                    View and manage all chatbot conversations with users
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <AdminChatbot userRole={userRole} />
-                </CardContent>
-              </Card>
+              <AdminChatbot userRole="admin" />
             </TabsContent>
 
             <TabsContent value="properties">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Property Management</CardTitle>
-                  <CardDescription>
-                    Manage all property listings on the platform
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <AdminProperties userRole={userRole} />
-                </CardContent>
-              </Card>
+              <AdminProperties userRole="admin" />
             </TabsContent>
 
-            <TabsContent value="users">
-              <Card>
-                <CardHeader>
-                  <CardTitle>User Management</CardTitle>
-                  <CardDescription>
-                    Manage users, roles, and permissions
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">User management interface coming soon...</p>
-                </CardContent>
-              </Card>
+            <TabsContent value="contact">
+              <ContactMessagesTab />
+            </TabsContent>
+
+            <TabsContent value="assistance">
+              <AssistanceRequestsTab />
             </TabsContent>
           </Tabs>
-        </main>
+        </div>
+      </main>
 
-        <Footer />
-      </div>
+      <Footer />
     </>
   );
 }

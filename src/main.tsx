@@ -1,5 +1,5 @@
-
 import { createRoot } from 'react-dom/client'
+import { MasterAdminProvider } from "@/contexts/MasterAdminContext";
 import App from './App.tsx'
 import './index.css'
 
@@ -122,7 +122,11 @@ if (redirectPath) {
 
 try {
   console.log('Attempting to render App component...');
-  root.render(<App />);
+  root.render(
+    <MasterAdminProvider>
+      <App />
+    </MasterAdminProvider>
+  );
   console.log('App component rendered successfully');
 } catch (error) {
   console.error('Error rendering app:', error);
