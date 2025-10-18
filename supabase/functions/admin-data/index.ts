@@ -6,8 +6,7 @@ const corsHeaders = {
 };
 
 interface AdminDataRequest {
-  sessionToken: string;
-  dataType: 'analytics' | 'contacts' | 'assistance' | 'properties' | 'chats' | 'login_history' | 'customer_activity';
+  dataType: 'analytics' | 'contacts' | 'assistance' | 'properties' | 'chats' | 'customer_activity';
 }
 
 Deno.serve(async (req) => {
@@ -20,28 +19,42 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { sessionToken, dataType }: AdminDataRequest = await req.json();
-
-    if (!sessionToken) {
+    // Get Authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
-        JSON.stringify({ error: 'Session token required' }),
+        JSON.stringify({ error: 'Authorization token required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Validate session token
-    const { data: validationData, error: validationError } = await supabase
-      .rpc('validate_master_admin_session', { session_token: sessionToken });
+    // Extract and validate JWT token
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
-    if (validationError || !validationData?.valid) {
-      console.error('Session validation failed:', validationError);
+    if (authError || !user) {
+      console.error('JWT validation failed:', authError);
       return new Response(
-        JSON.stringify({ error: 'Invalid or expired session' }),
+        JSON.stringify({ error: 'Invalid authentication token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Admin data request: ${dataType} by ${validationData.username}`);
+    // Check admin role using security definer function
+    const { data: hasAdmin, error: roleError } = await supabase
+      .rpc('has_role', { _user_id: user.id, _role: 'admin' });
+
+    if (roleError || !hasAdmin) {
+      console.error('Admin role check failed:', roleError);
+      return new Response(
+        JSON.stringify({ error: 'Insufficient privileges' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { dataType }: { dataType: AdminDataRequest['dataType'] } = await req.json();
+    
+    console.log(`Admin data request: ${dataType} by ${user.email}`);
 
     let responseData: any = {};
 
@@ -117,18 +130,6 @@ Deno.serve(async (req) => {
 
         if (error) throw error;
         responseData = { properties: data };
-        break;
-      }
-      
-      case 'login_history': {
-        const { data, error } = await supabase
-          .from('admin_login_history')
-          .select('*')
-          .order('login_attempt_time', { ascending: false })
-          .limit(100);
-
-        if (error) throw error;
-        responseData = data;
         break;
       }
       

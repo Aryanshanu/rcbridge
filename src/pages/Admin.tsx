@@ -17,41 +17,74 @@ import { isAdminUser } from "@/utils/admin/userUtils";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Admin() {
-  const navigate = useNavigate();
-  const { user, signOut } = useAuth();
-  const { toast } = useToast();
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const navigate = useNavigate();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
+    let cancelled = false;
+    
     const checkAdminAccess = async () => {
+      // Wait for auth to settle
+      if (authLoading) return;
+      
+      // If no user after auth settled, redirect to login
       if (!user) {
-        toast({
-          title: "Authentication Required",
-          description: "Please log in to access the admin dashboard",
-          variant: "destructive",
-        });
-        navigate('/login');
+        if (!cancelled) {
+          toast({
+            title: "Authentication Required",
+            description: "Please log in to access the admin dashboard",
+            variant: "destructive",
+          });
+          navigate('/login');
+        }
         return;
       }
 
-      const hasAdminAccess = await isAdminUser();
-      if (!hasAdminAccess) {
+      // Retry admin check up to 3 times with backoff
+      for (let attempt = 0; attempt < 3 && !cancelled; attempt++) {
+        try {
+          const adminStatus = await isAdminUser();
+          
+          if (cancelled) return;
+          
+          if (adminStatus) {
+            setIsAdmin(true);
+            setIsLoading(false);
+            return;
+          }
+          
+          // Only wait if we're going to retry
+          if (attempt < 2) {
+            await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)));
+          }
+        } catch (error) {
+          console.error(`Admin check attempt ${attempt + 1} failed:`, error);
+          if (attempt < 2 && !cancelled) {
+            await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)));
+          }
+        }
+      }
+      
+      // After all retries failed, redirect
+      if (!cancelled) {
         toast({
           title: "Access Denied",
           description: "You don't have permission to access the admin dashboard",
           variant: "destructive",
         });
         navigate('/');
-        return;
       }
-
-      setIsAdmin(true);
-      setIsLoading(false);
     };
 
     checkAdminAccess();
-  }, [user, navigate, toast]);
+    
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authLoading, navigate, toast]);
 
   const handleLogout = async () => {
     await signOut();

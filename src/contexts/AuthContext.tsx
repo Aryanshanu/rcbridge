@@ -26,31 +26,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast: uiToast } = useToast();
 
   useEffect(() => {
-    // Initial session check
+    // CRITICAL: Set up auth listener FIRST before checking session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        // Keep callback strictly synchronous to prevent deadlocks
+        setUser(session?.user ?? null);
+        
+        // Show welcome animation only for new sign ups
+        if (event === 'SIGNED_IN' && session?.user) {
+          const signUpTimestamp = session.user.created_at;
+          const now = new Date().toISOString();
+          const timeDiff = new Date(now).getTime() - new Date(signUpTimestamp).getTime();
+          
+          // If the user was created less than 10 seconds ago, it's a new signup
+          if (timeDiff < 10000) {
+            setShowWelcome(true);
+          }
+        }
+      }
+    );
+
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    // Set up auth listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      const previousUser = user;
-      const currentUser = session?.user ?? null;
-      
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-      } else {
-        setUser(currentUser);
-      }
-      
-      // If user wasn't logged in before and now is, show welcome animation
-      if (!previousUser && currentUser) {
-        setShowWelcome(true);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [user]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []); // Empty deps - never resubscribe
 
   const signInWithGoogle = async () => {
     try {

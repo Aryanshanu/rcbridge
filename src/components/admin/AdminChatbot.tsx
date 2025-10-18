@@ -70,6 +70,7 @@ export const AdminChatbot = ({ userRole }: AdminChatbotProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState('conversations');
   const [botSettings, setBotSettings] = useState({
     enabled: true,
@@ -80,158 +81,178 @@ export const AdminChatbot = ({ userRole }: AdminChatbotProps) => {
   
   const messageEndRef = useRef<HTMLDivElement>(null);
   
-  // Mock data for conversations
+  // Load conversations from database
   useEffect(() => {
-    // This would be replaced with a real API call in production
-    const mockConversations: Conversation[] = [
-      {
-        id: '1',
-        userName: 'John Smith',
-        userEmail: 'john.smith@example.com',
-        lastMessage: 'I need help finding a 3BHK property in Hyderabad',
-        lastMessageTime: new Date(Date.now() - 1000 * 60 * 15).toISOString(), // 15 minutes ago
-        unreadCount: 3,
-        status: 'active'
-      },
-      {
-        id: '2',
-        userName: 'Rani Patel',
-        userEmail: 'rani.patel@gmail.com',
-        lastMessage: 'What documents do I need for home loan?',
-        lastMessageTime: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 minutes ago
-        unreadCount: 0,
-        status: 'pending'
-      },
-      {
-        id: '3',
-        userName: 'Ahmed Khan',
-        userEmail: 'ahmed.k@outlook.com',
-        lastMessage: 'Thanks for the information! I will check out those properties.',
-        lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // 3 hours ago
-        unreadCount: 0,
-        status: 'resolved'
-      },
-      {
-        id: '4',
-        userName: 'Priya Singh',
-        userEmail: 'priya.singh@hotmail.com',
-        lastMessage: 'Is the Jubilee Hills property still available?',
-        lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-        unreadCount: 1,
-        status: 'active'
+    const fetchConversations = async () => {
+      try {
+        setError(null);
+        const { data: convos, error: convosError } = await supabase
+          .from('chat_conversations')
+          .select(`
+            id,
+            user_id,
+            created_at,
+            updated_at,
+            chat_messages (
+              content,
+              created_at,
+              sender_type
+            ),
+            chat_user_info (
+              name,
+              email
+            )
+          `)
+          .order('updated_at', { ascending: false });
+
+        if (convosError) throw convosError;
+
+        const mapped: Conversation[] = (convos || []).map((convo: any) => {
+          const msgs = convo.chat_messages || [];
+          const lastMsg = msgs[msgs.length - 1];
+          const userInfo = convo.chat_user_info?.[0];
+          
+          return {
+            id: convo.id,
+            userName: userInfo?.name || 'Anonymous User',
+            userEmail: userInfo?.email || 'No email',
+            lastMessage: lastMsg?.content || 'No messages yet',
+            lastMessageTime: lastMsg?.created_at || convo.created_at,
+            unreadCount: msgs.filter((m: any) => m.sender_type === 'user').length,
+            status: 'active' as const
+          };
+        });
+
+        setConversations(mapped);
+      } catch (err) {
+        console.error('Error fetching conversations:', err);
+        setError('Failed to load conversations');
+        toast.error('Failed to load conversations');
       }
-    ];
-    
-    setConversations(mockConversations);
+    };
+
+    fetchConversations();
   }, []);
   
-  // Mock data for messages when a conversation is selected
+  // Load messages when a conversation is selected
   useEffect(() => {
-    if (selectedConversation) {
+    if (!selectedConversation) return;
+
+    const fetchMessages = async () => {
       setLoading(true);
-      
-      // This would be replaced with a real API call in production
-      setTimeout(() => {
-        const mockMessages: Message[] = [
-          {
-            id: '1',
-            content: 'Hello, I need help finding a 3BHK property in Hyderabad',
-            sender: 'user',
-            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            userName: 'John Smith',
-            userEmail: 'john.smith@example.com'
-          },
-          {
-            id: '2',
-            content: 'Hi John! I\'d be happy to help you find a 3BHK property in Hyderabad. Could you please let me know your preferred areas and budget range?',
-            sender: 'bot',
-            timestamp: new Date(Date.now() - 1000 * 60 * 29).toISOString()
-          },
-          {
-            id: '3',
-            content: 'I\'m looking for something in Banjara Hills or Jubilee Hills. My budget is around ₹1.5 crore',
-            sender: 'user',
-            timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-            userName: 'John Smith',
-            userEmail: 'john.smith@example.com'
-          },
-          {
-            id: '4',
-            content: 'Great! We have several properties matching your criteria. Here are a few options:\n\n1. Luxury 3BHK in Banjara Hills - ₹1.45 crore\n2. Modern Apartment in Jubilee Hills - ₹1.38 crore\n3. Spacious Villa in Banjara Hills - ₹1.62 crore\n\nWould you like more details about any of these?',
-            sender: 'bot',
-            timestamp: new Date(Date.now() - 1000 * 60 * 24).toISOString()
-          },
-          {
-            id: '5',
-            content: 'I\'m interested in options 1 and 2. Can you send me more details?',
-            sender: 'user',
-            timestamp: new Date(Date.now() - 1000 * 60 * 20).toISOString(),
-            userName: 'John Smith',
-            userEmail: 'john.smith@example.com'
-          },
-          {
-            id: '6',
-            content: 'This conversation requires specific property knowledge. Let me connect you with one of our property specialists.',
-            sender: 'bot',
-            timestamp: new Date(Date.now() - 1000 * 60 * 19).toISOString()
-          },
-          {
-            id: '7',
-            content: 'Hello John, I\'m Rahul from RC Bridge. I can help you with detailed information about those properties. The Luxury 3BHK in Banjara Hills is a newly constructed property with premium fittings, 3 bathrooms, a modern kitchen, and a beautiful view of the city. The Modern Apartment in Jubilee Hills is part of a gated community with amenities like a swimming pool, gym, and 24x7 security.',
-            sender: 'admin',
-            timestamp: new Date(Date.now() - 1000 * 60 * 18).toISOString()
-          },
-          {
-            id: '8',
-            content: 'I\'d like to visit both properties. When can I schedule a viewing?',
-            sender: 'user',
-            timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-            userName: 'John Smith',
-            userEmail: 'john.smith@example.com',
-            read: false
-          }
-        ];
+      try {
+        const { data: msgs, error: msgsError } = await supabase
+          .from('chat_messages')
+          .select(`
+            id,
+            content,
+            sender_type,
+            created_at,
+            admin_name
+          `)
+          .eq('conversation_id', selectedConversation)
+          .order('created_at', { ascending: true });
+
+        if (msgsError) throw msgsError;
+
+        const { data: userInfo } = await supabase
+          .from('chat_user_info')
+          .select('name, email')
+          .eq('conversation_id', selectedConversation)
+          .maybeSingle();
+
+        const mapped: Message[] = (msgs || []).map((msg: any) => ({
+          id: msg.id,
+          content: msg.content,
+          sender: msg.sender_type === 'user' ? 'user' : (msg.sender_type === 'admin' ? 'admin' : 'bot'),
+          timestamp: msg.created_at,
+          userName: msg.sender_type === 'user' ? userInfo?.name : msg.admin_name,
+          userEmail: msg.sender_type === 'user' ? userInfo?.email : undefined,
+          read: true
+        }));
+
+        setMessages(mapped);
         
-        if (selectedConversation === '1') {
-          setMessages(mockMessages);
-        } else {
-          // For other conversations, generate generic messages
-          setMessages([
-            {
-              id: '101',
-              content: 'Hello, I have a question about RC Bridge properties',
-              sender: 'user',
-              timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-              userName: conversations.find(c => c.id === selectedConversation)?.userName,
-              userEmail: conversations.find(c => c.id === selectedConversation)?.userEmail
-            },
-            {
-              id: '102',
-              content: 'Hi there! How can I assist you with RC Bridge properties today?',
-              sender: 'bot',
-              timestamp: new Date(Date.now() - 1000 * 60 * 29).toISOString()
-            },
-            {
-              id: '103',
-              content: conversations.find(c => c.id === selectedConversation)?.lastMessage || '',
-              sender: 'user',
-              timestamp: conversations.find(c => c.id === selectedConversation)?.lastMessageTime || '',
-              userName: conversations.find(c => c.id === selectedConversation)?.userName,
-              userEmail: conversations.find(c => c.id === selectedConversation)?.userEmail
-            }
-          ]);
-        }
-        
-        setLoading(false);
-        
-        // Mark conversation as read when opened
+        // Mark conversation as read
         setConversations(prev => prev.map(conv => 
           conv.id === selectedConversation 
             ? { ...conv, unreadCount: 0 } 
             : conv
         ));
-      }, 1000);
-    }
+      } catch (err) {
+        console.error('Error fetching messages:', err);
+        toast.error('Failed to load messages');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMessages();
+  }, [selectedConversation]);
+
+  // Set up realtime subscriptions
+  useEffect(() => {
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+        (payload) => {
+          const newMsg = payload.new as any;
+          
+          // If message is for selected conversation, add it to messages
+          if (newMsg.conversation_id === selectedConversation) {
+            setMessages(prev => [...prev, {
+              id: newMsg.id,
+              content: newMsg.content,
+              sender: newMsg.sender_type === 'user' ? 'user' : (newMsg.sender_type === 'admin' ? 'admin' : 'bot'),
+              timestamp: newMsg.created_at,
+              read: true
+            }]);
+          }
+          
+          // Update conversation list
+          setConversations(prev => prev.map(conv => 
+            conv.id === newMsg.conversation_id
+              ? {
+                  ...conv,
+                  lastMessage: newMsg.content,
+                  lastMessageTime: newMsg.created_at,
+                  unreadCount: conv.id !== selectedConversation ? conv.unreadCount + 1 : 0
+                }
+              : conv
+          ));
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_conversations' },
+        async (payload) => {
+          const newConvo = payload.new as any;
+          
+          // Fetch user info for the new conversation
+          const { data: userInfo } = await supabase
+            .from('chat_user_info')
+            .select('name, email')
+            .eq('conversation_id', newConvo.id)
+            .maybeSingle();
+          
+          setConversations(prev => [{
+            id: newConvo.id,
+            userName: userInfo?.name || 'Anonymous User',
+            userEmail: userInfo?.email || 'No email',
+            lastMessage: 'New conversation',
+            lastMessageTime: newConvo.created_at,
+            unreadCount: 0,
+            status: 'active'
+          }, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedConversation]);
   
   // Scroll to bottom of messages
@@ -241,38 +262,42 @@ export const AdminChatbot = ({ userRole }: AdminChatbotProps) => {
     }
   }, [messages]);
   
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputMessage.trim() || !selectedConversation) return;
     
-    // Get admin name
     const adminName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Admin';
     
-    // Add new message to the conversation
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      content: inputMessage,
-      sender: 'admin',
-      timestamp: new Date().toISOString(),
-      userName: adminName
-    };
-    
-    setMessages([...messages, newMessage]);
-    setInputMessage('');
-    
-    // Update conversation with last message
-    setConversations(prev => prev.map(conv => 
-      conv.id === selectedConversation 
-        ? { 
-            ...conv, 
-            lastMessage: inputMessage,
-            lastMessageTime: new Date().toISOString(),
-            status: 'active'
-          } 
-        : conv
-    ));
-    
-    // In production, you would send this message to a backend API
-    toast.success("Message sent to user");
+    try {
+      // Insert admin message to database
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          conversation_id: selectedConversation,
+          sender_type: 'admin',
+          content: inputMessage.trim(),
+          admin_name: adminName,
+          message_type: 'text'
+        });
+
+      if (error) throw error;
+
+      // Optimistically update UI (realtime will also update it)
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        content: inputMessage.trim(),
+        sender: 'admin',
+        timestamp: new Date().toISOString(),
+        userName: adminName
+      };
+      
+      setMessages(prev => [...prev, newMessage]);
+      setInputMessage('');
+      
+      toast.success("Message sent to user");
+    } catch (err) {
+      console.error('Error sending message:', err);
+      toast.error('Failed to send message');
+    }
   };
   
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
