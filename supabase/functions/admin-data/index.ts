@@ -7,7 +7,7 @@ const corsHeaders = {
 
 interface AdminDataRequest {
   sessionToken: string;
-  dataType: 'analytics' | 'contacts' | 'assistance' | 'properties' | 'chats';
+  dataType: 'analytics' | 'contacts' | 'assistance' | 'properties' | 'chats' | 'login_history' | 'customer_activity';
 }
 
 Deno.serve(async (req) => {
@@ -117,6 +117,30 @@ Deno.serve(async (req) => {
 
         if (error) throw error;
         responseData = { properties: data };
+        break;
+      }
+      
+      case 'login_history': {
+        const { data, error } = await supabase
+          .from('admin_login_history')
+          .select('*')
+          .order('login_attempt_time', { ascending: false })
+          .limit(100);
+
+        if (error) throw error;
+        responseData = data;
+        break;
+      }
+      
+      case 'customer_activity': {
+        const { data, error } = await supabase
+          .from('customer_activity_history')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (error) throw error;
+        responseData = data;
         break;
       }
 

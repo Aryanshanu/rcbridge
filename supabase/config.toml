@@ -15,3 +15,12 @@ verify_jwt = false
 [functions.verify-admin]
 verify_jwt = true
 
+[functions.log-customer-activity]
+verify_jwt = false
+
+[functions.generate-image-stable]
+verify_jwt = false
+
+[functions.ai-reasoning-k2]
+verify_jwt = false
+

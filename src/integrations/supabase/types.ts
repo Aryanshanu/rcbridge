@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_login_history: {
+        Row: {
+          admin_id: string | null
+          created_at: string | null
+          failure_reason: string | null
+          id: string
+          ip_address: string | null
+          login_attempt_time: string | null
+          login_status: string
+          logout_time: string | null
+          session_duration: unknown | null
+          session_token: string | null
+          user_agent: string | null
+          username: string
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          login_attempt_time?: string | null
+          login_status: string
+          logout_time?: string | null
+          session_duration?: unknown | null
+          session_token?: string | null
+          user_agent?: string | null
+          username: string
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          login_attempt_time?: string | null
+          login_status?: string
+          logout_time?: string | null
+          session_duration?: unknown | null
+          session_token?: string | null
+          user_agent?: string | null
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_login_history_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "master_admin"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assistance_requests: {
         Row: {
           budget: string
@@ -272,6 +325,45 @@ export type Database = {
           id?: string
           sentiment?: string | null
           user_input?: string | null
+        }
+        Relationships: []
+      }
+      customer_activity_history: {
+        Row: {
+          activity_details: Json
+          activity_type: string
+          created_at: string | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          ip_address: string | null
+          referrer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          activity_details: Json
+          activity_type: string
+          created_at?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          ip_address?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          activity_details?: Json
+          activity_type?: string
+          created_at?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          ip_address?: string | null
+          referrer?: string | null
+          user_agent?: string | null
         }
         Relationships: []
       }

@@ -8,6 +8,8 @@ import { AdminProperties } from "@/components/admin/AdminProperties";
 import { ContactMessagesTab } from "@/components/admin/ContactMessagesTab";
 import { AssistanceRequestsTab } from "@/components/admin/AssistanceRequestsTab";
 import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
+import { LoginHistoryTab } from "@/components/admin/LoginHistoryTab";
+import { CustomerActivityTab } from "@/components/admin/CustomerActivityTab";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Loader2, LogOut } from "lucide-react";
@@ -72,14 +74,24 @@ export default function Admin() {
           <Tabs defaultValue="analytics" className="space-y-4">
             <TabsList>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="chat">Chat Conversations</TabsTrigger>
+              <TabsTrigger value="login-history">Login History</TabsTrigger>
+              <TabsTrigger value="activity">Customer Activity</TabsTrigger>
+              <TabsTrigger value="chat">Chat</TabsTrigger>
               <TabsTrigger value="properties">Properties</TabsTrigger>
-              <TabsTrigger value="contact">Contact Messages</TabsTrigger>
-              <TabsTrigger value="assistance">Assistance Requests</TabsTrigger>
+              <TabsTrigger value="contact">Contacts</TabsTrigger>
+              <TabsTrigger value="assistance">Assistance</TabsTrigger>
             </TabsList>
 
             <TabsContent value="analytics">
               <AnalyticsTab />
+            </TabsContent>
+
+            <TabsContent value="login-history">
+              <LoginHistoryTab />
+            </TabsContent>
+
+            <TabsContent value="activity">
+              <CustomerActivityTab />
             </TabsContent>
 
             <TabsContent value="chat">

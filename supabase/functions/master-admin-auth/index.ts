@@ -40,6 +40,21 @@ Deno.serve(async (req) => {
 
     if (fetchError || !adminData) {
       console.error('Admin not found:', fetchError);
+      
+      // Log failed login attempt
+      const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+      const userAgent = req.headers.get('user-agent') || 'unknown';
+      
+      await supabase
+        .from('admin_login_history')
+        .insert({
+          username,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          login_status: 'failed',
+          failure_reason: 'Admin not found',
+        });
+      
       return new Response(
         JSON.stringify({ error: 'Invalid credentials' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -54,6 +69,22 @@ Deno.serve(async (req) => {
 
     if (!isValidPassword) {
       console.error('Invalid password');
+      
+      // Log failed login attempt
+      const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+      const userAgent = req.headers.get('user-agent') || 'unknown';
+      
+      await supabase
+        .from('admin_login_history')
+        .insert({
+          admin_id: adminData.id,
+          username,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          login_status: 'failed',
+          failure_reason: 'Invalid password',
+        });
+      
       return new Response(
         JSON.stringify({ error: 'Invalid credentials' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -84,6 +115,21 @@ Deno.serve(async (req) => {
     }
 
     console.log('Master admin login successful');
+
+    // Log successful login to admin_login_history
+    const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
+    
+    await supabase
+      .from('admin_login_history')
+      .insert({
+        admin_id: adminData.id,
+        username: adminData.username,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        login_status: 'success',
+        session_token: sessionToken,
+      });
 
     return new Response(
       JSON.stringify({
