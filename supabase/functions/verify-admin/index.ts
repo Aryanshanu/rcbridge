@@ -49,8 +49,28 @@ Deno.serve(async (req) => {
       );
     }
 
-    const hasAdminRole = roles?.some(r => 
-      ['admin', 'developer', 'maintainer'].includes(r.role)
+    let effectiveRoles = roles || [];
+
+    // Bootstrap: if no admins exist in the system, grant current user admin
+    if (!effectiveRoles.length) {
+      const { count: adminCount } = await supabase
+        .from('user_roles')
+        .select('id', { count: 'exact', head: true })
+        .eq('role', 'admin');
+
+      if ((adminCount ?? 0) === 0) {
+        console.log('No admins found. Bootstrapping current user as admin');
+        const { error: insertErr } = await supabase
+          .from('user_roles')
+          .insert({ user_id: user.id, role: 'admin', granted_by: user.id });
+        if (!insertErr) {
+          effectiveRoles = [{ role: 'admin' } as any];
+        }
+      }
+    }
+
+    const hasAdminRole = effectiveRoles?.some(r => 
+      ['admin', 'developer', 'maintainer'].includes((r as any).role)
     );
 
     if (!hasAdminRole) {
@@ -61,9 +81,9 @@ Deno.serve(async (req) => {
     }
 
     // User is authorized
-    const userRole = roles.find(r => r.role === 'admin')?.role || 
-                     roles.find(r => r.role === 'developer')?.role ||
-                     roles.find(r => r.role === 'maintainer')?.role;
+    const userRole = (effectiveRoles as any).find((r: any) => r.role === 'admin')?.role || 
+                     (effectiveRoles as any).find((r: any) => r.role === 'developer')?.role ||
+                     (effectiveRoles as any).find((r: any) => r.role === 'maintainer')?.role;
 
     return new Response(
       JSON.stringify({ authorized: true, role: userRole }),

@@ -5,3 +5,7 @@ verify_jwt = false
 
 [functions.generate-property-image]
 verify_jwt = false
+
+[functions.verify-admin]
+verify_jwt = true
+

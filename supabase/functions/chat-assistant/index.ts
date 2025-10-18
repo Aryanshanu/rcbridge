@@ -720,13 +720,14 @@ async function processFunctionCalls(
 
     // Execute function calls (Tier 3: Model-driven function calling)
     console.log(`[Tier 3] Executing ${toolCalls.length} function call(s)`);
-    const toolResponses = [];
+    const toolResponses: Array<{ role: 'tool'; content: any; tool_call_id: string; name?: string }> = [];
     
+    // First pass: handle property DB search calls
     for (const toolCall of toolCalls) {
       const functionName = toolCall.function.name;
-      const functionArgs = JSON.parse(toolCall.function.arguments);
-      
-      if (functionName === 'search_properties_db') {
+      if (functionName !== 'search_properties_db') continue;
+      try {
+        const functionArgs = JSON.parse(toolCall.function.arguments);
         console.log('[Property DB Search] Executing with args:', functionArgs);
         const properties = await searchPropertiesDatabase(functionArgs);
         toolResponses.push({
@@ -735,15 +736,13 @@ async function processFunctionCalls(
           name: functionName,
           content: properties
         });
-      } else if (functionName === 'search_real_estate_info') {
-        // Existing search logic continues below
+      } catch (e) {
+        console.error('[Property DB Search] Error:', e);
       }
     }
     
     // Original search handling code continues...
     console.log('[Tier 3] Model requested tool calls:', toolCalls.map(tc => tc.function.name));
-    
-    const toolResponses: Array<{ role: string; content: string; tool_call_id: string }> = [];
 
     for (const toolCall of toolCalls) {
       if (toolCall.function.name === 'search_real_estate_info') {
