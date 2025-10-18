@@ -73,6 +73,14 @@ export function ChatBot() {
     const stored = localStorage.getItem('chat_conversation_id');
     return stored || crypto.randomUUID();
   });
+  const [sessionId] = useState<string>(() => {
+    // Generate or retrieve persistent session ID for anonymous users
+    const stored = localStorage.getItem('chat_session_id');
+    if (stored) return stored;
+    const newSessionId = crypto.randomUUID();
+    localStorage.setItem('chat_session_id', newSessionId);
+    return newSessionId;
+  });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [contextEntities, setContextEntities] = useState<ChatEntities>({});
   
@@ -154,9 +162,14 @@ export function ChatBot() {
         }
 
         // Use upsert instead of insert to avoid duplicate key errors
+        // Include session_id for anonymous users to enable proper data isolation
         const { error } = await supabase
           .from('chat_conversations')
-          .upsert([{ id: conversationId, user_id: userId }], { 
+          .upsert([{ 
+            id: conversationId, 
+            user_id: userId,
+            session_id: userId ? null : sessionId // Only set session_id for anonymous users
+          }], { 
             onConflict: 'id',
             ignoreDuplicates: false 
           });
