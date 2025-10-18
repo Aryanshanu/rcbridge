@@ -107,10 +107,10 @@ export const PropertyImageUpload = ({ propertyId, onUploadComplete }: PropertyIm
 
       onUploadComplete?.(publicUrl);
     } catch (error: any) {
-      console.error('Upload error:', error);
+      // Image upload failed - show user-friendly message
       toast({
-        title: "Error",
-        description: error.message || "Failed to upload image",
+        title: "Upload Failed",
+        description: "Failed to upload image. Please try again or contact support.",
         variant: "destructive",
       });
     } finally {

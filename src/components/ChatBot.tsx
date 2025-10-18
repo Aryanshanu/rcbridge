@@ -175,7 +175,7 @@ export function ChatBot() {
           });
 
         if (error) {
-          console.error('Failed to upsert conversation:', error);
+          // Error persisting conversation - continue in ephemeral mode
           toast({
             title: "Chat in ephemeral mode",
             description: "Messages won't persist. Continuing in-memory.",
@@ -185,7 +185,6 @@ export function ChatBot() {
           localStorage.setItem('chat_conversation_id', conversationId);
         }
       } catch (error) {
-        console.error('Error initializing conversation:', error);
         // Fallback to ephemeral session
         const ephemeralId = crypto.randomUUID();
         setConversationId(ephemeralId);
@@ -263,7 +262,7 @@ export function ChatBot() {
           ]);
 
         if (userMsgError) {
-          console.error('Failed to save user message:', userMsgError);
+          // Failed to persist user message - continue anyway
         }
       }
       
@@ -295,8 +294,7 @@ export function ChatBot() {
       );
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Edge function error:', response.status, errorText);
+        // Edge function error - handle gracefully
         
         if (response.status === 429) {
           throw new Error('Rate limit exceeded. Please wait a moment and try again.');
@@ -424,7 +422,7 @@ export function ChatBot() {
           });
         }
       } catch (dbErr) {
-        console.error('Failed to persist assistant message:', dbErr);
+        // Failed to persist assistant message - continue anyway
       }
 
       setIsLoading(false);
@@ -449,7 +447,7 @@ export function ChatBot() {
       }
 
     } catch (error: any) {
-      console.error('Error calling chat assistant:', error);
+      // Chat assistant error - show user-friendly message
       setFailureCount(prev => prev + 1);
       setIsLoading(false);
       

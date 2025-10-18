@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useToast } from "@/components/ui/use-toast";
 import { toast } from "sonner";
+import { z } from "zod";
 
 interface AuthContextType {
   user: User | null;
@@ -75,7 +76,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         window.location.href = data.url;
       }
     } catch (error: any) {
-      console.error('Error signing in with Google');
       uiToast({
         title: "Error signing in with Google",
         description: error.message || "Please try again later.",
@@ -95,7 +95,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
     } catch (error: any) {
-      console.error('Error signing in');
       uiToast({
         title: "Error signing in",
         description: error.message || "Please check your credentials and try again.",
@@ -107,6 +106,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, metadata?: { [key: string]: any }) => {
     try {
+      // Validate password strength before submitting to Supabase
+      const passwordSchema = z.string()
+        .min(8, 'Password must be at least 8 characters')
+        .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+        .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+        .regex(/[0-9]/, 'Password must contain at least one number')
+        .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
+
+      const validation = passwordSchema.safeParse(password);
+      if (!validation.success) {
+        throw new Error(validation.error.issues[0].message);
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -119,7 +131,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
     } catch (error: any) {
-      console.error('Error signing up');
       uiToast({
         title: "Error signing up",
         description: error.message || "Please try again later.",
@@ -175,7 +186,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }, 500);
       
     } catch (error: any) {
-      console.error('Error signing out');
       toast.error("Error signing out: " + (error.message || "Please try again"));
       
       // Attempt a more aggressive approach if normal signout fails
@@ -187,7 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Force reload the page
         window.location.href = '/';
       } catch (e) {
-        console.error('Final fallback error');
+        // Final fallback failed - user may need to clear cookies manually
       }
     }
   };

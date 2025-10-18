@@ -453,7 +453,6 @@ export type Database = {
           full_name: string | null
           id: string
           preferences: Json | null
-          role: Database["public"]["Enums"]["user_role"]
           updated_at: string
           username: string | null
         }
@@ -463,7 +462,6 @@ export type Database = {
           full_name?: string | null
           id: string
           preferences?: Json | null
-          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           username?: string | null
         }
@@ -473,7 +471,6 @@ export type Database = {
           full_name?: string | null
           id?: string
           preferences?: Json | null
-          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           username?: string | null
         }
@@ -747,7 +744,6 @@ export type Database = {
         | "commercial"
         | "agricultural"
         | "undeveloped"
-      user_role: "admin" | "developer" | "maintainer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -883,7 +879,6 @@ export const Constants = {
         "agricultural",
         "undeveloped",
       ],
-      user_role: ["admin", "developer", "maintainer"],
     },
   },
 } as const
