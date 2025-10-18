@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Users, MessageSquare, Home, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useMasterAdmin } from "@/contexts/MasterAdminContext";
 
 interface Analytics {
   totalUsers: number;
@@ -13,7 +12,6 @@ interface Analytics {
 }
 
 export function AnalyticsTab() {
-  const { sessionToken } = useMasterAdmin();
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -24,7 +22,7 @@ export function AnalyticsTab() {
   const fetchAnalytics = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('admin-data', {
-        body: { sessionToken, dataType: 'analytics' }
+        body: { dataType: 'analytics' }
       });
 
       if (error) throw error;

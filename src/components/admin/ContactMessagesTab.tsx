@@ -5,7 +5,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Mail, Phone, User, Loader2, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { useMasterAdmin } from "@/contexts/MasterAdminContext";
 
 interface ContactMessage {
   id: string;
@@ -18,7 +17,6 @@ interface ContactMessage {
 }
 
 export function ContactMessagesTab() {
-  const { sessionToken } = useMasterAdmin();
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -29,7 +27,7 @@ export function ContactMessagesTab() {
   const fetchMessages = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('admin-data', {
-        body: { sessionToken, dataType: 'contacts' }
+        body: { dataType: 'contacts' }
       });
 
       if (error) throw error;

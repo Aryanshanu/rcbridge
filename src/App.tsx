@@ -25,7 +25,6 @@ const SavedSearches = lazy(() => import("./pages/SavedSearches"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const AdminInvite = lazy(() => import("./pages/AdminInvite"));
-const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const Admin = lazy(() => import("./pages/Admin"));
 
 const PageLoading = () => (
@@ -175,7 +174,6 @@ const App = () => {
                           <Route path="/login" element={<Login />} />
                           <Route path="/register" element={<Register />} />
                           <Route path="/admin-invite" element={<AdminInvite />} />
-                          <Route path="/admin-login" element={<AdminLogin />} />
                           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                           <Route path="/my-properties" element={<ProtectedRoute><MyProperties /></ProtectedRoute>} />
                           <Route path="/saved-searches" element={<ProtectedRoute><SavedSearches /></ProtectedRoute>} />

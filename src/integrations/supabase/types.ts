@@ -14,59 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      admin_login_history: {
-        Row: {
-          admin_id: string | null
-          created_at: string | null
-          failure_reason: string | null
-          id: string
-          ip_address: string | null
-          login_attempt_time: string | null
-          login_status: string
-          logout_time: string | null
-          session_duration: unknown | null
-          session_token: string | null
-          user_agent: string | null
-          username: string
-        }
-        Insert: {
-          admin_id?: string | null
-          created_at?: string | null
-          failure_reason?: string | null
-          id?: string
-          ip_address?: string | null
-          login_attempt_time?: string | null
-          login_status: string
-          logout_time?: string | null
-          session_duration?: unknown | null
-          session_token?: string | null
-          user_agent?: string | null
-          username: string
-        }
-        Update: {
-          admin_id?: string | null
-          created_at?: string | null
-          failure_reason?: string | null
-          id?: string
-          ip_address?: string | null
-          login_attempt_time?: string | null
-          login_status?: string
-          logout_time?: string | null
-          session_duration?: unknown | null
-          session_token?: string | null
-          user_agent?: string | null
-          username?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "admin_login_history_admin_id_fkey"
-            columns: ["admin_id"]
-            isOneToOne: false
-            referencedRelation: "master_admin"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       assistance_requests: {
         Row: {
           budget: string
@@ -499,36 +446,6 @@ export type Database = {
         }
         Relationships: []
       }
-      master_admin: {
-        Row: {
-          created_at: string | null
-          id: string
-          last_login: string | null
-          password_hash: string
-          session_token: string | null
-          token_expires_at: string | null
-          username: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          last_login?: string | null
-          password_hash: string
-          session_token?: string | null
-          token_expires_at?: string | null
-          username: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          last_login?: string | null
-          password_hash?: string
-          session_token?: string | null
-          token_expires_at?: string | null
-          username?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -819,10 +736,6 @@ export type Database = {
       }
       validate_and_consume_invite_code: {
         Args: { _code: string; _user_id: string }
-        Returns: Json
-      }
-      validate_master_admin_session: {
-        Args: { session_token: string }
         Returns: Json
       }
     }

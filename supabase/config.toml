@@ -1,8 +1,5 @@
 project_id = "hchtekfbtcbfsfxkjyfi"
 
-[functions.master-admin-auth]
-verify_jwt = false
-
 [functions.admin-data]
 verify_jwt = false
 

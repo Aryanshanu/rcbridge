@@ -5,7 +5,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Mail, Phone, User, Building2, DollarSign, FileText, Loader2, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { useMasterAdmin } from "@/contexts/MasterAdminContext";
 
 interface AssistanceRequest {
   id: string;
@@ -20,7 +19,6 @@ interface AssistanceRequest {
 }
 
 export function AssistanceRequestsTab() {
-  const { sessionToken } = useMasterAdmin();
   const [requests, setRequests] = useState<AssistanceRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -31,7 +29,7 @@ export function AssistanceRequestsTab() {
   const fetchRequests = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('admin-data', {
-        body: { sessionToken, dataType: 'assistance' }
+        body: { dataType: 'assistance' }
       });
 
       if (error) throw error;
