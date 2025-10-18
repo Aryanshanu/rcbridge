@@ -29,14 +29,21 @@ export function CustomerActivityTab() {
   const fetchCustomerActivity = async () => {
     try {
       setIsLoading(true);
-      const sessionToken = localStorage.getItem('master_admin_token');
+      const { data: { session } } = await supabase.auth.getSession();
       
+      if (!session?.access_token) {
+        throw new Error('No session token');
+      }
+
       const { data, error } = await supabase.functions.invoke('admin-data', {
-        body: { sessionToken, dataType: 'customer_activity' }
+        body: { dataType: 'customer_activity' },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
 
       if (error) throw error;
-      setActivities(data || []);
+      setActivities(data?.data || []);
     } catch (error) {
       console.error('Failed to fetch customer activity:', error);
     } finally {
