@@ -182,37 +182,7 @@ export const AdminChatbot = ({ userRole }: AdminChatbotProps) => {
       supabase.removeChannel(messagesChannel);
       supabase.removeChannel(userInfoChannel);
     };
-  }, [selectedConversation])
-          .order('updated_at', { ascending: false });
-
-        if (convosError) throw convosError;
-
-        const mapped: Conversation[] = (convos || []).map((convo: any) => {
-          const msgs = convo.chat_messages || [];
-          const lastMsg = msgs[msgs.length - 1];
-          const userInfo = convo.chat_user_info?.[0];
-          
-          return {
-            id: convo.id,
-            userName: userInfo?.name || 'Anonymous User',
-            userEmail: userInfo?.email || 'No email',
-            lastMessage: lastMsg?.content || 'No messages yet',
-            lastMessageTime: lastMsg?.created_at || convo.created_at,
-            unreadCount: msgs.filter((m: any) => m.sender_type === 'user').length,
-            status: 'active' as const
-          };
-        });
-
-        setConversations(mapped);
-      } catch (err) {
-        console.error('Error fetching conversations:', err);
-        setError('Failed to load conversations');
-        toast.error('Failed to load conversations');
-      }
-    };
-
-    fetchConversations();
-  }, []);
+  }, [selectedConversation]);
   
   // Load messages when a conversation is selected
   useEffect(() => {
