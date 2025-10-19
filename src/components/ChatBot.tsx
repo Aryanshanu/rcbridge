@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, X, Send, Loader2, ChevronDown, User, Bot, MapPin, RefreshCw } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, ChevronDown, User, Bot, MapPin, RefreshCw, Maximize2, Minimize2 } from 'lucide-react';
 import { 
   initializeChatModel, 
   getConversationContext,
@@ -87,6 +87,17 @@ export function ChatBot() {
   const [contextEntities, setContextEntities] = useState<ChatEntities>({});
   const [messageCount, setMessageCount] = useState(0);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  
+  // Resizable chat window state
+  const [chatWidth, setChatWidth] = useState(() => {
+    const saved = localStorage.getItem('chatbot-width');
+    return saved ? parseInt(saved) : 384; // Default 384px (w-96)
+  });
+  const [chatHeight, setChatHeight] = useState(() => {
+    const saved = localStorage.getItem('chatbot-height');
+    return saved ? parseInt(saved) : 500; // Default 500px
+  });
+  const [isMaximized, setIsMaximized] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -215,24 +226,41 @@ export function ChatBot() {
 
   const generateSmartSuggestions = (lastMessage: string, entities: any) => {
     const msg = lastMessage.toLowerCase();
-    const suggestions: string[] = [];
+    const suggestionsSet = new Set<string>(); // Use Set for automatic deduplication
+
+    // Intent-specific suggestions based on activeIntent
+    if (activeIntent === 'rent' && !entities.timeline) {
+      suggestionsSet.add("Short-term rental?");
+      suggestionsSet.add("Long-term rental?");
+    } else if (activeIntent === 'buy' && !entities.budget) {
+      suggestionsSet.add("What's your budget range?");
+    } else if (activeIntent === 'sell') {
+      suggestionsSet.add("Tell me about your property");
+      suggestionsSet.add("When do you want to sell?");
+    } else if (activeIntent === 'trends') {
+      suggestionsSet.add("Which area are you interested in?");
+    }
 
     // Location-based suggestions
     if ((msg.includes('house') || msg.includes('property') || msg.includes('apartment')) && msg.includes('hyderabad') && !entities.location) {
-      suggestions.push("Which area? (Banjara Hills)", "Which area? (Gachibowli)", "Which area? (Pocharam)");
+      suggestionsSet.add("Banjara Hills");
+      suggestionsSet.add("Gachibowli");
+      suggestionsSet.add("Pocharam");
     } else if ((msg.includes('buy') || msg.includes('looking for')) && !entities.budget) {
-      suggestions.push("What's your budget range?");
+      suggestionsSet.add("What's your budget range?");
     } else if ((msg.includes('invest') || msg.includes('buy')) && msg.includes('pocharam') && !entities.propertyType) {
-      suggestions.push("Residential property?", "Commercial plot?", "Agricultural land?");
-    } else if (msg.includes('rent') && !entities.timeline) {
-      suggestions.push("Short-term rental?", "Long-term rental?");
+      suggestionsSet.add("Residential property?");
+      suggestionsSet.add("Commercial plot?");
+      suggestionsSet.add("Agricultural land?");
     } else if (entities.propertyType && !entities.size) {
-      suggestions.push("What size do you need?", "How many bedrooms?");
+      suggestionsSet.add("What size do you need?");
+      suggestionsSet.add("How many bedrooms?");
     } else if (entities.location && entities.propertyType && !entities.budget) {
-      suggestions.push("What's your budget?");
+      suggestionsSet.add("What's your budget?");
     }
 
-    setSmartSuggestions(suggestions.slice(0, 3));
+    // Convert Set to Array and limit to 4 suggestions max
+    setSmartSuggestions(Array.from(suggestionsSet).slice(0, 4));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -254,6 +282,7 @@ export function ChatBot() {
 
     setInput('');
     setShowQuickReplies(false);
+    setSmartSuggestions([]); // Clear old suggestions when user sends a message
 
     // Increment message count for anonymous users
     if (!isAuthenticated) {
@@ -599,44 +628,50 @@ export function ChatBot() {
       return;
     }
 
-    try {
-      const { data, error } = await supabase.functions.invoke('submit-chat-info', {
-        body: {
-          conversation_id: conversationId,
-          session_id: sessionId,
-          name: inquiryData.name,
-          email: inquiryData.email,
-          phone: inquiryData.phone || null,
-          requirements: inquiryData.message || null,
+      try {
+        console.log('Submitting chat info...');
+        const { data, error } = await supabase.functions.invoke('submit-chat-info', {
+          body: {
+            conversation_id: conversationId,
+            session_id: sessionId,
+            name: inquiryData.name,
+            email: inquiryData.email,
+            phone: inquiryData.phone || null,
+            requirements: inquiryData.message || null,
+          }
+        });
+
+        if (error) {
+          console.error('Supabase function error:', error);
+          throw error;
         }
-      });
 
-      if (error) throw error;
+        console.log('Chat info submitted successfully:', data);
 
-      toast({
-        title: "Information Submitted",
-        description: "Thank you! We'll get back to you soon.",
-      });
+        toast({
+          title: "Information Submitted",
+          description: "Thank you! We'll get back to you soon.",
+        });
 
-      setShowInquiryForm(false);
-      setInquiryData({ name: '', email: '', phone: '', message: '' });
+        setShowInquiryForm(false);
+        setInquiryData({ name: '', email: '', phone: '', message: '' });
 
-      // Add confirmation message to chat
-      const confirmationMessage: Message = {
-        id: messages.length + 1,
-        text: "Thank you for providing your information! Our team will reach out to you shortly to discuss your requirements in detail.",
-        sender: 'bot',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, confirmationMessage]);
-    } catch (error) {
-      console.error('Error submitting inquiry:', error);
-      toast({
-        title: "Submission Failed",
-        description: "There was an error submitting your information. Please try again.",
-        variant: "destructive",
-      });
-    }
+        // Add confirmation message to chat
+        const confirmationMessage: Message = {
+          id: messages.length + 1,
+          text: "Thank you for providing your information! Our team will reach out to you shortly to discuss your requirements in detail.",
+          sender: 'bot',
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, confirmationMessage]);
+      } catch (error: any) {
+        console.error('Error submitting inquiry:', error);
+        toast({
+          title: "Submission Failed",
+          description: error?.message || "There was an error submitting your information. Please try again.",
+          variant: "destructive",
+        });
+      }
   };
   
   const clearChat = async () => {
@@ -740,14 +775,37 @@ export function ChatBot() {
         </DialogContent>
       </Dialog>
 
-      {/* Chat window - positioned above button */}
+      {/* Chat window - positioned above button with resizable capability */}
       <div
         className={cn(
-          "fixed right-6 bottom-24 w-[calc(100vw-2rem)] max-w-md md:w-96 z-[60] transition-all duration-300 ease-in-out transform",
-          isOpen ? "translate-y-0 opacity-100 animate-enter" : "translate-y-8 opacity-0 pointer-events-none"
+          "fixed right-6 bottom-24 z-[60] transition-all duration-300 ease-in-out transform resize overflow-auto",
+          isOpen ? "translate-y-0 opacity-100 animate-enter" : "translate-y-8 opacity-0 pointer-events-none",
+          isMaximized && "!fixed !inset-4 !right-4 !bottom-4 !w-auto !h-auto"
         )}
+        style={{
+          width: isMaximized ? 'calc(100vw - 2rem)' : `${Math.min(chatWidth, window.innerWidth - 48)}px`,
+          height: isMaximized ? 'calc(100vh - 2rem)' : `${Math.min(chatHeight, window.innerHeight - 120)}px`,
+          minWidth: '320px',
+          maxWidth: isMaximized ? 'none' : '600px',
+          minHeight: '400px',
+          maxHeight: isMaximized ? 'none' : '80vh',
+        }}
+        onMouseUp={(e) => {
+          if (!isMaximized) {
+            const newWidth = (e.currentTarget as HTMLElement).offsetWidth;
+            const newHeight = (e.currentTarget as HTMLElement).offsetHeight;
+            if (newWidth !== chatWidth) {
+              setChatWidth(newWidth);
+              localStorage.setItem('chatbot-width', newWidth.toString());
+            }
+            if (newHeight !== chatHeight) {
+              setChatHeight(newHeight);
+              localStorage.setItem('chatbot-height', newHeight.toString());
+            }
+          }
+        }}
       >
-        <Card className="flex flex-col h-[calc(100vh-120px)] md:h-[500px] md:max-h-[70vh] overflow-hidden shadow-xl border-accent/20">
+        <Card className="flex flex-col h-full w-full overflow-hidden shadow-xl border-accent/20">
           {/* Chat header */}
           <div className="flex flex-col border-b bg-accent text-accent-foreground">
             <div className="flex items-center justify-between p-3">
@@ -756,6 +814,17 @@ export function ChatBot() {
                 <h3 className="font-medium">RC Bridge Assistant</h3>
               </div>
               <div className="flex items-center gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-8 w-8 text-accent-foreground hover:text-accent-foreground/80"
+                  onClick={() => {
+                    setIsMaximized(!isMaximized);
+                  }}
+                  title={isMaximized ? "Restore size" : "Maximize"}
+                >
+                  {isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                </Button>
                 <Button 
                   variant="ghost" 
                   size="icon"
@@ -962,43 +1031,6 @@ export function ChatBot() {
               </div>
             )}
             
-            {/* Quick Reply Buttons - only show early in conversation */}
-            {showQuickReplies && messages.length <= 2 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => handleQuickReply("I want to buy a property")}
-                  className="text-xs"
-                >
-                  🏠 Buy
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => handleQuickReply("I want to sell my property")}
-                  className="text-xs"
-                >
-                  💰 Sell
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => handleQuickReply("I want to rent a property")}
-                  className="text-xs"
-                >
-                  🏘️ Rent
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => handleQuickReply("Tell me about market trends")}
-                  className="text-xs"
-                >
-                  📈 Trends
-                </Button>
-              </div>
-            )}
             
             <form onSubmit={handleSubmit} className="flex gap-2 mb-2">
               <Input

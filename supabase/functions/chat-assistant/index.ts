@@ -1,8 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-import { searchTavily, formatSearchResults } from './tavily.ts';
-import { searchPropertiesDatabase } from './propertySearch.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,11 +20,6 @@ const rateLimits = new Map<string, { count: number; resetAt: number }>();
 const MAX_REQUESTS_PER_MINUTE = 10;
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
 
-// Search rate limiting - separate limit for search operations
-const searchRateLimits = new Map<string, { count: number; resetAt: number }>();
-const MAX_SEARCHES_PER_MINUTE = 3;
-const SEARCH_RATE_LIMIT_WINDOW = 60000;
-
 // Clean up old rate limit entries every 5 minutes
 setInterval(() => {
   const now = Date.now();
@@ -35,82 +28,9 @@ setInterval(() => {
       rateLimits.delete(ip);
     }
   }
-  for (const [ip, limit] of searchRateLimits.entries()) {
-    if (now > limit.resetAt) {
-      searchRateLimits.delete(ip);
-    }
-  }
 }, 300000);
 
-/**
- * Smart Intent Classifier - Determines if search is mandatory based on semantic analysis
- * This prevents unnecessary API calls while ensuring accurate data for time-sensitive queries
- */
-function shouldForceSearch(userQuery: string): boolean {
-  const query = userQuery.toLowerCase();
-  
-  // Time-sensitive keywords that REQUIRE current data
-  const urgentKeywords = ['current', 'latest', 'today', 'this month', 'this year', 'recent', 'now', '2025'];
-  const priceKeywords = ['price', 'prices', 'cost', 'costs', 'rate', 'rates', 'how much', 'per acre', 'per sq'];
-  const locationKeywords = ['pocharam', 'ghatkesar', 'gachibowli', 'kondapur', 'hitech city', 'financial district', 'jubilee hills'];
-  
-  // Exclusion keywords - questions answerable from knowledge base
-  const knowledgeKeywords = ['what is', 'what are', 'how to', 'explain', 'tell me about', 'why', 'benefits of', 'advantages of'];
-  
-  // Rule 1: General knowledge questions = NO SEARCH
-  const isKnowledgeQuery = knowledgeKeywords.some(kw => query.startsWith(kw));
-  if (isKnowledgeQuery) {
-    return false;
-  }
-  
-  // Rule 2: Time-sensitive + Price/Location = MANDATORY SEARCH
-  const hasTimeContext = urgentKeywords.some(kw => query.includes(kw));
-  const hasPriceContext = priceKeywords.some(kw => query.includes(kw));
-  const hasLocationContext = locationKeywords.some(kw => query.includes(kw));
-  
-  if (hasTimeContext && (hasPriceContext || hasLocationContext)) {
-    console.log('[Smart Classifier] FORCE SEARCH: Time-sensitive + Price/Location detected');
-    return true;
-  }
-  
-  // Rule 3: Price + Specific Location (without explicit time) = MANDATORY SEARCH
-  // User asking "price in Pocharam" likely wants current data
-  if (hasPriceContext && hasLocationContext) {
-    console.log('[Smart Classifier] FORCE SEARCH: Price + Location detected');
-    return true;
-  }
-  
-  // Rule 4: Default = Let model decide via tool calling
-  return false;
-}
-
 const SYSTEM_PROMPT = `You are the RC Bridge real estate assistant for Hyderabad properties. You are conversational, empathetic, and helpful.
-
-YOUR INTERNET SEARCH CAPABILITY:
-You have access to real-time internet search through Tavily Search API via the search_real_estate_info tool. Use it ONLY when you need current, time-sensitive information that you don't already know.
-
-WHEN TO USE SEARCH (use the tool):
-- Questions asking for "current", "latest", "recent", "today", "this month/year" data
-- Specific property prices or land rates where accuracy matters
-- Current interest rates or loan information
-- Recent news, regulations, or policy changes
-- Time-sensitive market conditions or statistics
-
-DO NOT USE SEARCH FOR:
-- General area information or neighborhood descriptions (you already know this)
-- Company information about RC Bridge (provided in your training)
-- General real estate concepts, terminology, or processes
-- Investment advice or ROI calculations (use your knowledge)
-- Property features or amenities explanations
-- Historical facts about Hyderabad areas
-
-CRITICAL OUTPUT RULES:
-- NEVER display tool calls, XML tags, JSON, or <function> tags to users
-- If you need to search, use the tool silently - your final response must be ONLY natural language
-- Users should NEVER see function names, parameters, or any technical markup
-- Your responses must be conversational text only, no code or tags
-
-IMPORTANT: When search results are provided to you (marked as "CURRENT SEARCH RESULTS"), always cite the source. Otherwise, answer confidently from your training data.
 
 COMPANY CONTEXT:
 - RC Bridge has facilitated ₹200 Cr+ worth of deals
@@ -172,8 +92,6 @@ KEY LOCATIONS & PROPERTIES:
 **Kokapet & Tellapur**: Emerging high-potential investment zones
 **Ghatkesar**: Growing area with good connectivity and infrastructure development
 
-NOTE: Use the search tool when users specifically ask for current/latest pricing information. Otherwise, provide general guidance and encourage them to contact RC Bridge for accurate quotes.
-
 FINANCING:
 - Partner with leading banks offering home loans starting at 7.2% interest
 - Investment properties can be financed up to 70% loan-to-value ratio
@@ -184,30 +102,6 @@ ZERO-BROKERAGE MODEL:
 - Only minimal subscription or service fees for advanced features/priority access
 - Direct connection between buyers and sellers for transparency
 - No public listings to preserve property value and exclusivity
-
-EXAMPLE CONVERSATION FLOWS:
-
-User: "Market trends"
-You: "Hyderabad is one of India's fastest-growing real estate markets! Areas like Gachibowli, Financial District, and Kokapet show strong appreciation potential of 8-12% annually. The IT sector continues to drive demand. Are you looking to buy, sell, or invest?"
-
-User: "buying a property"
-You: "Excellent! I'd love to help you find the perfect property. To match you with the best options, could you share your budget range and which areas of Hyderabad interest you?"
-
-User: "80 lakhs in 1 month"
-You: "Perfect! Looking for properties around ₹80 lakhs with quick possession. Which area are you interested in - Pocharam, Miyapur, Gachibowli, or somewhere else in Hyderabad?"
-
-User: "pocharam"
-You: "Great choice! Pocharam has excellent connectivity to IT parks and good appreciation potential. In your budget range, we have:
-
-1. Modern 2 BHK Apartment - ₹72 Lakhs (Gated community with amenities)
-2. Independent 3 BHK House - ₹1.2 Cr (With garden space, close to IT hubs)
-
-Would you like more details on either of these options?"
-
-User: "Tell me more about the apartment"
-You: "The 2 BHK apartment in Pocharam offers great value at ₹72 Lakhs. It's in a gated community with amenities like swimming pool, gym, and children's play area. The location provides easy access to major IT parks and has good schools and hospitals nearby.
-
-Given your timeline of 1 month, this property can be moved into quickly. Would you like to schedule a viewing or speak with our property consultant for more details?"
 
 LEAD CAPTURE:
 When users show strong interest (asking for more details, saying "yes", expressing excitement), naturally guide them:
@@ -247,7 +141,7 @@ serve(async (req) => {
   }
 
   try {
-    // Rate limiting based on IP address (must be defined first!)
+    // Rate limiting based on IP address
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
                req.headers.get('x-real-ip') || 
                'unknown';
@@ -312,91 +206,71 @@ serve(async (req) => {
     
     const { messages } = validation.data;
     const recentMessages = messages.slice(-20);
-    const HF_API_KEY = Deno.env.get('HUGGINGFACE_API_KEY');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
-    if (!HF_API_KEY) {
-      console.error('HUGGINGFACE_API_KEY not configured');
+    if (!LOVABLE_API_KEY) {
+      console.error('LOVABLE_API_KEY not configured');
       return new Response(
         JSON.stringify({ error: 'AI service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Calling Hugging Face API with', messages.length, 'messages');
+    console.log('Calling Lovable AI Gateway with', messages.length, 'messages');
 
-    // Smart RAG Pipeline: Check if we should force search before model sees the query
-    const lastUserMessage = messages[messages.length - 1]?.content || '';
-    const mustSearch = shouldForceSearch(lastUserMessage);
+    // Call Lovable AI Gateway
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          ...recentMessages
+        ],
+        max_tokens: 800,
+        stream: true
+      }),
+    });
     
-    let enhancedSystemPrompt = SYSTEM_PROMPT;
-    
-    if (mustSearch) {
-      console.log('[Smart RAG] Forcing pre-search for time-sensitive query');
+    if (!aiResponse.ok) {
+      console.error(`Lovable AI error (${aiResponse.status}):`, aiResponse.statusText);
       
-      // Check search rate limit
-      const now = Date.now();
-      const searchLimit = searchRateLimits.get(ip);
-      let canSearch = true;
-      
-      if (searchLimit) {
-        if (now < searchLimit.resetAt) {
-          if (searchLimit.count >= MAX_SEARCHES_PER_MINUTE) {
-            console.log(`[Smart RAG] Search rate limit exceeded for IP: ${ip}`);
-            canSearch = false;
-          } else {
-            searchLimit.count++;
-          }
-        } else {
-          searchRateLimits.set(ip, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
-        }
-      } else {
-        searchRateLimits.set(ip, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
+      // Handle 402 Payment Required
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'AI credits exhausted',
+            message: 'The AI service has run out of credits. Please add credits to your workspace at Settings -> Workspace -> Usage.'
+          }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
       
-      if (canSearch) {
-        try {
-          // Enhance search query
-          let searchQuery = lastUserMessage;
-          if (!searchQuery.includes('hyderabad')) {
-            searchQuery += ' Hyderabad';
-          }
-          if (!searchQuery.includes('2025')) {
-            searchQuery += ' 2025';
-          }
-          
-          console.log(`[Smart RAG] Pre-search executing: "${searchQuery}"`);
-          const searchResults = await searchTavily(searchQuery);
-          const formattedResults = formatSearchResults(searchQuery, searchResults);
-          console.log(`[Smart RAG] Pre-search found ${searchResults.length} results`);
-          
-          // Inject search results into system prompt
-          enhancedSystemPrompt = `${SYSTEM_PROMPT}\n\n=== CURRENT SEARCH RESULTS ===\n${formattedResults}\n\nIMPORTANT: Use these search results to answer the user's question accurately. Always cite the source.`;
-        } catch (error) {
-          console.error('[Smart RAG] Pre-search error:', error);
-          // Continue without search results
-        }
+      // Handle 429 Rate Limit
+      if (aiResponse.status === 429) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Rate limit exceeded',
+            message: 'Too many AI requests. Please wait a moment and try again.'
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-    } else {
-      console.log('[Smart RAG] Knowledge-base query, no pre-search needed');
-    }
-
-    // Call API with function calling support (model can still decide to search via tool)
-    const apiResponse = await callHuggingFaceWithFunctionCalling(recentMessages, HF_API_KEY, ip, requestBody.messages, enhancedSystemPrompt);
-    
-    if (!apiResponse.ok) {
-      const errorText = await apiResponse.text();
-      console.error('API call failed:', apiResponse.status, errorText);
+      
       return new Response(
-        JSON.stringify({ error: 'AI service error' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'AI service error', status: aiResponse.status }),
+        { status: aiResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Return streaming response
-    return new Response(apiResponse.body, {
+    return new Response(aiResponse.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
-
 
   } catch (error) {
     console.error("Error in chat-assistant function:", error);
@@ -406,451 +280,3 @@ serve(async (req) => {
     );
   }
 });
-
-/**
- * Call Hugging Face API with function calling support for search
- */
-async function callHuggingFaceWithFunctionCalling(
-  messages: Array<{ role: string; content: string }>,
-  apiKey: string,
-  clientIp: string,
-  originalMessages: Array<{ role: string; content: string }> = [],
-  systemPromptOverride?: string,
-  retries = 3
-): Promise<Response> {
-  // Define tools for function calling
-  const tools = [
-    {
-      type: "function",
-      function: {
-        name: "search_real_estate_info",
-        description: "Search the internet for current, up-to-date information about Hyderabad real estate market, property prices, interest rates, news, regulations, or availability. Use when users ask about 'latest', 'current', 'recent', 'today' information.",
-        parameters: {
-          type: "object",
-          properties: {
-            query: {
-              type: "string",
-              description: "Search query focused on Hyderabad real estate. Be specific and include location/property type. Example: 'current property prices in Gachibowli Hyderabad 2025'"
-            }
-          },
-          required: ["query"]
-        }
-      }
-    },
-    {
-      type: "function",
-      function: {
-        name: "search_properties_db",
-        description: "Search local property database for available listings based on user requirements. Use when user has provided specific criteria like budget, location, property type, or size.",
-        parameters: {
-          type: "object",
-          properties: {
-            budget_min: {
-              type: "number",
-              description: "Minimum budget in rupees (e.g., 5000000 for 50 lakhs)"
-            },
-            budget_max: {
-              type: "number",
-              description: "Maximum budget in rupees"
-            },
-            location: {
-              type: "string",
-              description: "Location/area name (e.g., 'Pocharam', 'Gachibowli')"
-            },
-            property_type: {
-              type: "string",
-              enum: ["residential", "commercial", "agricultural", "plot"],
-              description: "Type of property"
-            },
-            min_area: {
-              type: "number",
-              description: "Minimum area in square feet or yards"
-            }
-          },
-          required: []
-        }
-      }
-    }
-  ];
-
-  let delay = 1000;
-  
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const response = await fetch(
-        "https://router.huggingface.co/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "meta-llama/Llama-3.3-70B-Instruct",
-            messages: [
-              { role: "system", content: systemPromptOverride || SYSTEM_PROMPT },
-              ...messages
-            ],
-            max_tokens: 500,
-            temperature: 0.7,
-            tools: tools,
-            tool_choice: "auto",
-            stream: true,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`API error (attempt ${attempt}/${retries}):`, response.status, errorText);
-        
-        if (response.status === 429 || response.status === 503) {
-          if (attempt < retries) {
-            await new Promise(resolve => setTimeout(resolve, delay));
-            delay *= 2;
-            continue;
-          }
-        }
-        return response;
-      }
-
-      // Check if response contains function calls
-      const processedResponse = await processFunctionCalls(response, messages, apiKey, clientIp, originalMessages, systemPromptOverride);
-      return processedResponse;
-
-    } catch (error) {
-      console.error(`Network error (attempt ${attempt}/${retries}):`, error);
-      if (attempt < retries) {
-        await new Promise(resolve => setTimeout(resolve, delay));
-        delay *= 2;
-        continue;
-      }
-      throw error;
-    }
-  }
-
-  throw new Error('Max retries exceeded');
-}
-
-/**
- * Process streaming response to detect and execute function calls
- */
-async function processFunctionCalls(
-  response: Response,
-  conversationMessages: Array<{ role: string; content: string }>,
-  apiKey: string,
-  clientIp: string,
-  originalMessages: Array<{ role: string; content: string }> = [],
-  systemPromptOverride?: string
-): Promise<Response> {
-  const reader = response.body?.getReader();
-  if (!reader) return response;
-
-  const decoder = new TextDecoder();
-  let buffer = '';
-  let toolCalls: any[] = [];
-  let hasToolCall = false;
-  let assistantMessage = '';
-
-  try {
-    // Read the stream to detect function calls
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        if (!line.trim() || line.startsWith(':')) continue;
-        if (!line.startsWith('data: ')) continue;
-
-        const data = line.slice(6).trim();
-        if (data === '[DONE]') continue;
-
-        try {
-          const parsed = JSON.parse(data);
-          const delta = parsed.choices?.[0]?.delta;
-
-          // Accumulate assistant message
-          if (delta?.content) {
-            assistantMessage += delta.content;
-          }
-
-          // Check for tool calls
-          if (delta?.tool_calls) {
-            hasToolCall = true;
-            for (const toolCall of delta.tool_calls) {
-              const index = toolCall.index ?? 0;
-              if (!toolCalls[index]) {
-                toolCalls[index] = {
-                  id: toolCall.id || `call_${Date.now()}`,
-                  type: 'function',
-                  function: {
-                    name: toolCall.function?.name || '',
-                    arguments: toolCall.function?.arguments || ''
-                  }
-                };
-              } else {
-                if (toolCall.function?.name) {
-                  toolCalls[index].function.name += toolCall.function.name;
-                }
-                if (toolCall.function?.arguments) {
-                  toolCalls[index].function.arguments += toolCall.function.arguments;
-                }
-              }
-            }
-          }
-        } catch (e) {
-          // Ignore parse errors
-        }
-      }
-    }
-
-    // Sanitizer to remove function tags (defensive measure)
-    const sanitizeContent = (text: string): string => {
-      return text.replace(/<function[^>]*>[\s\S]*?<\/function>/gi, '');
-    };
-
-    // No tool calls detected - check for markup-style fake tool calls
-    if (!hasToolCall || toolCalls.length === 0) {
-      console.log('[Tier 1] No proper tool calls - checking for markup-style calls');
-      
-      // Detect markup-style tool call like: <function=search_real_estate_info>{"query":"..."}</function>
-      const markupMatch = assistantMessage.match(/<function\s*=\s*search_real_estate_info>\s*({[\s\S]*?})\s*<\/function>/i);
-      
-      if (markupMatch) {
-        console.log('[Tier 2] Detected markup-style tool call - processing');
-        try {
-          const args = JSON.parse(markupMatch[1]);
-          const query = args.query;
-
-          // Check search rate limit
-          const now = Date.now();
-          const searchLimit = searchRateLimits.get(clientIp);
-          
-          let canSearch = true;
-          if (searchLimit) {
-            if (now < searchLimit.resetAt) {
-              if (searchLimit.count >= MAX_SEARCHES_PER_MINUTE) {
-                console.log(`[Search] Rate limit exceeded for IP: ${clientIp}`);
-                canSearch = false;
-              } else {
-                searchLimit.count++;
-              }
-            } else {
-              searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
-            }
-          } else {
-            searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
-          }
-
-          if (canSearch) {
-            console.log(`[Tier 2 Search] Executing: "${query}"`);
-            const searchResults = await searchTavily(query);
-            const formattedResults = formatSearchResults(query, searchResults);
-
-            // Make second API call with search results
-            const updatedMessages = [
-              ...conversationMessages,
-              {
-                role: 'assistant',
-                content: sanitizeContent(assistantMessage) // Remove markup before sending
-              },
-              {
-                role: 'user',
-                content: `CURRENT SEARCH RESULTS for "${query}":\n\n${formattedResults}\n\nPlease answer the user's question using this information.`
-              }
-            ];
-
-            console.log('[Tier 2] Making second API call with search results');
-            const finalResponse = await fetch(
-              "https://router.huggingface.co/v1/chat/completions",
-              {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${apiKey}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  model: "meta-llama/Llama-3.3-70B-Instruct",
-                  messages: [
-                    { role: "system", content: systemPromptOverride || SYSTEM_PROMPT },
-                    ...updatedMessages
-                  ],
-                  max_tokens: 500,
-                  temperature: 0.7,
-                  stream: true,
-                }),
-              }
-            );
-            return finalResponse;
-          }
-        } catch (parseError) {
-          console.error('[Tier 2] Failed to parse markup args:', parseError);
-        }
-      }
-      
-      // No tool calls at all - sanitize and return
-      console.log('[Tier 1] Answering from knowledge base (no search needed)');
-      assistantMessage = sanitizeContent(assistantMessage);
-      
-      // Re-create response with sanitized accumulated data
-      const encoder = new TextEncoder();
-      const stream = new ReadableStream({
-        start(controller) {
-          if (assistantMessage) {
-            const sseData = `data: ${JSON.stringify({
-              choices: [{
-                delta: { content: assistantMessage },
-                finish_reason: null
-              }]
-            })}\n\n`;
-            controller.enqueue(encoder.encode(sseData));
-          }
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-          controller.close();
-        }
-      });
-      return new Response(stream, {
-        headers: { 'Content-Type': 'text/event-stream' }
-      });
-    }
-
-    // Execute function calls (Tier 3: Model-driven function calling)
-    console.log(`[Tier 3] Executing ${toolCalls.length} function call(s)`);
-    const toolResponses: Array<{ role: 'tool'; content: any; tool_call_id: string; name?: string }> = [];
-    
-    // First pass: handle property DB search calls
-    for (const toolCall of toolCalls) {
-      const functionName = toolCall.function.name;
-      if (functionName !== 'search_properties_db') continue;
-      try {
-        const functionArgs = JSON.parse(toolCall.function.arguments);
-        console.log('[Property DB Search] Executing with args:', functionArgs);
-        const properties = await searchPropertiesDatabase(functionArgs);
-        toolResponses.push({
-          role: 'tool',
-          tool_call_id: toolCall.id,
-          name: functionName,
-          content: properties
-        });
-      } catch (e) {
-        console.error('[Property DB Search] Error:', e);
-      }
-    }
-    
-    // Original search handling code continues...
-    console.log('[Tier 3] Model requested tool calls:', toolCalls.map(tc => tc.function.name));
-
-    for (const toolCall of toolCalls) {
-      if (toolCall.function.name === 'search_real_estate_info') {
-        try {
-          const args = JSON.parse(toolCall.function.arguments);
-          const query = args.query;
-
-          // Check search rate limit
-          const now = Date.now();
-          const searchLimit = searchRateLimits.get(clientIp);
-          
-          if (searchLimit) {
-            if (now < searchLimit.resetAt) {
-              if (searchLimit.count >= MAX_SEARCHES_PER_MINUTE) {
-                console.log(`[Search] Rate limit exceeded for IP: ${clientIp}`);
-                toolResponses.push({
-                  role: 'tool',
-                  content: 'Search rate limit reached. Using available knowledge.',
-                  tool_call_id: toolCall.id
-                });
-                continue;
-              }
-              searchLimit.count++;
-            } else {
-              searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
-            }
-          } else {
-            searchRateLimits.set(clientIp, { count: 1, resetAt: now + SEARCH_RATE_LIMIT_WINDOW });
-          }
-
-          console.log(`[Tier 3 Search] Executing: "${query}"`);
-          const searchResults = await searchTavily(query);
-          const formattedResults = formatSearchResults(query, searchResults);
-
-          toolResponses.push({
-            role: 'tool',
-            content: formattedResults,
-            tool_call_id: toolCall.id
-          });
-
-          console.log(`[Tier 3 Search] Found ${searchResults.length} results`);
-        } catch (error) {
-          console.error('[Tier 3 Search] Error:', error);
-          toolResponses.push({
-            role: 'tool',
-            content: 'Search temporarily unavailable. Using available knowledge.',
-            tool_call_id: toolCall.id
-          });
-        }
-      }
-    }
-
-    // Make second API call with tool responses
-    const updatedMessages: any[] = [
-      ...conversationMessages,
-      {
-        role: 'assistant',
-        content: assistantMessage || '',
-        tool_calls: toolCalls
-      },
-      ...toolResponses
-    ];
-
-    console.log('[Tier 3] Making second API call with tool responses');
-    
-    // Recursive call with tool responses (no function calling this time)
-    const finalResponse = await fetch(
-      "https://router.huggingface.co/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "meta-llama/Llama-3.3-70B-Instruct",
-          messages: [
-            { role: "system", content: systemPromptOverride || SYSTEM_PROMPT },
-            ...updatedMessages
-          ],
-          max_tokens: 500,
-          temperature: 0.7,
-          stream: true,
-        }),
-      }
-    );
-
-    return finalResponse;
-
-  } catch (error) {
-    console.error('[Function Call] Error processing:', error);
-    // Return error response
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      start(controller) {
-        const errorData = `data: ${JSON.stringify({
-          choices: [{
-            delta: { content: 'I apologize, but I encountered an error. Please try again.' },
-            finish_reason: 'stop'
-          }]
-        })}\n\n`;
-        controller.enqueue(encoder.encode(errorData));
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-        controller.close();
-      }
-    });
-    return new Response(stream, {
-      headers: { 'Content-Type': 'text/event-stream' }
-    });
-  }
-}
