@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MessageCircle, X, Send, Loader2, ChevronDown, User, Bot, MapPin, RefreshCw, Maximize2, Minimize2 } from 'lucide-react';
+import { Rnd } from 'react-rnd';
+import { extractEntitiesWithNLP, prewarmNLP } from '@/utils/nlpExtraction';
 import { 
   initializeChatModel, 
   getConversationContext,
@@ -98,6 +100,14 @@ export function ChatBot() {
     return saved ? parseInt(saved) : 500; // Default 500px
   });
   const [isMaximized, setIsMaximized] = useState(false);
+  const [chatX, setChatX] = useState(() => {
+    const saved = localStorage.getItem('chatbot-x');
+    return saved ? parseInt(saved) : window.innerWidth - 420;
+  });
+  const [chatY, setChatY] = useState(() => {
+    const saved = localStorage.getItem('chatbot-y');
+    return saved ? parseInt(saved) : window.innerHeight - 650;
+  });
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -205,6 +215,17 @@ export function ChatBot() {
         setConversationId(ephemeralId);
         localStorage.setItem('chat_conversation_id', ephemeralId);
       }
+      
+      // Pre-warm the edge function for faster first response
+      try {
+        await fetch(`https://hchtekfbtcbfsfxkjyfi.functions.supabase.co/chat-assistant?health=1`);
+        console.log('Chat assistant pre-warmed');
+      } catch (e) {
+        // Ignore pre-warming errors
+      }
+      
+      // Pre-warm NLP model in background
+      prewarmNLP();
     };
 
     initializeChat();
@@ -289,17 +310,39 @@ export function ChatBot() {
       setMessageCount(prev => prev + 1);
     }
 
-    // Extract information from user message
+    // Extract information from user message using both regex and NLP
     const budget = extractBudget(userMessage);
     const timeline = extractTimeline(userMessage);
     const locations = extractLocations(userMessage);
     
+    // Enhanced extraction with NLP
+    const nlpEntities = await extractEntitiesWithNLP(userMessage);
+    
+    // Update extracted entities with both regex and NLP results
     if (budget && !extractedBudget) setExtractedBudget(budget);
+    if (nlpEntities.budget && !extractedBudget) setExtractedBudget(nlpEntities.budget);
+    
     if (timeline && !extractedTimeline) setExtractedTimeline(timeline);
+    if (nlpEntities.timeline && !extractedTimeline) setExtractedTimeline(nlpEntities.timeline);
+    
     if (locations.length > 0) {
       setExtractedLocation(locations[0]);
       setUserMentionedLocation(locations[0]);
+    } else if (nlpEntities.location) {
+      setExtractedLocation(nlpEntities.location);
+      setUserMentionedLocation(nlpEntities.location);
     }
+    
+    // Update context entities with NLP extraction + active intent
+    const updatedContextEntities = {
+      ...contextEntities,
+      ...nlpEntities,
+      intent: activeIntent || contextEntities.intent,
+      budget: nlpEntities.budget || budget || contextEntities.budget,
+      location: nlpEntities.location || locations[0] || contextEntities.location,
+      timeline: nlpEntities.timeline || timeline || contextEntities.timeline
+    };
+    setContextEntities(updatedContextEntities);
 
     const newUserMessage: Message = {
       id: messages.length,
@@ -314,11 +357,9 @@ export function ChatBot() {
     
     // Update context with new message
     await updateContextWithMessage(conversationId, userMessage, 'user');
-    const updatedEntities = await loadContextEntities(conversationId);
-    setContextEntities(updatedEntities);
-
-    // Generate smart suggestions
-    generateSmartSuggestions(userMessage, updatedEntities);
+    
+    // Generate smart suggestions based on updated context
+    generateSmartSuggestions(userMessage, updatedContextEntities);
     
     // Check if user should be prompted to sign in (after 4-5 messages for anonymous users)
     if (!isAuthenticated) {
@@ -361,8 +402,8 @@ export function ChatBot() {
         content: msg.text
       })).slice(-12);
 
-      // Inject context summary into system message
-      const contextSummary = Object.entries(updatedEntities)
+      // Prepare context summary from updated entities
+      const contextSummary = Object.entries(updatedContextEntities)
         .filter(([_, v]) => v)
         .map(([k, v]) => `${k}: ${v}`)
         .join(', ');
@@ -377,7 +418,7 @@ export function ChatBot() {
           },
           body: JSON.stringify({ 
             messages: conversationHistory,
-            context: contextSummary // Send context summary to backend
+            context: contextSummary // Send accumulated context to backend
           }),
         }
       );
@@ -775,36 +816,46 @@ export function ChatBot() {
         </DialogContent>
       </Dialog>
 
-      {/* Chat window - positioned above button with resizable capability */}
-      <div
-        className={cn(
-          "fixed right-6 bottom-24 z-[60] transition-all duration-300 ease-in-out transform resize overflow-auto",
-          isOpen ? "translate-y-0 opacity-100 animate-enter" : "translate-y-8 opacity-0 pointer-events-none",
-          isMaximized && "!fixed !inset-4 !right-4 !bottom-4 !w-auto !h-auto"
-        )}
-        style={{
-          width: isMaximized ? 'calc(100vw - 2rem)' : `${Math.min(chatWidth, window.innerWidth - 48)}px`,
-          height: isMaximized ? 'calc(100vh - 2rem)' : `${Math.min(chatHeight, window.innerHeight - 120)}px`,
-          minWidth: '320px',
-          maxWidth: isMaximized ? 'none' : '600px',
-          minHeight: '400px',
-          maxHeight: isMaximized ? 'none' : '80vh',
-        }}
-        onMouseUp={(e) => {
-          if (!isMaximized) {
-            const newWidth = (e.currentTarget as HTMLElement).offsetWidth;
-            const newHeight = (e.currentTarget as HTMLElement).offsetHeight;
-            if (newWidth !== chatWidth) {
-              setChatWidth(newWidth);
-              localStorage.setItem('chatbot-width', newWidth.toString());
-            }
-            if (newHeight !== chatHeight) {
-              setChatHeight(newHeight);
-              localStorage.setItem('chatbot-height', newHeight.toString());
-            }
-          }
-        }}
-      >
+      {/* Chat window - draggable and resizable */}
+      {isOpen && (
+        <Rnd
+          default={{
+            x: chatX,
+            y: chatY,
+            width: chatWidth,
+            height: chatHeight,
+          }}
+          minWidth={320}
+          maxWidth={isMaximized ? window.innerWidth - 32 : 600}
+          minHeight={400}
+          maxHeight={isMaximized ? window.innerHeight - 32 : window.innerHeight - 120}
+          bounds="window"
+          enableResizing={!isMaximized}
+          disableDragging={isMaximized}
+          onResizeStop={(e, direction, ref, delta, position) => {
+            const newWidth = parseInt(ref.style.width);
+            const newHeight = parseInt(ref.style.height);
+            setChatWidth(newWidth);
+            setChatHeight(newHeight);
+            localStorage.setItem('chatbot-width', newWidth.toString());
+            localStorage.setItem('chatbot-height', newHeight.toString());
+          }}
+          onDragStop={(e, d) => {
+            setChatX(d.x);
+            setChatY(d.y);
+            localStorage.setItem('chatbot-x', d.x.toString());
+            localStorage.setItem('chatbot-y', d.y.toString());
+          }}
+          className={cn(
+            "z-[60] transition-all duration-300 ease-in-out",
+            isMaximized && "!fixed !left-4 !top-4 !right-4 !bottom-4 !w-auto !h-auto"
+          )}
+          style={isMaximized ? {
+            width: 'calc(100vw - 2rem) !important',
+            height: 'calc(100vh - 2rem) !important',
+            transform: 'none !important'
+          } : {}}
+        >
         <Card className="flex flex-col h-full w-full overflow-hidden shadow-xl border-accent/20">
           {/* Chat header */}
           <div className="flex flex-col border-b bg-accent text-accent-foreground">
@@ -977,7 +1028,7 @@ export function ChatBot() {
                 }}
                 className="flex-1 min-w-[90px]"
               >
-                Buy
+                🏠 Buy
               </Button>
               <Button
                 size="sm"
@@ -988,7 +1039,7 @@ export function ChatBot() {
                 }}
                 className="flex-1 min-w-[90px]"
               >
-                Sell
+                💰 Sell
               </Button>
               <Button
                 size="sm"
@@ -999,7 +1050,7 @@ export function ChatBot() {
                 }}
                 className="flex-1 min-w-[90px]"
               >
-                Rental
+                🏘️ Rent
               </Button>
               <Button
                 size="sm"
@@ -1010,7 +1061,7 @@ export function ChatBot() {
                 }}
                 className="flex-1 min-w-[90px]"
               >
-                Trends
+                📈 Trends
               </Button>
             </div>
 
@@ -1063,7 +1114,8 @@ export function ChatBot() {
             </Button>
           </div>
         </Card>
-      </div>
+        </Rnd>
+      )}
       
       {/* Inquiry Form Dialog */}
       <Dialog open={showInquiryForm} onOpenChange={setShowInquiryForm}>

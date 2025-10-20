@@ -298,3 +298,23 @@
 .dark .bg-light {
   @apply bg-gray-800;
 }
+
+/* React-rnd chatbot resize handles */
+.react-rnd {
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.react-rnd:hover {
+  border-color: hsl(var(--primary) / 0.3);
+}
+
+.react-rnd-resize-handle {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.react-rnd:hover .react-rnd-resize-handle {
+  opacity: 1;
+}
+

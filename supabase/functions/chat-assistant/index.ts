@@ -12,7 +12,8 @@ const chatMessageSchema = z.object({
   messages: z.array(z.object({
     role: z.enum(['user', 'assistant', 'system']),
     content: z.string().min(1, 'Message cannot be empty').max(1000, 'Message too long (max 1000 characters)')
-  })).min(1, 'At least one message required').max(20, 'Too many messages (max 20)')
+  })).min(1, 'At least one message required').max(20, 'Too many messages (max 20)'),
+  context: z.string().optional() // Context summary with extracted entities
 });
 
 // Rate limiting configuration
@@ -31,6 +32,14 @@ setInterval(() => {
 }, 300000);
 
 const SYSTEM_PROMPT = `You are the RC Bridge real estate assistant for Hyderabad properties. You are conversational, empathetic, and helpful.
+
+CRITICAL CONTEXT MEMORY RULES:
+- You will receive a "CONTEXT" section at the start of each user message
+- This context contains extracted entities (budget, location, timeline, property type, bedrooms, intent, etc.)
+- ALWAYS reference these entities in your responses to show you remember
+- NEVER ask for information that's already in the CONTEXT
+- If a user provides new information, acknowledge it explicitly and use it
+- Example: If CONTEXT shows "budget: ₹80 lakhs, location: Gachibowli", and user says "I want 2BHK", respond with "Great! So you're looking for a 2BHK in Gachibowli with a budget of ₹80 lakhs..."
 
 COMPANY CONTEXT:
 - RC Bridge has facilitated ₹200 Cr+ worth of deals
@@ -204,8 +213,17 @@ serve(async (req) => {
       );
     }
     
-    const { messages } = validation.data;
+    const { messages, context } = validation.data;
     const recentMessages = messages.slice(-20);
+    
+    // Inject context into the last user message if provided
+    if (context && recentMessages.length > 0) {
+      const lastMessage = recentMessages[recentMessages.length - 1];
+      if (lastMessage.role === 'user') {
+        lastMessage.content = `[CONTEXT: ${context}]\n\n${lastMessage.content}`;
+      }
+    }
+    
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
