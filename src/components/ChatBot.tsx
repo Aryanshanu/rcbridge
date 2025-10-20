@@ -286,6 +286,7 @@ export function ChatBot() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!input.trim() || isLoading) return;
 
     const userMessage = input.trim();
@@ -816,22 +817,32 @@ export function ChatBot() {
         </DialogContent>
       </Dialog>
 
-      {/* Chat window - draggable and resizable */}
+      {/* Chat window - fixed to right, resizable only */}
       {isOpen && (
         <Rnd
-          default={{
-            x: chatX,
-            y: chatY,
-            width: chatWidth,
-            height: chatHeight,
+          position={{
+            x: window.innerWidth - (isMaximized ? window.innerWidth - 32 : chatWidth) - 24,
+            y: isMaximized ? 16 : Math.max(16, window.innerHeight - chatHeight - 88)
+          }}
+          size={{
+            width: isMaximized ? window.innerWidth - 32 : chatWidth,
+            height: isMaximized ? window.innerHeight - 32 : chatHeight,
           }}
           minWidth={320}
-          maxWidth={isMaximized ? window.innerWidth - 32 : 600}
+          maxWidth={600}
           minHeight={400}
-          maxHeight={isMaximized ? window.innerHeight - 32 : window.innerHeight - 120}
-          bounds="window"
-          enableResizing={!isMaximized}
-          disableDragging={isMaximized}
+          maxHeight={window.innerHeight - 120}
+          disableDragging={true}
+          enableResizing={isMaximized ? false : {
+            top: false,
+            right: false,
+            bottom: true,
+            left: true,
+            topRight: false,
+            bottomRight: false,
+            bottomLeft: true,
+            topLeft: false,
+          }}
           onResizeStop={(e, direction, ref, delta, position) => {
             const newWidth = parseInt(ref.style.width);
             const newHeight = parseInt(ref.style.height);
@@ -840,21 +851,7 @@ export function ChatBot() {
             localStorage.setItem('chatbot-width', newWidth.toString());
             localStorage.setItem('chatbot-height', newHeight.toString());
           }}
-          onDragStop={(e, d) => {
-            setChatX(d.x);
-            setChatY(d.y);
-            localStorage.setItem('chatbot-x', d.x.toString());
-            localStorage.setItem('chatbot-y', d.y.toString());
-          }}
-          className={cn(
-            "z-[60] transition-all duration-300 ease-in-out",
-            isMaximized && "!fixed !left-4 !top-4 !right-4 !bottom-4 !w-auto !h-auto"
-          )}
-          style={isMaximized ? {
-            width: 'calc(100vw - 2rem) !important',
-            height: 'calc(100vh - 2rem) !important',
-            transform: 'none !important'
-          } : {}}
+          className="fixed z-[60]"
         >
         <Card className="flex flex-col h-full w-full overflow-hidden shadow-xl border-accent/20">
           {/* Chat header */}

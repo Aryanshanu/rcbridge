@@ -216,12 +216,10 @@ serve(async (req) => {
     const { messages, context } = validation.data;
     const recentMessages = messages.slice(-20);
     
-    // Inject context into the last user message if provided
-    if (context && recentMessages.length > 0) {
-      const lastMessage = recentMessages[recentMessages.length - 1];
-      if (lastMessage.role === 'user') {
-        lastMessage.content = `[CONTEXT: ${context}]\n\n${lastMessage.content}`;
-      }
+    // Build enhanced system prompt with context (hidden from user)
+    let enhancedSystemPrompt = SYSTEM_PROMPT;
+    if (context) {
+      enhancedSystemPrompt += `\n\nCURRENT USER CONTEXT (use this information to personalize responses, never repeat it back):\n${context}`;
     }
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -246,7 +244,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: enhancedSystemPrompt },
           ...recentMessages
         ],
         max_tokens: 800,
