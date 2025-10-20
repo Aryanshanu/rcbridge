@@ -98,11 +98,11 @@ export function ChatBot() {
   // Resizable chat window state
   const [chatWidth, setChatWidth] = useState(() => {
     const saved = localStorage.getItem('chatbot-width');
-    return saved ? parseInt(saved) : 384; // Default 384px (w-96)
+    return saved ? parseInt(saved) : 400; // Default 400px
   });
   const [chatHeight, setChatHeight] = useState(() => {
     const saved = localStorage.getItem('chatbot-height');
-    return saved ? parseInt(saved) : 500; // Default 500px
+    return saved ? parseInt(saved) : 600; // Default 600px
   });
   const [isMaximized, setIsMaximized] = useState(false);
   const [chatX, setChatX] = useState(() => {
@@ -297,11 +297,6 @@ export function ChatBot() {
     // Check anonymous message limit
     if (!isAuthenticated && messageCount >= 4) {
       setShowAuthPrompt(true);
-      toast({
-        title: "Sign in Required",
-        description: "Please sign in to continue chatting with us",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -371,11 +366,6 @@ export function ChatBot() {
       setMessageCount(newCount);
       if (newCount >= 4) {
         setShowAuthPrompt(true);
-        toast({
-          title: "Sign in to continue",
-          description: "Please sign in to track your conversations and get personalized recommendations.",
-          duration: 5000,
-        });
       }
     }
     
@@ -435,6 +425,15 @@ export function ChatBot() {
         }
         if (response.status === 402) {
           throw new Error('Service credits exhausted. Please contact support.');
+        }
+        if (response.status === 400) {
+          // Parse 400 error details
+          try {
+            const errorData = await response.json();
+            throw new Error(errorData.details || 'Your message is too long. Please shorten to under 700 characters.');
+          } catch (e) {
+            throw new Error('Your message is too long. Please shorten to under 700 characters.');
+          }
         }
         
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -851,12 +850,12 @@ export function ChatBot() {
           className={cn(
             "fixed z-[60] transition-none chatbot-container",
             isMaximized 
-              ? "top-4 right-4 bottom-4 left-4" 
+              ? "bottom-8 right-8" 
               : "bottom-[88px] right-6"
           )}
           style={{
-            width: isMaximized ? 'calc(100vw - 2rem)' : `${chatWidth}px`,
-            height: isMaximized ? 'calc(100vh - 2rem)' : `${chatHeight}px`,
+            width: isMaximized ? 'min(72vw, 980px)' : `${chatWidth}px`,
+            height: isMaximized ? 'min(78vh, 880px)' : `${chatHeight}px`,
             maxWidth: isMaximized ? 'none' : '600px',
             minWidth: '320px',
             minHeight: '400px',
@@ -886,7 +885,7 @@ export function ChatBot() {
             bounds="parent"
             className="w-full h-full"
           >
-        <Card className="flex flex-col h-full w-full overflow-hidden shadow-xl border-accent/20">
+        <Card className="flex flex-col h-full w-full overflow-hidden shadow-xl border-accent/20 bg-card">
           {/* Chat header */}
           <div className="flex flex-col border-b bg-accent text-accent-foreground">
             <div className="flex items-center justify-between p-3">
@@ -1121,6 +1120,7 @@ export function ChatBot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isLoading || !modelReady}
+                maxLength={700}
                 className="flex-1 chatbot-input"
               />
               
