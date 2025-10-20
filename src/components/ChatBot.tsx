@@ -96,23 +96,15 @@ export function ChatBot() {
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   
   // Resizable chat window state
-  const [chatWidth, setChatWidth] = useState(() => {
-    const saved = localStorage.getItem('chatbot-width');
-    return saved ? parseInt(saved) : 400; // Default 400px
-  });
+  const [chatWidth] = useState(400); // Locked width
   const [chatHeight, setChatHeight] = useState(() => {
     const saved = localStorage.getItem('chatbot-height');
     return saved ? parseInt(saved) : 600; // Default 600px
   });
   const [isMaximized, setIsMaximized] = useState(false);
-  const [chatX, setChatX] = useState(() => {
-    const saved = localStorage.getItem('chatbot-x');
-    return saved ? parseInt(saved) : window.innerWidth - 420;
-  });
-  const [chatY, setChatY] = useState(() => {
-    const saved = localStorage.getItem('chatbot-y');
-    return saved ? parseInt(saved) : window.innerHeight - 650;
-  });
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -292,6 +284,13 @@ export function ChatBot() {
     
     if (!input.trim() || isLoading) return;
 
+    // 3-second cooldown between messages
+    const now = Date.now();
+    if (now - lastSubmitTime < 3000) {
+      return;
+    }
+    setLastSubmitTime(now);
+
     const userMessage = input.trim();
     
     // Check anonymous message limit
@@ -303,6 +302,7 @@ export function ChatBot() {
     setInput('');
     setShowQuickReplies(false);
     setSmartSuggestions([]); // Clear old suggestions when user sends a message
+    setRetryCount(0);
 
     // Increment message count for anonymous users
     if (!isAuthenticated) {
@@ -402,42 +402,84 @@ export function ChatBot() {
         .map(([k, v]) => `${k}: ${v}`)
         .join(', ');
 
-      // Call streaming edge function with context
-      const response = await fetch(
-        `https://hchtekfbtcbfsfxkjyfi.functions.supabase.co/chat-assistant`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ 
-            messages: conversationHistory,
-            context: contextSummary // Send accumulated context to backend
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        // Edge function error - handle gracefully
+      // Robust fetch with retry logic
+      const attemptFetch = async (attempt: number): Promise<Response> => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
         
-        if (response.status === 429) {
-          throw new Error('Rate limit exceeded. Please wait a moment and try again.');
-        }
-        if (response.status === 402) {
-          throw new Error('Service credits exhausted. Please contact support.');
-        }
-        if (response.status === 400) {
-          // Parse 400 error details
-          try {
-            const errorData = await response.json();
-            throw new Error(errorData.details || 'Your message is too long. Please shorten to under 700 characters.');
-          } catch (e) {
-            throw new Error('Your message is too long. Please shorten to under 700 characters.');
+        let firstChunkReceived = false;
+        const connectingTimeoutId = setTimeout(() => {
+          if (!firstChunkReceived) {
+            setIsConnecting(true);
           }
+        }, 5000);
+
+        try {
+          const response = await fetch(
+            `https://hchtekfbtcbfsfxkjyfi.functions.supabase.co/chat-assistant`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ 
+                messages: conversationHistory,
+                context: contextSummary
+              }),
+              signal: controller.signal
+            }
+          );
+          
+          clearTimeout(timeoutId);
+          clearTimeout(connectingTimeoutId);
+          setIsConnecting(false);
+          
+          if (!response.ok) {
+            if (response.status === 429) {
+              const retryAfter = response.headers.get('Retry-After');
+              const waitSeconds = retryAfter ? parseInt(retryAfter) : 60;
+              throw new Error(`RATE_LIMIT:${waitSeconds}`);
+            }
+            if (response.status === 402) {
+              throw new Error('CREDITS_EXHAUSTED:AI credits exhausted. Please try again later.');
+            }
+            if (response.status === 400) {
+              try {
+                const errorData = await response.json();
+                throw new Error(`BAD_REQUEST:${errorData.details || 'Your message is too long. Please shorten to under 700 characters.'}`);
+              } catch (e) {
+                throw new Error('BAD_REQUEST:Your message is too long. Please shorten to under 700 characters.');
+              }
+            }
+            if (response.status >= 500) {
+              throw new Error('SERVER_ERROR:AI service temporarily unavailable. Try again.');
+            }
+            
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          return response;
+        } catch (error) {
+          clearTimeout(timeoutId);
+          clearTimeout(connectingTimeoutId);
+          setIsConnecting(false);
+          
+          if (error instanceof Error) {
+            const errorMsg = error.message;
+            
+            // Retry for server errors
+            if (errorMsg.startsWith('SERVER_ERROR:') && attempt < 2) {
+              const delay = attempt === 0 ? 600 : 1200;
+              await new Promise(resolve => setTimeout(resolve, delay));
+              return attemptFetch(attempt + 1);
+            }
+          }
+          
+          throw error;
         }
-        
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      };
+
+      const response = await attemptFetch(0);
 
       if (!response.body) {
         throw new Error('Response body is null');
@@ -466,9 +508,15 @@ export function ChatBot() {
       };
       setMessages((prev) => [...prev, botMessage]);
 
+      let firstChunkReceived = false;
       while (!streamDone) {
         const { done, value } = await reader.read();
         if (done) break;
+        
+        if (!firstChunkReceived) {
+          firstChunkReceived = true;
+          setIsConnecting(false);
+        }
         
         textBuffer += decoder.decode(value, { stream: true });
 
@@ -863,29 +911,22 @@ export function ChatBot() {
           }}
         >
           <Rnd
-            disableDragging={true}
-            enableResizing={isMaximized ? false : {
-              top: false,
-              right: false,
-              bottom: true,
-              left: true,
-              topRight: false,
-              bottomRight: false,
-              bottomLeft: true,
-              topLeft: false,
-            }}
-            onResizeStop={(e, direction, ref, delta, position) => {
-              const newWidth = Math.max(320, Math.min(600, parseInt(ref.style.width)));
-              const newHeight = Math.max(400, parseInt(ref.style.height));
-              setChatWidth(newWidth);
+            size={{ width: chatWidth, height: chatHeight }}
+            position={{ x: 0, y: 0 }}
+            onResizeStop={(e, direction, ref) => {
+              const newHeight = parseInt(ref.style.height);
               setChatHeight(newHeight);
-              localStorage.setItem('chatbot-width', newWidth.toString());
               localStorage.setItem('chatbot-height', newHeight.toString());
             }}
+            minHeight={400}
+            enableResizing={{
+              bottom: !isMaximized
+            }}
+            disableDragging={true}
             bounds="parent"
             className="w-full h-full"
           >
-        <Card className="flex flex-col h-full w-full overflow-hidden shadow-xl border-accent/20 bg-card">
+            <Card className="flex flex-col h-full w-full overflow-hidden shadow-xl border-accent/20 bg-card transition-all duration-300">
           {/* Chat header */}
           <div className="flex flex-col border-b bg-accent text-accent-foreground">
             <div className="flex items-center justify-between p-3">

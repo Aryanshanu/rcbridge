@@ -303,7 +303,7 @@ export const NotificationButton = () => {
 
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogOverlay className="bg-black/80 backdrop-blur-sm" />
-        <DialogContent className="sm:max-w-md border-2 border-primary/30 shadow-2xl">
+        <DialogContent className="w-[90%] sm:max-w-[25.2rem] border-2 border-primary/30 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5" /> Authentication Required
@@ -330,7 +330,7 @@ export const NotificationButton = () => {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogOverlay className="bg-black/80 backdrop-blur-sm" />
-        <DialogContent className="sm:max-w-md border-2 border-primary/30 shadow-2xl">
+        <DialogContent className="w-[90%] sm:max-w-[25.2rem] border-2 border-primary/30 shadow-2xl">
           <DialogHeader>
             <DialogTitle>Get Property Alerts</DialogTitle>
             <DialogDescription>
