@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Message {
   id: number;
@@ -122,13 +123,6 @@ export function ChatBot() {
       // Initialize chat model
       const chatReady = await initializeChatModel();
       setModelReady(chatReady);
-      
-      if (chatReady) {
-        toast({
-          title: "RC Bridge Assistant Ready",
-          description: "Ask me about real estate properties and investments in Hyderabad",
-        });
-      }
 
       loadConversationContext();
 
@@ -204,12 +198,7 @@ export function ChatBot() {
           });
 
         if (error) {
-          // Error persisting conversation - continue in ephemeral mode
-          toast({
-            title: "Chat in ephemeral mode",
-            description: "Messages won't persist. Continuing in-memory.",
-            variant: "default"
-          });
+          // Error persisting conversation - continue in ephemeral mode silently
         } else {
           localStorage.setItem('chat_conversation_id', conversationId);
         }
@@ -583,12 +572,7 @@ export function ChatBot() {
         userMessage.toLowerCase().includes('farm') ||
         userMessage.toLowerCase().includes('land')
       ) {
-        setTimeout(() => {
-          toast({
-            title: "Tip",
-            description: "Click the image button to see property visualizations",
-          });
-        }, 2000);
+        // Property type detected - no toast needed
       }
 
     } catch (error: any) {
@@ -775,10 +759,7 @@ export function ChatBot() {
     setFailureCount(0);
     setUserMentionedLocation(null);
     setContextEntities({});
-    toast({
-      title: "Chat Cleared",
-      description: "Starting a fresh conversation",
-    });
+    // Chat cleared silently
   };
   
   const handleQuickReply = (message: string) => {
@@ -1240,13 +1221,22 @@ export function ChatBot() {
 
       {/* Floating chat button - only show if welcome banner was already seen */}
       {hasSeenWelcome && (
-        <Button
-          onClick={() => setIsOpen(!isOpen)}
-          className="fixed bottom-6 right-6 rounded-full p-5 h-18 w-18 shadow-lg z-50 bg-accent hover:bg-accent/90"
-          aria-label="Chat with us"
-        >
-          {isOpen ? <X size={36} /> : <MessageCircle size={36} />}
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={() => setIsOpen(!isOpen)}
+                className="fixed bottom-6 right-6 rounded-full p-5 h-18 w-18 shadow-lg z-50 bg-accent hover:bg-accent/90"
+                aria-label="Assistant"
+              >
+                {isOpen ? <X size={36} /> : <MessageCircle size={36} />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left" align="center">
+              <p>Assistant</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
     </div>
   );

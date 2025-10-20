@@ -339,8 +339,8 @@ export const NotificationButton = () => {
           </DialogHeader>
           
           {!user && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
+            <Alert className="mb-4 border-blue-200 bg-blue-50 text-blue-900 dark:bg-blue-900/20 dark:border-blue-800">
+              <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               <AlertTitle>Authentication Required</AlertTitle>
               <AlertDescription>
                 You'll need to sign in before setting up property alerts. All your preferences will be preserved.
