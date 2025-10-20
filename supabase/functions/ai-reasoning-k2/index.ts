@@ -5,9 +5,47 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiting for expensive AI reasoning
+const rateLimits = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 5; // requests per minute
+const RATE_WINDOW = 60000; // 1 minute in ms
+
+// Clean up old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, limit] of rateLimits.entries()) {
+    if (now > limit.resetTime) {
+      rateLimits.delete(ip);
+    }
+  }
+}, RATE_WINDOW);
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Rate limiting check
+  const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  const now = Date.now();
+  const userLimit = rateLimits.get(clientIP);
+
+  if (userLimit && now < userLimit.resetTime) {
+    if (userLimit.count >= RATE_LIMIT) {
+      console.log(`Rate limit exceeded for IP: ${clientIP} on ai-reasoning-k2`);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Rate limit exceeded. Please wait before making another reasoning request.' 
+        }),
+        { 
+          status: 429, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    userLimit.count++;
+  } else {
+    rateLimits.set(clientIP, { count: 1, resetTime: now + RATE_WINDOW });
   }
 
   try {
