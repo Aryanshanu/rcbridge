@@ -318,3 +318,29 @@
   opacity: 1;
 }
 
+/* Prevent chatbot interactions from scrolling the page */
+.chatbot-container {
+  position: fixed !important;
+  will-change: auto;
+  transform: translateZ(0); /* Force GPU rendering */
+  backface-visibility: hidden;
+}
+
+.chatbot-messages {
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain; /* Critical: prevents scroll chaining */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent body scroll when chatbot is focused */
+body:has(.chatbot-input:focus) {
+  overflow: hidden;
+}
+
+/* Enhanced dialog backdrop */
+[data-radix-dialog-overlay] {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(4px);
+}
+

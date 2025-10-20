@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogOverlay } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
@@ -133,24 +134,45 @@ export const NotificationButton = () => {
         return;
       }
 
-      // Validate and coerce prices
+      // Validate and coerce prices with enhanced validation
       const minPriceNum = minPrice ? parseFloat(minPrice) : null;
       const maxPriceNum = maxPrice ? parseFloat(maxPrice) : null;
+      const MAX_PRICE = 10000000000; // ₹1000 crores
 
-      if (minPriceNum !== null && isNaN(minPriceNum)) {
+      if (minPriceNum !== null && (isNaN(minPriceNum) || minPriceNum < 0)) {
         toast({
           title: "Invalid Price",
-          description: "Minimum price must be a valid number",
+          description: "Minimum price must be a positive number",
           variant: "destructive",
         });
         setIsSubmitting(false);
         return;
       }
 
-      if (maxPriceNum !== null && isNaN(maxPriceNum)) {
+      if (maxPriceNum !== null && (isNaN(maxPriceNum) || maxPriceNum < 0)) {
         toast({
           title: "Invalid Price",
-          description: "Maximum price must be a valid number",
+          description: "Maximum price must be a positive number",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (minPriceNum !== null && minPriceNum > MAX_PRICE) {
+        toast({
+          title: "Invalid Price",
+          description: "Minimum price exceeds maximum limit of ₹1000 crores",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (maxPriceNum !== null && maxPriceNum > MAX_PRICE) {
+        toast({
+          title: "Invalid Price",
+          description: "Maximum price exceeds maximum limit of ₹1000 crores",
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -257,24 +279,31 @@ export const NotificationButton = () => {
 
   return (
     <>
-      <button 
-        onClick={() => setOpen(true)}
-        className="bg-primary text-white p-4 rounded-full shadow-lg hover:bg-primary/90 transition-all duration-300 group relative"
-        aria-label="Get property notifications"
-      >
-        <Bell className="h-9 w-9" />
-        {alertCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
-            {alertCount}
-          </span>
-        )}
-        <span className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm py-1 px-3 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-          Property Alerts
-        </span>
-      </button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button 
+              onClick={() => setOpen(true)}
+              className="bg-primary text-white p-4 rounded-full shadow-lg hover:bg-primary/90 transition-all duration-300 group relative"
+              aria-label="Get property notifications"
+            >
+              <Bell className="h-9 w-9" />
+              {alertCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
+                  {alertCount}
+                </span>
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" align="center">
+            <p>Get Alerts</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogOverlay className="bg-black/80 backdrop-blur-sm" />
+        <DialogContent className="sm:max-w-md border-2 border-primary/30 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5" /> Authentication Required
@@ -300,7 +329,8 @@ export const NotificationButton = () => {
       </Dialog>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogOverlay className="bg-black/80 backdrop-blur-sm" />
+        <DialogContent className="sm:max-w-md border-2 border-primary/30 shadow-2xl">
           <DialogHeader>
             <DialogTitle>Get Property Alerts</DialogTitle>
             <DialogDescription>

@@ -45,7 +45,7 @@ export const Hero = () => {
           <div className="mt-10 max-w-xl mx-auto">
             <EnhancedSearch 
               variant="hero" 
-              showFilters={true} 
+              showFilters={false} 
               onSearch={handleSearch}
             />
           </div>

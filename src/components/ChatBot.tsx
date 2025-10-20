@@ -46,6 +46,10 @@ type InquiryData = {
 export function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [hasSeenWelcome, setHasSeenWelcome] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('chatbot-welcome-seen') === 'true';
+  });
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 0,
@@ -284,9 +288,19 @@ export function ChatBot() {
     setSmartSuggestions(Array.from(suggestionsSet).slice(0, 4));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, isProgrammatic = false) => {
     e.preventDefault();
-    e.stopPropagation();
+    
+    // Only stop propagation for user-initiated submissions
+    if (!isProgrammatic) {
+      e.stopPropagation();
+    }
+    
+    // Prevent scroll-to-input behavior
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
     if (!input.trim() || isLoading) return;
 
     const userMessage = input.trim();
@@ -770,23 +784,22 @@ export function ChatBot() {
   const handleQuickReply = (message: string) => {
     setInput(message);
     setShowQuickReplies(false);
-    // Trigger form submission after a brief delay
+    
+    // Create synthetic event for programmatic submission
     setTimeout(() => {
-      inputRef.current?.form?.requestSubmit();
+      if (inputRef.current?.form) {
+        const submitEvent = new Event('submit', { bubbles: true, cancelable: true }) as any;
+        Object.defineProperty(submitEvent, 'target', {
+          writable: false,
+          value: inputRef.current.form
+        });
+        handleSubmit(submitEvent, true); // Mark as programmatic
+      }
     }, 100);
   };
 
   return (
-    <>
-      {/* Chat button - fixed bottom-right with proper z-index */}
-      <Button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 rounded-full p-5 h-18 w-18 shadow-lg z-50 bg-accent hover:bg-accent/90"
-        aria-label="Chat with us"
-      >
-        {isOpen ? <X size={36} /> : <MessageCircle size={36} />}
-      </Button>
-
+    <div>
       {/* Authentication Prompt Dialog */}
       <Dialog open={showAuthPrompt} onOpenChange={setShowAuthPrompt}>
         <DialogContent className="sm:max-w-md">
@@ -817,42 +830,81 @@ export function ChatBot() {
         </DialogContent>
       </Dialog>
 
-      {/* Chat window - fixed to right, resizable only */}
-      {isOpen && (
-        <Rnd
-          position={{
-            x: window.innerWidth - (isMaximized ? window.innerWidth - 32 : chatWidth) - 24,
-            y: isMaximized ? 16 : Math.max(16, window.innerHeight - chatHeight - 88)
+      {/* Welcome Banner for First-Time Visitors */}
+      {!hasSeenWelcome && !isOpen && (
+        <div 
+          onClick={() => {
+            setHasSeenWelcome(true);
+            localStorage.setItem('chatbot-welcome-seen', 'true');
+            setIsOpen(true);
           }}
-          size={{
-            width: isMaximized ? window.innerWidth - 32 : chatWidth,
-            height: isMaximized ? window.innerHeight - 32 : chatHeight,
-          }}
-          minWidth={320}
-          maxWidth={600}
-          minHeight={400}
-          maxHeight={window.innerHeight - 120}
-          disableDragging={true}
-          enableResizing={isMaximized ? false : {
-            top: false,
-            right: false,
-            bottom: true,
-            left: true,
-            topRight: false,
-            bottomRight: false,
-            bottomLeft: true,
-            topLeft: false,
-          }}
-          onResizeStop={(e, direction, ref, delta, position) => {
-            const newWidth = parseInt(ref.style.width);
-            const newHeight = parseInt(ref.style.height);
-            setChatWidth(newWidth);
-            setChatHeight(newHeight);
-            localStorage.setItem('chatbot-width', newWidth.toString());
-            localStorage.setItem('chatbot-height', newHeight.toString());
-          }}
-          className="fixed z-[60]"
+          className="fixed bottom-6 right-6 z-50 cursor-pointer group animate-fade-in"
         >
+          <Card className="p-6 shadow-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/10 hover:border-primary/50 transition-all duration-300 hover:scale-105 max-w-sm">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-full group-hover:bg-primary/20 transition-colors">
+                <MessageCircle size={28} className="text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">
+                  We welcome you! 👋
+                </h3>
+                <p className="text-sm text-muted-foreground mb-2">
+                  I am your assistant
+                </p>
+                <p className="text-xs font-mono text-primary/70">
+                  - assybit
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 text-xs text-center text-muted-foreground animate-pulse">
+              Click anywhere to start chatting
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Chat window - fixed to bottom-right, resizable only */}
+      {isOpen && (
+        <div 
+          className={cn(
+            "fixed z-[60] transition-none chatbot-container",
+            isMaximized 
+              ? "top-4 right-4 bottom-4 left-4" 
+              : "bottom-[88px] right-6"
+          )}
+          style={{
+            width: isMaximized ? 'calc(100vw - 2rem)' : `${chatWidth}px`,
+            height: isMaximized ? 'calc(100vh - 2rem)' : `${chatHeight}px`,
+            maxWidth: isMaximized ? 'none' : '600px',
+            minWidth: '320px',
+            minHeight: '400px',
+            maxHeight: isMaximized ? 'none' : 'calc(100vh - 120px)',
+          }}
+        >
+          <Rnd
+            disableDragging={true}
+            enableResizing={isMaximized ? false : {
+              top: false,
+              right: false,
+              bottom: true,
+              left: true,
+              topRight: false,
+              bottomRight: false,
+              bottomLeft: true,
+              topLeft: false,
+            }}
+            onResizeStop={(e, direction, ref, delta, position) => {
+              const newWidth = Math.max(320, Math.min(600, parseInt(ref.style.width)));
+              const newHeight = Math.max(400, parseInt(ref.style.height));
+              setChatWidth(newWidth);
+              setChatHeight(newHeight);
+              localStorage.setItem('chatbot-width', newWidth.toString());
+              localStorage.setItem('chatbot-height', newHeight.toString());
+            }}
+            bounds="parent"
+            className="w-full h-full"
+          >
         <Card className="flex flex-col h-full w-full overflow-hidden shadow-xl border-accent/20">
           {/* Chat header */}
           <div className="flex flex-col border-b bg-accent text-accent-foreground">
@@ -927,7 +979,7 @@ export function ChatBot() {
           </div>
 
           {/* Chat messages */}
-          <div className="flex-1 p-3 overflow-y-auto bg-background">
+          <div className="chatbot-messages flex-1 p-3 overflow-y-auto bg-background overscroll-contain">
             {!modelReady && (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
@@ -1088,7 +1140,7 @@ export function ChatBot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isLoading || !modelReady}
-                className="flex-1"
+                className="flex-1 chatbot-input"
               />
               
               <Button 
@@ -1112,6 +1164,7 @@ export function ChatBot() {
           </div>
         </Card>
         </Rnd>
+        </div>
       )}
       
       {/* Inquiry Form Dialog */}
@@ -1184,6 +1237,17 @@ export function ChatBot() {
           </form>
         </DialogContent>
       </Dialog>
-    </>
+
+      {/* Floating chat button - only show if welcome banner was already seen */}
+      {hasSeenWelcome && (
+        <Button
+          onClick={() => setIsOpen(!isOpen)}
+          className="fixed bottom-6 right-6 rounded-full p-5 h-18 w-18 shadow-lg z-50 bg-accent hover:bg-accent/90"
+          aria-label="Chat with us"
+        >
+          {isOpen ? <X size={36} /> : <MessageCircle size={36} />}
+        </Button>
+      )}
+    </div>
   );
 }
