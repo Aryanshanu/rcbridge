@@ -981,15 +981,18 @@ export function ChatBot() {
 
       {/* Chat window - fixed to bottom-right, resizable only */}
       {isOpen && (
+        <div
+          className="fixed z-[60]"
+          style={{
+            right: isMaximized ? 32 : 24,
+            bottom: isMaximized ? 32 : 88,
+            width: isMaximized ? Math.min(windowDimensions.width * 0.72, 980) : chatWidth,
+            height: isMaximized ? Math.min(windowDimensions.height * 0.78, 880) : chatHeight,
+          }}
+        >
           <Rnd
-            size={{ 
-              width: isMaximized ? Math.min(windowDimensions.width * 0.72, 980) : chatWidth,
-              height: isMaximized ? Math.min(windowDimensions.height * 0.78, 880) : chatHeight 
-            }}
-            position={{ 
-              x: windowDimensions.width - (isMaximized ? Math.min(windowDimensions.width * 0.72, 980) : chatWidth) - (isMaximized ? 32 : 24),
-              y: windowDimensions.height - (isMaximized ? Math.min(windowDimensions.height * 0.78, 880) : chatHeight) - (isMaximized ? 32 : 88)
-            }}
+            size={{ width: '100%', height: '100%' }}
+            position={{ x: 0, y: 0 }}
             onResizeStop={(e, direction, ref) => {
               if (!isMaximized) {
                 const newHeight = parseInt(ref.style.height);
@@ -1002,10 +1005,10 @@ export function ChatBot() {
             maxWidth={600}
             maxHeight={Math.min(windowDimensions.height - 120, 900)}
             enableResizing={{
-              bottom: !isMaximized
+              bottom: !isMaximized,
             }}
             disableDragging={true}
-            className="fixed z-[60]"
+            className="w-full h-full"
           >
             <Card className="flex flex-col h-full w-full overflow-hidden shadow-xl border-accent/20 bg-card">
           {/* Chat header */}
@@ -1236,8 +1239,9 @@ export function ChatBot() {
               Want to know more?
             </Button>
           </div>
-         </Card>
+          </Card>
         </Rnd>
+        </div>
       )}
       
       {/* Inquiry Form Dialog */}
