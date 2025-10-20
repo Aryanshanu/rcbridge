@@ -231,42 +231,59 @@ export function ChatBot() {
   }, [isOpen]);
 
   const generateSmartSuggestions = (lastMessage: string, entities: any) => {
-    const msg = lastMessage.toLowerCase();
-    const suggestionsSet = new Set<string>(); // Use Set for automatic deduplication
-
-    // Intent-specific suggestions based on activeIntent
+    const suggestions: string[] = [];
+    
+    // Priority 1: Budget (if intent is set but budget is not)
+    if ((activeIntent === 'buy' || activeIntent === 'invest') && !entities.budget) {
+      suggestions.push("₹50L - ₹1Cr", "₹1Cr - ₹2Cr", "₹2Cr+", "Custom budget");
+      setSmartSuggestions(suggestions);
+      return;
+    }
+    
+    // Priority 2: Property type
+    if (entities.budget && !entities.property_type) {
+      suggestions.push("🏢 Apartment", "🏡 Villa", "🏠 Independent House", "🏗️ Commercial");
+      setSmartSuggestions(suggestions);
+      return;
+    }
+    
+    // Priority 3: Location
+    if (entities.property_type && !entities.location) {
+      suggestions.push("📍 Gachibowli", "📍 Jubilee Hills", "📍 Banjara Hills", "📍 Financial District", "📍 Other");
+      setSmartSuggestions(suggestions);
+      return;
+    }
+    
+    // Priority 4: Size/Bedrooms
+    if (entities.location && !entities.size && !entities.bedrooms) {
+      suggestions.push("1 BHK", "2 BHK", "3 BHK", "4+ BHK");
+      setSmartSuggestions(suggestions);
+      return;
+    }
+    
+    // For selling
+    if (activeIntent === 'sell' && !entities.property_type) {
+      suggestions.push("🏢 Apartment", "🏡 Villa", "🏠 Independent House", "🏗️ Commercial");
+      setSmartSuggestions(suggestions);
+      return;
+    }
+    
+    // For renting
     if (activeIntent === 'rent' && !entities.timeline) {
-      suggestionsSet.add("Short-term rental?");
-      suggestionsSet.add("Long-term rental?");
-    } else if (activeIntent === 'buy' && !entities.budget) {
-      suggestionsSet.add("What's your budget range?");
-    } else if (activeIntent === 'sell') {
-      suggestionsSet.add("Tell me about your property");
-      suggestionsSet.add("When do you want to sell?");
-    } else if (activeIntent === 'trends') {
-      suggestionsSet.add("Which area are you interested in?");
+      suggestions.push("Short-term (< 6 months)", "Long-term (6+ months)");
+      setSmartSuggestions(suggestions);
+      return;
     }
-
-    // Location-based suggestions
-    if ((msg.includes('house') || msg.includes('property') || msg.includes('apartment')) && msg.includes('hyderabad') && !entities.location) {
-      suggestionsSet.add("Banjara Hills");
-      suggestionsSet.add("Gachibowli");
-      suggestionsSet.add("Pocharam");
-    } else if ((msg.includes('buy') || msg.includes('looking for')) && !entities.budget) {
-      suggestionsSet.add("What's your budget range?");
-    } else if ((msg.includes('invest') || msg.includes('buy')) && msg.includes('pocharam') && !entities.propertyType) {
-      suggestionsSet.add("Residential property?");
-      suggestionsSet.add("Commercial plot?");
-      suggestionsSet.add("Agricultural land?");
-    } else if (entities.propertyType && !entities.size) {
-      suggestionsSet.add("What size do you need?");
-      suggestionsSet.add("How many bedrooms?");
-    } else if (entities.location && entities.propertyType && !entities.budget) {
-      suggestionsSet.add("What's your budget?");
+    
+    // For trends
+    if (activeIntent === 'trends' && !entities.location) {
+      suggestions.push("📍 Gachibowli", "📍 Jubilee Hills", "📍 Financial District", "📍 Tellapur");
+      setSmartSuggestions(suggestions);
+      return;
     }
-
-    // Convert Set to Array and limit to 4 suggestions max
-    setSmartSuggestions(Array.from(suggestionsSet).slice(0, 4));
+    
+    // Clear suggestions if all info collected
+    setSmartSuggestions([]);
   };
 
   const handleSubmit = async (e: React.FormEvent, isProgrammatic = false) => {
@@ -803,9 +820,11 @@ export function ChatBot() {
     setExtractedLocation(null);
     setExtractedTimeline(null);
     setShowQuickReplies(true);
+    setActiveIntent(null);
     setFailureCount(0);
     setUserMentionedLocation(null);
     setContextEntities({});
+    setSmartSuggestions([]);
     // Chat cleared silently
   };
   
@@ -894,39 +913,33 @@ export function ChatBot() {
 
       {/* Chat window - fixed to bottom-right, resizable only */}
       {isOpen && (
-        <div 
-          className={cn(
-            "fixed z-[60] transition-none chatbot-container",
-            isMaximized 
-              ? "bottom-8 right-8" 
-              : "bottom-[88px] right-6"
-          )}
-          style={{
-            width: isMaximized ? 'min(72vw, 980px)' : `${chatWidth}px`,
-            height: isMaximized ? 'min(78vh, 880px)' : `${chatHeight}px`,
-            maxWidth: isMaximized ? 'none' : '600px',
-            minWidth: '320px',
-            minHeight: '400px',
-            maxHeight: isMaximized ? 'none' : 'calc(100vh - 120px)',
-          }}
-        >
           <Rnd
-            size={{ width: chatWidth, height: chatHeight }}
-            position={{ x: 0, y: 0 }}
-            onResizeStop={(e, direction, ref) => {
-              const newHeight = parseInt(ref.style.height);
-              setChatHeight(newHeight);
-              localStorage.setItem('chatbot-height', newHeight.toString());
+            size={{ 
+              width: isMaximized ? Math.min(window.innerWidth * 0.72, 980) : chatWidth,
+              height: isMaximized ? Math.min(window.innerHeight * 0.78, 880) : chatHeight 
             }}
+            position={{ 
+              x: window.innerWidth - (isMaximized ? Math.min(window.innerWidth * 0.72, 980) : chatWidth) - (isMaximized ? 32 : 24),
+              y: window.innerHeight - (isMaximized ? Math.min(window.innerHeight * 0.78, 880) : chatHeight) - (isMaximized ? 32 : 88)
+            }}
+            onResizeStop={(e, direction, ref) => {
+              if (!isMaximized) {
+                const newHeight = parseInt(ref.style.height);
+                setChatHeight(newHeight);
+                localStorage.setItem('chatbot-height', newHeight.toString());
+              }
+            }}
+            minWidth={320}
             minHeight={400}
+            maxWidth={600}
+            maxHeight={Math.min(window.innerHeight - 120, 900)}
             enableResizing={{
               bottom: !isMaximized
             }}
             disableDragging={true}
-            bounds="parent"
-            className="w-full h-full"
+            className="fixed z-[60]"
           >
-            <Card className="flex flex-col h-full w-full overflow-hidden shadow-xl border-accent/20 bg-card transition-all duration-300">
+            <Card className="flex flex-col h-full w-full overflow-hidden shadow-xl border-accent/20 bg-card">
           {/* Chat header */}
           <div className="flex flex-col border-b bg-accent text-accent-foreground">
             <div className="flex items-center justify-between p-3">
@@ -1087,53 +1100,55 @@ export function ChatBot() {
 
           {/* Chat footer with quick replies and input */}
           <div className="p-3 border-t">
-            {/* Intent Selection Buttons */}
-            <div className="flex gap-2 mb-4 flex-wrap">
-              <Button
-                size="sm"
-                variant={activeIntent === 'buy' ? "default" : "outline"}
-                onClick={() => {
-                  setActiveIntent('buy');
-                  handleQuickReply("I want to buy a property");
-                }}
-                className="flex-1 min-w-[90px]"
-              >
-                🏠 Buy
-              </Button>
-              <Button
-                size="sm"
-                variant={activeIntent === 'sell' ? "default" : "outline"}
-                onClick={() => {
-                  setActiveIntent('sell');
-                  handleQuickReply("I want to sell my property");
-                }}
-                className="flex-1 min-w-[90px]"
-              >
-                💰 Sell
-              </Button>
-              <Button
-                size="sm"
-                variant={activeIntent === 'rent' ? "default" : "outline"}
-                onClick={() => {
-                  setActiveIntent('rent');
-                  handleQuickReply("I want to rent a property");
-                }}
-                className="flex-1 min-w-[90px]"
-              >
-                🏘️ Rent
-              </Button>
-              <Button
-                size="sm"
-                variant={activeIntent === 'trends' ? "default" : "outline"}
-                onClick={() => {
-                  setActiveIntent('trends');
-                  handleQuickReply("Show me market trends");
-                }}
-                className="flex-1 min-w-[90px]"
-              >
-                📈 Trends
-              </Button>
-            </div>
+            {/* Intent Selection Buttons - only show initially */}
+            {showQuickReplies && (
+              <div className="flex gap-2 mb-4 flex-wrap">
+                <Button
+                  size="sm"
+                  variant={activeIntent === 'buy' ? "default" : "outline"}
+                  onClick={() => {
+                    setActiveIntent('buy');
+                    handleQuickReply("I want to buy a property");
+                  }}
+                  className="flex-1 min-w-[90px]"
+                >
+                  🏠 Buy
+                </Button>
+                <Button
+                  size="sm"
+                  variant={activeIntent === 'sell' ? "default" : "outline"}
+                  onClick={() => {
+                    setActiveIntent('sell');
+                    handleQuickReply("I want to sell my property");
+                  }}
+                  className="flex-1 min-w-[90px]"
+                >
+                  💰 Sell
+                </Button>
+                <Button
+                  size="sm"
+                  variant={activeIntent === 'rent' ? "default" : "outline"}
+                  onClick={() => {
+                    setActiveIntent('rent');
+                    handleQuickReply("I want to rent a property");
+                  }}
+                  className="flex-1 min-w-[90px]"
+                >
+                  🏘️ Rent
+                </Button>
+                <Button
+                  size="sm"
+                  variant={activeIntent === 'trends' ? "default" : "outline"}
+                  onClick={() => {
+                    setActiveIntent('trends');
+                    handleQuickReply("Show me market trends");
+                  }}
+                  className="flex-1 min-w-[90px]"
+                >
+                  📈 Trends
+                </Button>
+              </div>
+            )}
 
             {/* Smart Suggestions */}
             {smartSuggestions.length > 0 && (
@@ -1184,9 +1199,8 @@ export function ChatBot() {
               Want to know more?
             </Button>
           </div>
-        </Card>
+         </Card>
         </Rnd>
-        </div>
       )}
       
       {/* Inquiry Form Dialog */}
