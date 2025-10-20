@@ -106,6 +106,19 @@ export function ChatBot() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   
+  /**
+   * POSITIONING SYSTEM
+   * The chat window must be fixed to bottom-right corner.
+   * - Uses windowDimensions state (updated on resize) for accurate positioning
+   * - Normal: 24px from right, 88px from bottom (accounting for button)
+   * - Maximized: 32px from right and bottom
+   * - NEVER use window.innerWidth/innerHeight directly in JSX!
+   */
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -216,6 +229,19 @@ export function ChatBot() {
     initializeChat();
   }, [toast]);
 
+  // Window resize listener for accurate positioning
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // removed localStorage persistence of messages
 
   useEffect(() => {
@@ -230,42 +256,84 @@ export function ChatBot() {
     }
   }, [isOpen]);
 
+  /**
+   * SMART SUGGESTIONS ALGORITHM
+   * Generates contextual button options based on:
+   * 1. activeIntent (buy/sell/rent/trends)
+   * 2. Missing entities in contextEntities
+   * 3. Property type (commercial vs residential)
+   * 
+   * Priority order ensures logical conversation flow.
+   * Commercial properties → sq ft options
+   * Residential properties → BHK options
+   */
   const generateSmartSuggestions = (lastMessage: string, entities: any) => {
     const suggestions: string[] = [];
     
-    // Priority 1: Budget (if intent is set but budget is not)
-    if ((activeIntent === 'buy' || activeIntent === 'invest') && !entities.budget) {
-      suggestions.push("₹50L - ₹1Cr", "₹1Cr - ₹2Cr", "₹2Cr+", "Custom budget");
-      setSmartSuggestions(suggestions);
-      return;
+    // For buying/investing - sequential flow
+    if (activeIntent === 'buy' || activeIntent === 'invest') {
+      // Priority 1: Budget
+      if (!entities.budget) {
+        suggestions.push("₹50L - ₹1Cr", "₹1Cr - ₹2Cr", "₹2Cr+", "Custom budget");
+        setSmartSuggestions(suggestions);
+        return;
+      }
+      // Priority 2: Property type
+      if (!entities.property_type) {
+        suggestions.push("🏢 Apartment", "🏡 Villa", "🏠 Independent House", "🏗️ Commercial");
+        setSmartSuggestions(suggestions);
+        return;
+      }
+      // Priority 3: Location
+      if (!entities.location) {
+        suggestions.push("📍 Gachibowli", "📍 Jubilee Hills", "📍 Banjara Hills", "📍 Financial District", "📍 Other");
+        setSmartSuggestions(suggestions);
+        return;
+      }
+      // Priority 4: Size/Bedrooms - property-type aware
+      if (!entities.size && !entities.bedrooms) {
+        const propertyType = entities.property_type?.toLowerCase() || '';
+        if (propertyType.includes('commercial')) {
+          suggestions.push("500-1000 sq ft", "1000-2000 sq ft", "2000-5000 sq ft", "5000+ sq ft", "Custom size");
+        } else {
+          suggestions.push("1 BHK", "2 BHK", "3 BHK", "4+ BHK");
+        }
+        setSmartSuggestions(suggestions);
+        return;
+      }
     }
     
-    // Priority 2: Property type
-    if (entities.budget && !entities.property_type) {
-      suggestions.push("🏢 Apartment", "🏡 Villa", "🏠 Independent House", "🏗️ Commercial");
-      setSmartSuggestions(suggestions);
-      return;
-    }
-    
-    // Priority 3: Location
-    if (entities.property_type && !entities.location) {
-      suggestions.push("📍 Gachibowli", "📍 Jubilee Hills", "📍 Banjara Hills", "📍 Financial District", "📍 Other");
-      setSmartSuggestions(suggestions);
-      return;
-    }
-    
-    // Priority 4: Size/Bedrooms
-    if (entities.location && !entities.size && !entities.bedrooms) {
-      suggestions.push("1 BHK", "2 BHK", "3 BHK", "4+ BHK");
-      setSmartSuggestions(suggestions);
-      return;
-    }
-    
-    // For selling
-    if (activeIntent === 'sell' && !entities.property_type) {
-      suggestions.push("🏢 Apartment", "🏡 Villa", "🏠 Independent House", "🏗️ Commercial");
-      setSmartSuggestions(suggestions);
-      return;
+    // For selling - complete sequential flow
+    if (activeIntent === 'sell') {
+      // Priority 1: Property type
+      if (!entities.property_type) {
+        suggestions.push("🏢 Apartment", "🏡 Villa", "🏠 Independent House", "🏗️ Commercial");
+        setSmartSuggestions(suggestions);
+        return;
+      }
+      // Priority 2: Location
+      if (!entities.location) {
+        suggestions.push("📍 Gachibowli", "📍 Jubilee Hills", "📍 Banjara Hills", "📍 Financial District", "📍 Other");
+        setSmartSuggestions(suggestions);
+        return;
+      }
+      // Priority 3: Size - property-type aware
+      if (!entities.size && !entities.bedrooms) {
+        const propertyType = entities.property_type?.toLowerCase() || '';
+        if (propertyType.includes('commercial')) {
+          suggestions.push("500-1000 sq ft", "1000-2000 sq ft", "2000-5000 sq ft", "5000+ sq ft");
+        } else {
+          suggestions.push("1 BHK", "2 BHK", "3 BHK", "4+ BHK");
+        }
+        setSmartSuggestions(suggestions);
+        return;
+      }
+      // Priority 4: Budget/Price
+      if (!entities.budget) {
+        suggestions.push("₹50L - ₹1Cr", "₹1Cr - ₹2Cr", "₹2Cr - ₹5Cr", "₹5Cr+", "Custom price");
+        setSmartSuggestions(suggestions);
+        return;
+      }
     }
     
     // For renting
@@ -915,12 +983,12 @@ export function ChatBot() {
       {isOpen && (
           <Rnd
             size={{ 
-              width: isMaximized ? Math.min(window.innerWidth * 0.72, 980) : chatWidth,
-              height: isMaximized ? Math.min(window.innerHeight * 0.78, 880) : chatHeight 
+              width: isMaximized ? Math.min(windowDimensions.width * 0.72, 980) : chatWidth,
+              height: isMaximized ? Math.min(windowDimensions.height * 0.78, 880) : chatHeight 
             }}
             position={{ 
-              x: window.innerWidth - (isMaximized ? Math.min(window.innerWidth * 0.72, 980) : chatWidth) - (isMaximized ? 32 : 24),
-              y: window.innerHeight - (isMaximized ? Math.min(window.innerHeight * 0.78, 880) : chatHeight) - (isMaximized ? 32 : 88)
+              x: windowDimensions.width - (isMaximized ? Math.min(windowDimensions.width * 0.72, 980) : chatWidth) - (isMaximized ? 32 : 24),
+              y: windowDimensions.height - (isMaximized ? Math.min(windowDimensions.height * 0.78, 880) : chatHeight) - (isMaximized ? 32 : 88)
             }}
             onResizeStop={(e, direction, ref) => {
               if (!isMaximized) {
@@ -932,7 +1000,7 @@ export function ChatBot() {
             minWidth={320}
             minHeight={400}
             maxWidth={600}
-            maxHeight={Math.min(window.innerHeight - 120, 900)}
+            maxHeight={Math.min(windowDimensions.height - 120, 900)}
             enableResizing={{
               bottom: !isMaximized
             }}
@@ -979,37 +1047,6 @@ export function ChatBot() {
                 </Button>
               </div>
             </div>
-            
-            {/* Extracted Information Badges */}
-            {Object.keys(contextEntities).some(k => contextEntities[k as keyof ChatEntities]) && (
-              <div className="flex flex-wrap gap-2 px-3 pb-2 border-t border-accent-foreground/20 pt-2">
-                {contextEntities.budget && (
-                  <Badge variant="secondary" className="bg-accent-foreground/20 text-accent-foreground border-0 text-xs">
-                    💰 {contextEntities.budget}
-                  </Badge>
-                )}
-                {contextEntities.location && (
-                  <Badge variant="secondary" className="bg-accent-foreground/20 text-accent-foreground border-0 text-xs">
-                    📍 {contextEntities.location}
-                  </Badge>
-                )}
-                {contextEntities.property_type && (
-                  <Badge variant="secondary" className="bg-accent-foreground/20 text-accent-foreground border-0 text-xs">
-                    🏠 {contextEntities.property_type}
-                  </Badge>
-                )}
-                {contextEntities.size && (
-                  <Badge variant="secondary" className="bg-accent-foreground/20 text-accent-foreground border-0 text-xs">
-                    📐 {contextEntities.size}
-                  </Badge>
-                )}
-                {contextEntities.timeline && (
-                  <Badge variant="secondary" className="bg-accent-foreground/20 text-accent-foreground border-0 text-xs">
-                    ⏱️ {contextEntities.timeline}
-                  </Badge>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Chat messages */}
