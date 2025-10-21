@@ -149,6 +149,29 @@ export function ChatBot() {
         const userId = session?.user?.id || null;
         setIsAuthenticated(!!userId);
 
+        // CRITICAL: Link anonymous conversation to authenticated user
+        if (userId) {
+          // First, check if there's an anonymous conversation with this sessionId
+          const { data: anonymousConv } = await supabase
+            .from("chat_conversations")
+            .select("id")
+            .eq("session_id", sessionId)
+            .is("user_id", null)
+            .maybeSingle();
+
+          // If found, link it to the authenticated user
+          if (anonymousConv) {
+            await supabase
+              .from("chat_conversations")
+              .update({ user_id: userId })
+              .eq("id", anonymousConv.id);
+
+            // Use this conversation ID going forward
+            setConversationId(anonymousConv.id);
+            localStorage.setItem("chat_conversation_id", anonymousConv.id);
+          }
+        }
+
         // Load context entities from database
         const entities = await loadContextEntities(conversationId);
         setContextEntities(entities);

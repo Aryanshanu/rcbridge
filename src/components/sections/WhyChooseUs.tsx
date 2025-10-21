@@ -28,12 +28,12 @@ export const WhyChooseUs = () => {
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4 relative inline-block">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50 mb-4 relative inline-block">
             <span className="absolute -left-6 -top-6 text-5xl text-primary/10">❝</span>
             RC Bridge: A Decade of Excellence in Real Estate 🏡
             <span className="absolute -right-6 -bottom-6 text-5xl text-primary/10">❞</span>
           </h2>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             With 10+ years of expertise in the real estate market, RC Bridge has built a trusted and 
             well-established presence in the industry. Our deep market knowledge, vast network, and 
             commitment to quality over quantity make us the go-to platform for exclusive and high-value 

@@ -191,8 +191,8 @@ export const Features = () => {
   return (
     <section className="mb-16 sm:mb-24">
       <div className="text-center mb-8 sm:mb-12">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Our Core Services & Advantages</h2>
-        <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-3xl mx-auto">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50">Our Core Services & Advantages</h2>
+        <p className="mt-2 text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
           A decade of excellence in providing exclusive, high-value real estate solutions through direct connections.
         </p>
       </div>
@@ -219,25 +219,25 @@ export const Features = () => {
                 {feature.icon}
               </div>
               <h3 className="text-lg sm:text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-sm sm:text-base text-gray-600">{feature.description}</p>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">{feature.description}</p>
             </div>
           ))}
         </div>
         
-        <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 mt-8">
+        <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg border border-gray-100 dark:border-gray-700 mt-8">
           <h3 className="text-xl font-bold text-center mb-4">Our Impact & Achievements</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-lg text-center">
               <p className="text-primary font-bold text-xl">₹20 Crores+</p>
-              <p className="text-gray-600 text-sm">Saved in Brokerage & Hidden Costs</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Saved in Brokerage & Hidden Costs</p>
             </div>
             <div className="bg-white p-4 rounded-lg text-center">
               <p className="text-primary font-bold text-xl">₹200 Crores+</p>
-              <p className="text-gray-600 text-sm">Total Real Estate Transactions</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Total Real Estate Transactions</p>
             </div>
             <div className="bg-white p-4 rounded-lg text-center">
               <p className="text-primary font-bold text-xl">₹4.5 Crores+</p>
-              <p className="text-gray-600 text-sm">Retained in Property Value</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Retained in Property Value</p>
             </div>
           </div>
         </div>
@@ -257,7 +257,7 @@ export const Features = () => {
                   {feature.icon}
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900">{feature.title}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50">{feature.title}</h3>
                   
                   <div className="mt-4">
                     <h4 className="font-semibold text-primary">{feature.subtitle}</h4>
@@ -265,7 +265,7 @@ export const Features = () => {
                       {feature.description.map((item, i) => (
                         <li key={i} className="flex items-start">
                           <span className="text-primary mr-2 mt-1">➤</span>
-                          <span className="text-gray-700">{item}</span>
+                          <span className="text-gray-700 dark:text-gray-300">{item}</span>
                         </li>
                       ))}
                     </ul>
@@ -277,7 +277,7 @@ export const Features = () => {
                       {feature.benefits.map((benefit, i) => (
                         <li key={i} className="flex items-start">
                           <span className="text-green-600 mr-2 mt-1">✓</span>
-                          <span className="text-gray-700">{benefit}</span>
+                          <span className="text-gray-700 dark:text-gray-300">{benefit}</span>
                         </li>
                       ))}
                     </ul>
@@ -301,7 +301,7 @@ export const Features = () => {
             
             <div className="mb-4">
               <div className="grid grid-cols-7 gap-2">
-                <div className="col-span-1 font-semibold text-gray-700 pl-2">Feature</div>
+                <div className="col-span-1 font-semibold text-gray-700 dark:text-gray-300 pl-2">Feature</div>
                 {competitors.map((competitor, index) => (
                   <div key={index} className="col-span-1 font-semibold text-center text-sm">
                     {competitor.name}
@@ -311,8 +311,8 @@ export const Features = () => {
             </div>
             
             {competitiveMatrix.map((row, rowIndex) => (
-              <div key={rowIndex} className="grid grid-cols-7 gap-2 mb-3 items-center hover:bg-gray-50">
-                <div className="col-span-1 text-gray-700 pl-2 font-medium">{row.feature}</div>
+              <div key={rowIndex} className="grid grid-cols-7 gap-2 mb-3 items-center hover:bg-gray-50 dark:hover:bg-gray-800">
+                <div className="col-span-1 text-gray-700 dark:text-gray-300 pl-2 font-medium">{row.feature}</div>
                 {row.scores.map((score, scoreIndex) => (
                   <div key={`${rowIndex}-${scoreIndex}`} className="col-span-1 flex flex-col items-center justify-center">
                     {row.icons[scoreIndex] ? (
@@ -329,7 +329,7 @@ export const Features = () => {
               </div>
             ))}
             
-            <div className="mt-6 bg-gray-50 p-4 rounded-lg">
+            <div className="mt-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
               <h4 className="font-semibold mb-2">Key Takeaways:</h4>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-start">

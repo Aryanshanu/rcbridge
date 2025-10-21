@@ -32,8 +32,8 @@ export const ExploreServices = () => {
     <section className="full-width bg-white py-16">
       <div className="content-container">
         <div className="text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Explore Our Services</h2>
-          <p className="mt-2 text-base sm:text-lg text-gray-600">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50">Explore Our Services</h2>
+          <p className="mt-2 text-base sm:text-lg text-gray-600 dark:text-gray-400">
             Discover what RC Bridge has to offer to help you achieve your real estate goals
           </p>
         </div>
@@ -43,7 +43,7 @@ export const ExploreServices = () => {
             <div key={index} className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center">
               <service.icon className="h-12 w-12 text-primary mb-4" />
               <h3 className="text-xl font-bold mb-2">{service.title}</h3>
-              <p className="text-gray-600 mb-4">{service.description}</p>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">{service.description}</p>
               <Link to={service.link} className="mt-auto">
                 <Button className="w-full">
                   {service.buttonText}

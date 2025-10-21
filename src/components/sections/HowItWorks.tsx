@@ -24,11 +24,11 @@ export const HowItWorks = () => {
   ];
 
   return (
-    <section className="full-width bg-gray-50 py-16">
+    <section className="full-width bg-gray-50 dark:bg-gray-900 py-16">
       <div className="content-container">
         <div className="text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">How RC Bridge Works</h2>
-          <p className="mt-2 text-base sm:text-lg text-gray-600">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50">How RC Bridge Works</h2>
+          <p className="mt-2 text-base sm:text-lg text-gray-600 dark:text-gray-400">
             Our unique approach to revolutionizing real estate transactions
           </p>
         </div>
@@ -46,7 +46,7 @@ export const HowItWorks = () => {
                   {step.step}
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
-                <p className="text-gray-600">{step.description}</p>
+                <p className="text-gray-600 dark:text-gray-400">{step.description}</p>
               </div>
             ))}
           </div>

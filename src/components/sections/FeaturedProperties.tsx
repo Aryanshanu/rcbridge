@@ -15,8 +15,8 @@ export const FeaturedProperties = () => {
   return (
     <section className="mb-12 sm:mb-16">
       <div className="text-center mb-6 sm:mb-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Featured Properties</h2>
-        <p className="mt-2 text-base sm:text-lg text-gray-600">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50">Featured Properties</h2>
+        <p className="mt-2 text-base sm:text-lg text-gray-600 dark:text-gray-400">
           Discover our hand-picked premium listings
         </p>
         

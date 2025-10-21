@@ -41,7 +41,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 w-full">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 w-full">
       <SEO />
       <Navbar />
       <Hero />
@@ -57,22 +57,22 @@ const Index = () => {
         </div>
         
         {/* Why Choose Us Section */}
-        <section className="full-width bg-white py-16">
+        <section className="full-width bg-white dark:bg-gray-950 py-16">
           <div className="content-container">
             <WhyChooseUs />
           </div>
         </section>
         
         {/* Tell Us Your Requirements Section */}
-        <section className="full-width bg-gray-50 py-16">
+        <section className="full-width bg-gray-50 dark:bg-gray-900 py-16">
           <div className="content-container">
             <div className="text-center mb-6 sm:mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Tell Us Your Requirements</h2>
-              <p className="mt-2 text-base sm:text-lg text-gray-600">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50">Tell Us Your Requirements</h2>
+              <p className="mt-2 text-base sm:text-lg text-gray-600 dark:text-gray-400">
                 Whether you're looking to buy, sell, or rent, we'll help you find the perfect match.
               </p>
             </div>
-            <div id="property-form" className="bg-gray-100 backdrop-blur-lg rounded-lg shadow-lg p-4 sm:p-8 max-w-5xl mx-auto">
+            <div id="property-form" className="bg-gray-100 dark:bg-gray-800 backdrop-blur-lg rounded-lg shadow-lg p-4 sm:p-8 max-w-5xl mx-auto">
               <Suspense fallback={<LoadingSpinner />}>
                 <PropertyForm />
               </Suspense>
@@ -90,10 +90,10 @@ const Index = () => {
         <ExploreServices />
         
         {/* Featured Properties Section - Text Only */}
-        <section className="full-width bg-gray-50 py-16">
+        <section className="full-width bg-gray-50 dark:bg-gray-900 py-16">
           <div className="content-container">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Featured Properties</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50">Featured Properties</h2>
               <Link to="/properties" className="text-primary hover:underline font-medium">
                 View all properties
               </Link>
@@ -103,7 +103,7 @@ const Index = () => {
         </section>
         
         {/* Features Section */}
-        <section className="full-width bg-white py-16">
+        <section className="full-width bg-white dark:bg-gray-950 py-16">
           <div className="content-container">
             <Suspense fallback={<LoadingSpinner />}>
               <Features />
@@ -112,7 +112,7 @@ const Index = () => {
         </section>
         
         {/* Testimonials Section */}
-        <section className="full-width bg-gray-50 py-16">
+        <section className="full-width bg-gray-50 dark:bg-gray-900 py-16">
           <div className="content-container">
             <Suspense fallback={<LoadingSpinner />}>
               <Testimonials />

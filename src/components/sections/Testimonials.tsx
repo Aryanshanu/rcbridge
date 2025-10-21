@@ -144,17 +144,17 @@ export const Testimonials = () => {
   };
 
   return (
-    <section className="mb-16 sm:mb-20 overflow-hidden bg-gray-50 py-12 rounded-xl">
+    <section className="mb-16 sm:mb-20 overflow-hidden bg-gray-50 dark:bg-gray-900 py-12 rounded-xl">
       <div className="text-center mb-8 sm:mb-10">
-        <h2 className="text-3xl font-display font-bold text-gray-900">What Our Users Say</h2>
+        <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-gray-50">What Our Users Say</h2>
         <div className="w-20 h-1 bg-accent mx-auto mt-3 mb-4 rounded-full"></div>
-        <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-xl mx-auto">
+        <p className="mt-2 text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
           Real experiences from our community members
         </p>
       </div>
       
       <div className="relative max-w-4xl mx-auto px-4">
-        <div className="relative bg-white rounded-xl shadow-lg p-6 sm:p-10 overflow-hidden">
+        <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-10 overflow-hidden border dark:border-gray-700">
           {/* Background design elements */}
           <div className="absolute top-6 left-6 text-primary opacity-10">
             <Quote size={80} />
@@ -173,7 +173,7 @@ export const Testimonials = () => {
                     : "opacity-0 absolute inset-0 transform translate-x-8"
                 }`}
               >
-                <blockquote className="text-lg sm:text-xl italic text-gray-700 mb-6 pt-8">
+                <blockquote className="text-lg sm:text-xl italic text-gray-700 dark:text-gray-300 mb-6 pt-8">
                   "{testimonial.content}"
                 </blockquote>
                 
@@ -185,8 +185,8 @@ export const Testimonials = () => {
                   </div>
                   
                   <div>
-                    <p className="font-semibold text-gray-900">{testimonial.name}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="font-semibold text-gray-900 dark:text-gray-50">{testimonial.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       {testimonial.role}
                       {testimonial.company && ` at ${testimonial.company}`}
                     </p>
@@ -201,7 +201,7 @@ export const Testimonials = () => {
         <div className="flex justify-center mt-8 space-x-4">
           <button
             onClick={prevTestimonial}
-            className="p-3 rounded-full bg-white shadow-md hover:bg-gray-50 transition-colors text-primary"
+            className="p-3 rounded-full bg-white dark:bg-gray-800 shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-primary dark:text-white"
             aria-label="Previous testimonial"
             disabled={isAnimating}
           >
@@ -216,7 +216,7 @@ export const Testimonials = () => {
                 className={`w-3 h-3 rounded-full transition-all duration-300 ${
                   index === activeIndex 
                     ? "bg-accent w-6" 
-                    : "bg-gray-300 hover:bg-gray-400"
+                    : "bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500"
                 }`}
                 aria-label={`Go to testimonial ${index + 1}`}
                 aria-current={index === activeIndex ? "true" : "false"}
@@ -226,7 +226,7 @@ export const Testimonials = () => {
           
           <button
             onClick={nextTestimonial}
-            className="p-3 rounded-full bg-white shadow-md hover:bg-gray-50 transition-colors text-primary"
+            className="p-3 rounded-full bg-white dark:bg-gray-800 shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-primary dark:text-white"
             aria-label="Next testimonial"
             disabled={isAnimating}
           >
