@@ -1,5 +1,5 @@
-
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { 
   BarChart, 
   Bar, 
@@ -14,35 +14,11 @@ import {
   Area
 } from 'recharts';
 import { ArrowUpRight, TrendingUp, Percent, Building } from 'lucide-react';
-
-// Sample data for charts
-const valueRetentionData = [
-  { name: 'Traditional', value: 80, fill: '#94A3B8' },
-  { name: 'RC Bridge', value: 95, fill: '#10B981' }
-];
-
-const growthData = [
-  { month: 'Jan', value: 100 },
-  { month: 'Feb', value: 120 },
-  { month: 'Mar', value: 125 },
-  { month: 'Apr', value: 135 },
-  { month: 'May', value: 148 },
-  { month: 'Jun', value: 160 },
-  { month: 'Jul', value: 175 },
-  { month: 'Aug', value: 190 },
-  { month: 'Sep', value: 215 },
-  { month: 'Oct', value: 230 },
-  { month: 'Nov', value: 255 },
-  { month: 'Dec', value: 280 }
-];
-
-const roiData = [
-  { year: '2023', roi: 8 },
-  { year: '2024', roi: 12 },
-  { year: '2025', roi: 17 },
-  { year: '2026', roi: 23 },
-  { year: '2027', roi: 30 }
-];
+import { 
+  fetchValueRetentionData, 
+  fetchGrowthData, 
+  fetchROIData 
+} from '@/utils/chartDataFetcher';
 
 type VisualizationType = 'value-retention' | 'growth' | 'roi';
 
@@ -53,26 +29,33 @@ interface DataVisualizationCardProps {
   className?: string;
 }
 
-const ValueRetentionChart = () => (
+const ValueRetentionChart = ({ data }: { data: any[] }) => (
   <ResponsiveContainer width="100%" height={200}>
     <BarChart
-      data={valueRetentionData}
+      data={data}
       margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
     >
-      <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-      <XAxis dataKey="name" axisLine={false} tickLine={false} />
+      <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
+      <XAxis 
+        dataKey="name" 
+        axisLine={false} 
+        tickLine={false}
+        className="fill-gray-600 dark:fill-gray-300" 
+      />
       <YAxis 
         domain={[0, 100]} 
         axisLine={false} 
         tickLine={false} 
-        tickFormatter={(value) => `${value}%`} 
+        tickFormatter={(value) => `${value}%`}
+        className="fill-gray-600 dark:fill-gray-300"
       />
       <Tooltip 
         formatter={(value: number) => [`${value}%`, 'Value Retention']}
         contentStyle={{ 
-          backgroundColor: '#FFFFFF', 
+          backgroundColor: 'hsl(var(--background))', 
           borderRadius: '8px', 
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' 
+          border: '1px solid hsl(var(--border))',
+          color: 'hsl(var(--foreground))'
         }}
       />
       <Bar 
@@ -85,10 +68,10 @@ const ValueRetentionChart = () => (
   </ResponsiveContainer>
 );
 
-const GrowthChart = () => (
+const GrowthChart = ({ data }: { data: any[] }) => (
   <ResponsiveContainer width="100%" height={200}>
     <AreaChart
-      data={growthData}
+      data={data}
       margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
     >
       <defs>
@@ -97,15 +80,25 @@ const GrowthChart = () => (
           <stop offset="95%" stopColor="#1E3A8A" stopOpacity={0.1} />
         </linearGradient>
       </defs>
-      <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-      <XAxis dataKey="month" axisLine={false} tickLine={false} />
-      <YAxis axisLine={false} tickLine={false} />
+      <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
+      <XAxis 
+        dataKey="month" 
+        axisLine={false} 
+        tickLine={false}
+        className="fill-gray-600 dark:fill-gray-300"
+      />
+      <YAxis 
+        axisLine={false} 
+        tickLine={false}
+        className="fill-gray-600 dark:fill-gray-300"
+      />
       <Tooltip 
         formatter={(value: number) => [`${value}`, 'Value']}
         contentStyle={{ 
-          backgroundColor: '#FFFFFF', 
+          backgroundColor: 'hsl(var(--background))', 
           borderRadius: '8px', 
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' 
+          border: '1px solid hsl(var(--border))',
+          color: 'hsl(var(--foreground))'
         }}
       />
       <Area 
@@ -120,25 +113,32 @@ const GrowthChart = () => (
   </ResponsiveContainer>
 );
 
-const ROIChart = () => (
+const ROIChart = ({ data }: { data: any[] }) => (
   <ResponsiveContainer width="100%" height={200}>
     <LineChart
-      data={roiData}
+      data={data}
       margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
     >
-      <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-      <XAxis dataKey="year" axisLine={false} tickLine={false} />
+      <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
+      <XAxis 
+        dataKey="year" 
+        axisLine={false} 
+        tickLine={false}
+        className="fill-gray-600 dark:fill-gray-300"
+      />
       <YAxis 
         axisLine={false} 
         tickLine={false} 
         tickFormatter={(value) => `${value}%`}
+        className="fill-gray-600 dark:fill-gray-300"
       />
       <Tooltip 
         formatter={(value: number) => [`${value}%`, 'ROI']}
         contentStyle={{ 
-          backgroundColor: '#FFFFFF', 
+          backgroundColor: 'hsl(var(--background))', 
           borderRadius: '8px', 
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' 
+          border: '1px solid hsl(var(--border))',
+          color: 'hsl(var(--foreground))'
         }}
       />
       <Line 
@@ -155,6 +155,38 @@ const ROIChart = () => (
 );
 
 export const DataVisualizationCard = ({ title, description, type, className }: DataVisualizationCardProps) => {
+  const [data, setData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        let result;
+        switch (type) {
+          case 'value-retention':
+            result = await fetchValueRetentionData();
+            break;
+          case 'growth':
+            result = await fetchGrowthData();
+            break;
+          case 'roi':
+            result = await fetchROIData();
+            break;
+          default:
+            result = [];
+        }
+        setData(result);
+      } catch (error) {
+        console.error('Error fetching chart data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [type]);
+
   let Icon;
   let badgeColor;
   let chartComponent;
@@ -162,28 +194,28 @@ export const DataVisualizationCard = ({ title, description, type, className }: D
   switch (type) {
     case 'value-retention':
       Icon = Percent;
-      badgeColor = 'bg-blue-500';
-      chartComponent = <ValueRetentionChart />;
+      badgeColor = 'bg-blue-500 dark:bg-blue-600';
+      chartComponent = <ValueRetentionChart data={data} />;
       break;
     case 'growth':
       Icon = TrendingUp;
-      badgeColor = 'bg-primary';
-      chartComponent = <GrowthChart />;
+      badgeColor = 'bg-primary dark:bg-primary/90';
+      chartComponent = <GrowthChart data={data} />;
       break;
     case 'roi':
       Icon = ArrowUpRight;
-      badgeColor = 'bg-accent';
-      chartComponent = <ROIChart />;
+      badgeColor = 'bg-accent dark:bg-accent/90';
+      chartComponent = <ROIChart data={data} />;
       break;
     default:
       Icon = Building;
-      badgeColor = 'bg-gray-500';
-      chartComponent = <ValueRetentionChart />;
+      badgeColor = 'bg-gray-500 dark:bg-gray-600';
+      chartComponent = <ValueRetentionChart data={data} />;
   }
   
   return (
     <motion.div
-      className={`bg-white rounded-lg shadow-md overflow-hidden ${className || ''}`}
+      className={`bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/50 overflow-hidden border border-gray-100 dark:border-gray-700 ${className || ''}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
@@ -194,8 +226,14 @@ export const DataVisualizationCard = ({ title, description, type, className }: D
       </div>
       
       <div className="p-4">
-        <p className="text-gray-600 mb-4">{description}</p>
-        {chartComponent}
+        <p className="text-gray-600 dark:text-gray-300 mb-4">{description}</p>
+        {isLoading ? (
+          <div className="h-[200px] flex items-center justify-center">
+            <div className="h-8 w-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          </div>
+        ) : (
+          chartComponent
+        )}
       </div>
     </motion.div>
   );

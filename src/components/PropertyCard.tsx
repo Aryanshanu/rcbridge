@@ -111,7 +111,7 @@ export const PropertyCard = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl group">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/50 overflow-hidden transition-all duration-300 hover:shadow-xl dark:hover:shadow-gray-900/70 group border border-gray-100 dark:border-gray-700">
       <div className="relative h-48 overflow-hidden">
         <LazyImage 
           src={propertyImage} 
@@ -119,7 +119,7 @@ export const PropertyCard = ({
           aspectRatio="video"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-        <div className="absolute top-4 right-4 bg-primary text-white px-3 py-1 rounded-full text-sm font-semibold">
+        <div className="absolute top-4 right-4 bg-primary dark:bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
           {price}
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
@@ -142,12 +142,12 @@ export const PropertyCard = ({
         </div>
       </div>
       <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-1 group-hover:text-primary transition-colors duration-300">{title}</h3>
-        <div className="flex items-center text-gray-600 mb-3">
-          <MapPin className="h-4 w-4 mr-1 text-gray-400" />
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2 line-clamp-1 group-hover:text-primary dark:group-hover:text-blue-400 transition-colors duration-300">{title}</h3>
+        <div className="flex items-center text-gray-600 dark:text-gray-400 mb-3">
+          <MapPin className="h-4 w-4 mr-1 text-gray-400 dark:text-gray-500" />
           <span className="text-sm line-clamp-1">{location}</span>
         </div>
-        <div className="flex justify-between text-sm text-gray-600 mb-4">
+        <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-4">
           <div className="flex items-center">
             <Bed className="h-4 w-4 mr-1 text-gray-400" />
             <span>{bedrooms} {bedrooms === 1 ? 'Bed' : 'Beds'}</span>

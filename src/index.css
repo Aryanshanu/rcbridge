@@ -14,6 +14,7 @@
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -33,9 +34,17 @@
     @apply text-xl md:text-2xl;
   }
   
+  /* Dark mode color variables */
   .dark {
     --foreground: 210 40% 98%;
     --background: 222 47% 11%;
+    --card: 222 47% 15%;
+    --card-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --border: 217 33% 25%;
+    --input: 217 33% 20%;
+    --ring: 212 70% 58%;
     color-scheme: dark;
   }
 }
@@ -50,7 +59,19 @@
 }
 
 .dark .card-dark {
+  @apply bg-gray-800 border-gray-700 text-gray-100;
+}
+
+.dark .card {
   @apply bg-gray-800 border-gray-700;
+}
+
+.dark .input {
+  @apply bg-gray-800 border-gray-700 text-white;
+}
+
+.dark .btn-primary {
+  @apply bg-primary hover:bg-primary/90;
 }
 
 /* Desktop optimization styles */

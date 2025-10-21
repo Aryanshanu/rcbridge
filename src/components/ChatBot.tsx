@@ -394,8 +394,8 @@ export function ChatBot() {
 
     const userMessage = input.trim();
 
-    // Check anonymous message limit
-    if (!isAuthenticated && messageCount >= 4) {
+    // Check anonymous message limit (increased to 6-7 messages)
+    if (!isAuthenticated && messageCount >= 6) {
       setShowAuthPrompt(true);
       return;
     }
@@ -461,11 +461,11 @@ export function ChatBot() {
     // Generate smart suggestions based on updated context
     generateSmartSuggestions(userMessage, updatedContextEntities);
 
-    // Check if user should be prompted to sign in (after 4-5 messages for anonymous users)
+    // Check if user should be prompted to sign in (after 6-7 messages for anonymous users)
     if (!isAuthenticated) {
       const newCount = messageCount + 1;
       setMessageCount(newCount);
-      if (newCount >= 4) {
+      if (newCount >= 6) {
         setShowAuthPrompt(true);
       }
     }

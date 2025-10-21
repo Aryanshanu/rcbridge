@@ -18,12 +18,12 @@ export const Hero = () => {
   };
 
   return (
-    <section className="relative bg-primary py-20 md:py-28 lg:py-32 overflow-hidden" role="banner">
+    <section className="relative bg-primary dark:bg-gray-900 py-20 md:py-28 lg:py-32 overflow-hidden" role="banner">
       {/* Background with overlay and 3D cityscape */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/70">
-        <div className="absolute inset-0 bg-grid-white/[0.1] bg-[size:20px_20px]" aria-hidden="true" />
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/70 dark:from-gray-900/95 dark:to-gray-800/90">
+        <div className="absolute inset-0 bg-grid-white/[0.1] dark:bg-grid-white/[0.05] bg-[size:20px_20px]" aria-hidden="true" />
         {/* Abstract 3D Visualization */}
-        <div className="absolute inset-0 opacity-40">
+        <div className="absolute inset-0 opacity-40 dark:opacity-30">
           <AbstractCitySkyline />
         </div>
       </div>
@@ -31,13 +31,13 @@ export const Hero = () => {
       {/* Hero Content */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <span className="inline-block bg-accent/90 text-white text-sm font-medium px-3 py-1 rounded-full mb-4 animate-fade-in shadow-md backdrop-blur-sm">
+          <span className="inline-block bg-accent/90 dark:bg-accent text-white text-sm font-medium px-3 py-1 rounded-full mb-4 animate-fade-in shadow-md backdrop-blur-sm">
             Excellence in Real Estate 🏡
           </span>
           <h1 className="font-display text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl max-w-5xl mx-auto leading-tight animate-fade-in backdrop-blur-[1px]" tabIndex={0}>
             Revolutionizing Real Estate & <span className="text-accent animate-pulse">Community Building</span> in India
           </h1>
-          <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-200 sm:text-xl md:mt-5 md:max-w-3xl animate-fade-in delay-150 backdrop-blur-[1px]" tabIndex={0}>
+          <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-200 dark:text-gray-100 sm:text-xl md:mt-5 md:max-w-3xl animate-fade-in delay-150 backdrop-blur-[1px]" tabIndex={0}>
             Direct connections, transparent transactions, and a vibrant ecosystem of property owners, buyers, and startups in Hyderabad.
           </p>
           

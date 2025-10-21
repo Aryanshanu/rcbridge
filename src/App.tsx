@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import { ThemeProvider } from "@/contexts/ThemeProvider";
 import Index from "./pages/Index";
 import Properties from "./pages/Properties";
 import Services from "./pages/Services";
@@ -153,11 +154,12 @@ const App = () => {
     <div className="w-full max-w-full overflow-x-hidden">
       <HelmetProvider>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <AuthProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
                 <AppRouter />
                 <WelcomeWrapper>
                   <Suspense fallback={<PageLoading />}>
@@ -188,9 +190,10 @@ const App = () => {
                     )}
                   </Suspense>
                 </WelcomeWrapper>
-              </BrowserRouter>
-            </TooltipProvider>
-          </AuthProvider>
+                </BrowserRouter>
+              </TooltipProvider>
+            </AuthProvider>
+          </ThemeProvider>
         </QueryClientProvider>
       </HelmetProvider>
     </div>
