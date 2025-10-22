@@ -13,6 +13,7 @@ export interface ChatEntities {
   budget?: string;
   location?: string;
   size?: string;
+  bedrooms?: string;
   timeline?: string;
   property_type?: string;
   intent?: string;

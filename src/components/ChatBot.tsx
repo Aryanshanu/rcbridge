@@ -323,9 +323,9 @@ export function ChatBot() {
         setSmartSuggestions(suggestions);
         return;
       }
-      // Priority 3: Location
+      // Priority 3: Location (Pocharam FIRST)
       if (!entities.location) {
-        suggestions.push("📍 Gachibowli", "📍 Jubilee Hills", "📍 Banjara Hills", "📍 Financial District", "📍 Other");
+        suggestions.push("📍 Pocharam", "📍 Uppal", "📍 Gachibowli", "📍 Jubilee Hills", "📍 Financial District", "📍 Other");
         setSmartSuggestions(suggestions);
         return;
       }
@@ -350,9 +350,9 @@ export function ChatBot() {
         setSmartSuggestions(suggestions);
         return;
       }
-      // Priority 2: Location
+      // Priority 2: Location (Pocharam FIRST)
       if (!entities.location) {
-        suggestions.push("📍 Gachibowli", "📍 Jubilee Hills", "📍 Banjara Hills", "📍 Financial District", "📍 Other");
+        suggestions.push("📍 Pocharam", "📍 Uppal", "📍 Gachibowli", "📍 Jubilee Hills", "📍 Financial District", "📍 Other");
         setSmartSuggestions(suggestions);
         return;
       }
@@ -382,9 +382,9 @@ export function ChatBot() {
       return;
     }
 
-    // For trends
+    // For trends (Pocharam FIRST)
     if (activeIntent === "trends" && !entities.location) {
-      suggestions.push("📍 Gachibowli", "📍 Jubilee Hills", "📍 Financial District", "📍 Tellapur");
+      suggestions.push("📍 Pocharam", "📍 Uppal", "📍 Gachibowli", "📍 Jubilee Hills", "📍 Financial District", "📍 Tellapur");
       setSmartSuggestions(suggestions);
       return;
     }
@@ -456,14 +456,20 @@ export function ChatBot() {
       setUserMentionedLocation(nlpEntities.location);
     }
 
+    // Normalize propertyType to property_type for consistency
+    const normalizedPropertyType = (nlpEntities.propertyType || contextEntities.property_type || "").toString().toLowerCase();
+    
     // Update context entities with NLP extraction + active intent
     const updatedContextEntities = {
       ...contextEntities,
       ...nlpEntities,
+      property_type: normalizedPropertyType || contextEntities.property_type,
       intent: activeIntent || contextEntities.intent,
       budget: nlpEntities.budget || budget || contextEntities.budget,
       location: nlpEntities.location || locations[0] || contextEntities.location,
       timeline: nlpEntities.timeline || timeline || contextEntities.timeline,
+      bedrooms: nlpEntities.bedrooms || contextEntities.bedrooms,
+      size: contextEntities.size, // preserve existing size
     };
     setContextEntities(updatedContextEntities);
 
@@ -608,9 +614,12 @@ export function ChatBot() {
         throw new Error("Response body is null");
       }
 
-      // Sanitizer to remove function call tags from model output
+      // Sanitizer to remove function call tags and CONTEXT blocks from model output
       const sanitizeModelContent = (text: string): string => {
-        return text.replace(/<function[^>]*>[\s\S]*?<\/function>/gi, "");
+        let sanitized = text.replace(/<function[^>]*>[\s\S]*?<\/function>/gi, "");
+        // Remove any CONTEXT: blocks that might leak (case-insensitive, multiline)
+        sanitized = sanitized.replace(/(^|\n)\s*context:\s*[\s\S]*?(?=(\n{2,}|\n[A-Z]|$))/gi, "$1").trim();
+        return sanitized;
       };
 
       // Handle streaming response
@@ -725,6 +734,9 @@ export function ChatBot() {
 
       setIsLoading(false);
       setFailureCount(0); // Reset failure count on success
+      
+      // Regenerate smart suggestions after assistant responds
+      generateSmartSuggestions(assistantMessage, updatedContextEntities);
 
       // If the user is asking about properties, suggest showing an image
       if (
@@ -1092,6 +1104,32 @@ export function ChatBot() {
                   </div>
                 </div>
               </div>
+
+              {/* Context badges - show extracted entities */}
+              {(contextEntities.budget || contextEntities.property_type || contextEntities.location || contextEntities.size || contextEntities.bedrooms) && (
+                <div className="px-3 py-2 border-b bg-muted/30 flex flex-wrap gap-2">
+                  {contextEntities.budget && (
+                    <Badge variant="secondary" className="text-xs">
+                      💰 {contextEntities.budget}
+                    </Badge>
+                  )}
+                  {contextEntities.property_type && (
+                    <Badge variant="secondary" className="text-xs">
+                      🏢 {contextEntities.property_type}
+                    </Badge>
+                  )}
+                  {contextEntities.location && (
+                    <Badge variant="secondary" className="text-xs">
+                      📍 {contextEntities.location}
+                    </Badge>
+                  )}
+                  {(contextEntities.size || contextEntities.bedrooms) && (
+                    <Badge variant="secondary" className="text-xs">
+                      📐 {contextEntities.size || contextEntities.bedrooms}
+                    </Badge>
+                  )}
+                </div>
+              )}
 
               {/* Chat messages */}
               <div className="chatbot-messages flex-1 p-3 overflow-y-auto bg-background overscroll-contain">
