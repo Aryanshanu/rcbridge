@@ -838,24 +838,38 @@ export function ChatBot() {
     }
 
     try {
-      console.log("Submitting chat info...");
+      const payload = {
+        conversation_id: conversationId,
+        session_id: sessionId,
+        name: inquiryData.name,
+        email: inquiryData.email,
+        phone: inquiryData.phone || null,
+        requirements: inquiryData.message || null,
+      };
+
+      console.log("=== SUBMITTING CHAT INFO ===");
+      console.log("Conversation ID:", conversationId);
+      console.log("Session ID:", sessionId);
+      console.log("Payload:", JSON.stringify(payload, null, 2));
+      console.log("Function URL:", `https://hchtekfbtcbfsfxkjyfi.supabase.co/functions/v1/submit-chat-info`);
+
       const { data, error } = await supabase.functions.invoke("submit-chat-info", {
-        body: {
-          conversation_id: conversationId,
-          session_id: sessionId,
-          name: inquiryData.name,
-          email: inquiryData.email,
-          phone: inquiryData.phone || null,
-          requirements: inquiryData.message || null,
-        },
+        body: payload,
       });
 
+      console.log("=== RESPONSE RECEIVED ===");
+      console.log("Data:", data);
+      console.log("Error:", error);
+
       if (error) {
-        console.error("Supabase function error:", error);
+        console.error("❌ Supabase function returned error:", error);
+        console.error("Error details:", JSON.stringify(error, null, 2));
+        console.error("Error message:", error.message);
+        console.error("Error context:", error.context);
         throw error;
       }
 
-      console.log("Chat info submitted successfully:", data);
+      console.log("✅ Chat info submitted successfully:", data);
 
       toast({
         title: "Information Submitted",
