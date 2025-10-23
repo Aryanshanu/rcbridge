@@ -24,6 +24,22 @@ export function CustomerActivityTab() {
 
   useEffect(() => {
     fetchCustomerActivity();
+
+    // Subscribe to real-time customer activity inserts
+    const channel = supabase
+      .channel('customer-activity-realtime')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'customer_activity_history' },
+        (payload) => {
+          console.log('👤 New customer activity recorded:', payload.new);
+          setActivities(prev => [payload.new as CustomerActivity, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchCustomerActivity = async () => {

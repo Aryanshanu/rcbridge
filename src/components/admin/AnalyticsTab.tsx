@@ -17,6 +17,82 @@ export function AnalyticsTab() {
 
   useEffect(() => {
     fetchAnalytics();
+
+    // Subscribe to real-time changes in all relevant tables
+    const conversationsChannel = supabase
+      .channel('analytics-conversations')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'chat_conversations' },
+        () => {
+          console.log('📊 New conversation detected, refreshing analytics...');
+          fetchAnalytics();
+        }
+      )
+      .subscribe();
+
+    const messagesChannel = supabase
+      .channel('analytics-messages')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+        () => {
+          console.log('📊 New message detected, refreshing analytics...');
+          fetchAnalytics();
+        }
+      )
+      .subscribe();
+
+    const propertiesChannel = supabase
+      .channel('analytics-properties')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'properties' },
+        () => {
+          console.log('📊 New property detected, refreshing analytics...');
+          fetchAnalytics();
+        }
+      )
+      .subscribe();
+
+    const contactsChannel = supabase
+      .channel('analytics-contacts')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'contact_messages' },
+        () => {
+          console.log('📊 New contact message detected, refreshing analytics...');
+          fetchAnalytics();
+        }
+      )
+      .subscribe();
+
+    const assistanceChannel = supabase
+      .channel('analytics-assistance')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'assistance_requests' },
+        () => {
+          console.log('📊 New assistance request detected, refreshing analytics...');
+          fetchAnalytics();
+        }
+      )
+      .subscribe();
+
+    const profilesChannel = supabase
+      .channel('analytics-profiles')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'profiles' },
+        () => {
+          console.log('📊 New profile detected, refreshing analytics...');
+          fetchAnalytics();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(conversationsChannel);
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(propertiesChannel);
+      supabase.removeChannel(contactsChannel);
+      supabase.removeChannel(assistanceChannel);
+      supabase.removeChannel(profilesChannel);
+    };
   }, []);
 
   const fetchAnalytics = async () => {

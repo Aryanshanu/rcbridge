@@ -24,6 +24,22 @@ export function AssistanceRequestsTab() {
 
   useEffect(() => {
     fetchRequests();
+
+    // Subscribe to real-time assistance request inserts
+    const channel = supabase
+      .channel('assistance-requests-realtime')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'assistance_requests' },
+        (payload) => {
+          console.log('🆘 New assistance request received:', payload.new);
+          setRequests(prev => [payload.new as AssistanceRequest, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchRequests = async () => {

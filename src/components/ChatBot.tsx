@@ -720,16 +720,44 @@ export function ChatBot() {
 
       // Persist assistant message
       try {
-        if (conversationId) {
-          await supabase.from("chat_messages").insert({
+        if (conversationId && assistantMessage.trim()) {
+          console.log("💾 Persisting assistant message:", {
+            conversation_id: conversationId,
+            content_length: assistantMessage.length,
+            content_preview: assistantMessage.substring(0, 100)
+          });
+          
+          const { data, error } = await supabase.from("chat_messages").insert({
             conversation_id: conversationId,
             sender_type: "assistant",
             content: assistantMessage,
             message_type: "text",
           });
+          
+          if (error) {
+            console.error("❌ Failed to persist assistant message:", error);
+            console.error("Error details:", JSON.stringify(error, null, 2));
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: "Failed to save conversation"
+            });
+          } else {
+            console.log("✅ Assistant message saved successfully");
+          }
+        } else {
+          console.warn("⚠️ Skipping assistant message persist:", {
+            hasConversationId: !!conversationId,
+            messageLength: assistantMessage.length
+          });
         }
-      } catch (dbErr) {
-        // Failed to persist assistant message - continue anyway
+      } catch (dbErr: any) {
+        console.error("❌ Exception persisting assistant message:", dbErr);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Error saving conversation: " + (dbErr.message || "Unknown error")
+        });
       }
 
       setIsLoading(false);

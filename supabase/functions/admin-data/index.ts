@@ -45,7 +45,12 @@ Deno.serve(async (req) => {
       .rpc('has_role', { _user_id: user.id, _role: 'admin' });
 
     if (roleError || !hasAdmin) {
-      console.error('Admin role check failed:', roleError);
+      console.error('❌ Admin access denied:', {
+        userEmail: user.email,
+        userId: user.id,
+        roleError: roleError?.message,
+        reason: 'No admin/developer/maintainer role found'
+      });
       return new Response(
         JSON.stringify({ error: 'Insufficient privileges' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -54,7 +59,17 @@ Deno.serve(async (req) => {
 
     const { dataType }: { dataType: AdminDataRequest['dataType'] } = await req.json();
     
-    console.log(`Admin data request: ${dataType} by ${user.email}`);
+    console.log('📊 Admin data request received:', {
+      dataType,
+      userEmail: user.email,
+      userId: user.id,
+      timestamp: new Date().toISOString()
+    });
+
+    console.log('✅ Admin access granted:', {
+      userEmail: user.email,
+      dataType
+    });
 
     let responseData: any = {};
 

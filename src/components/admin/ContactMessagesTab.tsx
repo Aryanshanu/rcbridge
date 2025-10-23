@@ -22,6 +22,22 @@ export function ContactMessagesTab() {
 
   useEffect(() => {
     fetchMessages();
+
+    // Subscribe to real-time contact message inserts
+    const channel = supabase
+      .channel('contact-messages-realtime')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'contact_messages' },
+        (payload) => {
+          console.log('📬 New contact message received:', payload.new);
+          setMessages(prev => [payload.new as ContactMessage, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchMessages = async () => {

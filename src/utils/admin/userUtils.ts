@@ -16,32 +16,30 @@ export const getUserRole = async (): Promise<UserRole | null> => {
     
     const userId = sessionData.session.user.id;
     
-    // SECURITY FIX: Always fetch from database - no client-side caching
-    // This prevents privilege escalation attacks via browser storage manipulation
-    // FIX: Remove .single() to handle users with multiple roles
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId);
+    // SECURITY: Call verify-admin edge function to check authorization
+    // This triggers allowlist auto-assignment and validates role server-side
+    console.log("🔐 Verifying admin status via edge function...");
+    const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-admin', {
+      headers: {
+        Authorization: `Bearer ${sessionData.session.access_token}`
+      }
+    });
     
-    if (error) {
-      console.error("Error fetching user role:", error);
+    if (verifyError) {
+      console.error("Error verifying admin status:", verifyError);
       return null;
     }
     
-    if (!data || data.length === 0) {
-      console.log("No role found for user");
+    if (!verifyData?.authorized) {
+      console.log("User not authorized:", verifyData?.error);
       return null;
     }
     
-    // Prioritize roles: admin > developer > maintainer
-    const roles = data.map(r => r.role as UserRole);
+    console.log("✅ Admin status verified:", verifyData.role);
     
-    if (roles.includes('admin')) return 'admin';
-    if (roles.includes('developer')) return 'developer';
-    if (roles.includes('maintainer')) return 'maintainer';
+    // Return the role from verify-admin response
+    return verifyData.role as UserRole;
     
-    return null;
   } catch (error) {
     console.error("Error in getUserRole:", error);
     return null;
