@@ -272,13 +272,13 @@ export const EnhancedSearch = ({
       
       {/* Suggestions dropdown */}
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-50 top-full left-0 right-0 bg-white rounded-b-lg shadow-lg border-t-0 border border-gray-200 mt-0">
+        <div className="absolute z-[60] top-full left-0 right-0 bg-white dark:bg-gray-800 rounded-b-lg shadow-xl border-t-0 border border-gray-200 dark:border-gray-700 mt-0 max-h-[300px] overflow-y-auto">
           <ul className="py-1">
             {suggestions.map((suggestion, index) => (
               <li key={index}>
                 <button
                   type="button"
-                  className="flex w-full items-center px-4 py-2 text-left hover:bg-gray-50 text-gray-700"
+                  className="flex w-full items-center px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
                   onClick={() => selectSuggestion(suggestion)}
                 >
                   {suggestion.includes("in") ? (
@@ -296,10 +296,10 @@ export const EnhancedSearch = ({
       
       {/* Advanced filters dropdown */}
       {showAdvancedFilters && showFilters && (
-        <div className="absolute z-40 top-full left-0 right-0 bg-white rounded-b-lg shadow-lg border-t-0 border border-gray-200 p-4 mt-0">
+        <div className="absolute z-[60] top-full left-0 right-0 bg-white dark:bg-gray-800 rounded-b-lg shadow-xl border-t-0 border border-gray-200 dark:border-gray-700 p-4 mt-0 max-h-[70vh] overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Property Type
               </label>
               <div className="flex flex-wrap gap-2">
@@ -311,7 +311,7 @@ export const EnhancedSearch = ({
                       "px-3 py-1 text-xs rounded-full border",
                       propertyTypeFilter === type.toLowerCase()
                         ? "bg-primary text-white border-primary"
-                        : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+                        : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600"
                     )}
                     onClick={() => {
                       setPropertyTypeFilter(
@@ -325,11 +325,11 @@ export const EnhancedSearch = ({
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Price Range: {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
               </label>
               <div className="px-2">
-                <div className="h-2 bg-gray-200 rounded-full mt-2 relative">
+                <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 relative">
                   <div
                     className="absolute h-2 bg-primary rounded-full"
                     style={{
@@ -338,7 +338,7 @@ export const EnhancedSearch = ({
                     }}
                   ></div>
                 </div>
-                <div className="flex justify-between mt-1 text-xs text-gray-500">
+                <div className="flex justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
                   <span>₹5L</span>
                   <span>₹1Cr</span>
                 </div>

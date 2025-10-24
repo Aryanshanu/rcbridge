@@ -176,7 +176,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
             <SelectTrigger className="bg-gray-50 border-gray-200">
               <SelectValue placeholder="Select property type" />
             </SelectTrigger>
-            <SelectContent className="bg-white z-50 max-h-[300px] overflow-y-auto">
+            <SelectContent className="bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 z-[60] max-h-[300px] overflow-y-auto">
               <SelectItem value="all">All Properties</SelectItem>
               <SelectItem value="residential">Residential</SelectItem>
               <SelectItem value="commercial">Commercial</SelectItem>
@@ -207,7 +207,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
             <SelectTrigger className="bg-gray-50 border-gray-200">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
-            <SelectContent className="bg-white z-50">
+            <SelectContent className="bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 z-[60]">
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="sale">For Sale</SelectItem>
               <SelectItem value="rent">For Rent</SelectItem>
@@ -257,7 +257,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
             <SelectTrigger className="bg-gray-50 border-gray-200">
               <SelectValue placeholder="Bedrooms" />
             </SelectTrigger>
-            <SelectContent className="bg-white z-50">
+            <SelectContent className="bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 z-[60]">
               <SelectItem value="any">Any Bedrooms</SelectItem>
               <SelectItem value="1">1+ Bedrooms</SelectItem>
               <SelectItem value="2">2+ Bedrooms</SelectItem>
@@ -274,7 +274,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
             <SelectTrigger className="bg-gray-50 border-gray-200">
               <SelectValue placeholder="Bathrooms" />
             </SelectTrigger>
-            <SelectContent className="bg-white z-50">
+            <SelectContent className="bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 z-[60]">
               <SelectItem value="any">Any Bathrooms</SelectItem>
               <SelectItem value="1">1+ Bathrooms</SelectItem>
               <SelectItem value="2">2+ Bathrooms</SelectItem>
@@ -290,7 +290,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
             <SelectTrigger className="bg-gray-50 border-gray-200">
               <SelectValue placeholder="Age" />
             </SelectTrigger>
-            <SelectContent className="bg-white z-50">
+            <SelectContent className="bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 z-[60]">
               <SelectItem value="any">Any Age</SelectItem>
               <SelectItem value="new">New Construction</SelectItem>
               <SelectItem value="5">Less than 5 years</SelectItem>

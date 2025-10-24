@@ -41,6 +41,44 @@ export const initNLPExtractor = async () => {
 };
 
 /**
+ * Clean and merge contiguous NER entities
+ */
+const mergeContiguousEntities = (entities: any[], text: string, targetType = 'LOC'): string | null => {
+  const filtered = entities.filter((e: any) => 
+    e.entity.includes(targetType) && e.score > 0.7
+  ).sort((a: any, b: any) => a.start - b.start);
+  
+  if (filtered.length === 0) return null;
+  
+  const merged: Array<{start: number; end: number}> = [];
+  let current = { start: filtered[0].start, end: filtered[0].end };
+  
+  for (let i = 1; i < filtered.length; i++) {
+    if (filtered[i].start <= current.end + 1) {
+      current.end = Math.max(current.end, filtered[i].end);
+    } else {
+      merged.push(current);
+      current = { start: filtered[i].start, end: filtered[i].end };
+    }
+  }
+  merged.push(current);
+  
+  // Extract and clean the first merged span
+  if (merged.length > 0) {
+    let phrase = text.substring(merged[0].start, merged[0].end);
+    // Remove subword artifacts (##) and clean spacing
+    phrase = phrase.replace(/##/g, '').replace(/\s+/g, ' ').trim();
+    // Title case
+    phrase = phrase.split(' ').map(w => 
+      w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+    ).join(' ');
+    return phrase.length >= 3 ? phrase : null;
+  }
+  
+  return null;
+};
+
+/**
  * Extract entities from text using NLP model
  */
 export const extractEntitiesWithNLP = async (text: string): Promise<{
@@ -63,7 +101,10 @@ export const extractEntitiesWithNLP = async (text: string): Promise<{
     for (const pattern of budgetPatterns) {
       const match = text.match(pattern);
       if (match) {
-        extracted.budget = `₹${match[0].replace(/₹/g, '').trim()}`;
+        // Normalize spacing and ensure single rupee symbol
+        let budgetStr = match[0].replace(/₹/g, '').trim();
+        budgetStr = budgetStr.replace(/\s+/g, ' ');
+        extracted.budget = `₹${budgetStr}`;
         break;
       }
     }
@@ -96,7 +137,7 @@ export const extractEntitiesWithNLP = async (text: string): Promise<{
     for (const pattern of timelinePatterns) {
       const match = text.match(pattern);
       if (match) {
-        extracted.timeline = match[0];
+        extracted.timeline = match[0].replace(/\s+/g, ' ').trim();
         break;
       }
     }
@@ -124,12 +165,10 @@ export const extractEntitiesWithNLP = async (text: string): Promise<{
       if (extractor) {
         try {
           const entities = await extractor(text);
-          const locationEntities = entities.filter((e: any) => 
-            e.entity.includes('LOC') && e.score > 0.7
-          );
+          const mergedLocation = mergeContiguousEntities(entities, text, 'LOC');
           
-          if (locationEntities.length > 0) {
-            extracted.location = locationEntities[0].word;
+          if (mergedLocation) {
+            extracted.location = mergedLocation;
           }
         } catch (nlpError) {
           console.warn('NLP extraction failed, using regex fallback:', nlpError);

@@ -42,7 +42,7 @@ export const Hero = () => {
           </p>
           
           {/* Search Bar - Now using Enhanced Search */}
-          <div className="mt-10 max-w-xl mx-auto">
+          <div className="mt-10 max-w-xl mx-auto relative overflow-visible">
             <EnhancedSearch 
               variant="hero" 
               showFilters={false} 
