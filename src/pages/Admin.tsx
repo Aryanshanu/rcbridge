@@ -5,6 +5,7 @@ import { Footer } from "@/components/sections/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminChatbot } from "@/components/admin/AdminChatbot";
 import { AdminProperties } from "@/components/admin/AdminProperties";
+import { PropertyImport } from "@/components/admin/PropertyImport";
 import { ContactMessagesTab } from "@/components/admin/ContactMessagesTab";
 import { AssistanceRequestsTab } from "@/components/admin/AssistanceRequestsTab";
 import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
@@ -136,6 +137,7 @@ export default function Admin() {
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               <TabsTrigger value="activity">Customer Activity</TabsTrigger>
               <TabsTrigger value="chat">Chat</TabsTrigger>
+              <TabsTrigger value="import">Import Properties</TabsTrigger>
               <TabsTrigger value="properties">Properties</TabsTrigger>
               <TabsTrigger value="alerts">Alerts</TabsTrigger>
               <TabsTrigger value="contact">Contacts</TabsTrigger>
@@ -152,6 +154,10 @@ export default function Admin() {
 
             <TabsContent value="chat">
               <AdminChatbot userRole="admin" />
+            </TabsContent>
+
+            <TabsContent value="import">
+              <PropertyImport />
             </TabsContent>
 
             <TabsContent value="properties">

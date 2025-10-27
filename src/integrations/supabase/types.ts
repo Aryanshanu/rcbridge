@@ -492,9 +492,16 @@ export type Database = {
           owner_id: string | null
           price: number
           property_type: Database["public"]["Enums"]["property_type"] | null
-          rental_duration: unknown | null
+          rental_duration: unknown
           rental_terms: string | null
           roi_potential: number | null
+          source_contact_email: string | null
+          source_contact_name: string | null
+          source_contact_phone: string | null
+          source_instagram_handle: string | null
+          source_platform: string | null
+          source_scraped_at: string | null
+          source_url: string | null
           status: string | null
           title: string
           updated_at: string
@@ -514,9 +521,16 @@ export type Database = {
           owner_id?: string | null
           price: number
           property_type?: Database["public"]["Enums"]["property_type"] | null
-          rental_duration?: unknown | null
+          rental_duration?: unknown
           rental_terms?: string | null
           roi_potential?: number | null
+          source_contact_email?: string | null
+          source_contact_name?: string | null
+          source_contact_phone?: string | null
+          source_instagram_handle?: string | null
+          source_platform?: string | null
+          source_scraped_at?: string | null
+          source_url?: string | null
           status?: string | null
           title: string
           updated_at?: string
@@ -536,9 +550,16 @@ export type Database = {
           owner_id?: string | null
           price?: number
           property_type?: Database["public"]["Enums"]["property_type"] | null
-          rental_duration?: unknown | null
+          rental_duration?: unknown
           rental_terms?: string | null
           roi_potential?: number | null
+          source_contact_email?: string | null
+          source_contact_name?: string | null
+          source_contact_phone?: string | null
+          source_instagram_handle?: string | null
+          source_platform?: string | null
+          source_scraped_at?: string | null
+          source_url?: string | null
           status?: string | null
           title?: string
           updated_at?: string
@@ -625,7 +646,65 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "property_images_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "public_properties"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      scraping_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          import_data: Json | null
+          platform: string
+          properties_added: number | null
+          properties_found: number | null
+          properties_skipped: number | null
+          properties_updated: number | null
+          started_at: string | null
+          status: string
+          triggered_by: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          import_data?: Json | null
+          platform?: string
+          properties_added?: number | null
+          properties_found?: number | null
+          properties_skipped?: number | null
+          properties_updated?: number | null
+          started_at?: string | null
+          status?: string
+          triggered_by?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          import_data?: Json | null
+          platform?: string
+          properties_added?: number | null
+          properties_found?: number | null
+          properties_skipped?: number | null
+          properties_updated?: number | null
+          started_at?: string | null
+          status?: string
+          triggered_by?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       search_queries: {
         Row: {
@@ -710,13 +789,86 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_properties: {
+        Row: {
+          amenities: Json | null
+          area: number | null
+          bathrooms: number | null
+          bedrooms: number | null
+          created_at: string | null
+          description: string | null
+          features: string[] | null
+          id: string | null
+          land_size: number | null
+          listing_type: Database["public"]["Enums"]["listing_type"] | null
+          location: string | null
+          owner_id: string | null
+          price: number | null
+          property_type: Database["public"]["Enums"]["property_type"] | null
+          rental_duration: unknown
+          rental_terms: string | null
+          roi_potential: number | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amenities?: Json | null
+          area?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string | null
+          description?: string | null
+          features?: string[] | null
+          id?: string | null
+          land_size?: number | null
+          listing_type?: Database["public"]["Enums"]["listing_type"] | null
+          location?: string | null
+          owner_id?: string | null
+          price?: number | null
+          property_type?: Database["public"]["Enums"]["property_type"] | null
+          rental_duration?: unknown
+          rental_terms?: string | null
+          roi_potential?: number | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amenities?: Json | null
+          area?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string | null
+          description?: string | null
+          features?: string[] | null
+          id?: string | null
+          land_size?: number | null
+          listing_type?: Database["public"]["Enums"]["listing_type"] | null
+          location?: string | null
+          owner_id?: string | null
+          price?: number | null
+          property_type?: Database["public"]["Enums"]["property_type"] | null
+          rental_duration?: unknown
+          rental_terms?: string | null
+          roi_potential?: number | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      cleanup_old_anonymous_chats: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_old_anonymous_chats: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
