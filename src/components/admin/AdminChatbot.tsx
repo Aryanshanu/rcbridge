@@ -175,6 +175,14 @@ export const AdminChatbot = ({ userRole }: AdminChatbotProps) => {
       .channel('chat_user_info_admin')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_user_info' }, 
         () => selectedConversation && fetchMessages(selectedConversation))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_user_info' },
+        () => {
+          // Refresh conversation list when user info is updated
+          fetchConversations();
+          if (selectedConversation) {
+            fetchMessages(selectedConversation);
+          }
+        })
       .subscribe();
 
     return () => {

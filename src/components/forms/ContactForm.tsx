@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { z } from "zod";
 import { contactFormSchema } from "@/utils/validation/schemas";
+import { logActivity } from "@/utils/activityLogger";
 
 export const ContactForm = () => {
   const { toast } = useToast();
@@ -46,6 +47,22 @@ export const ContactForm = () => {
         }]);
         
       if (error) throw error;
+      
+      // Log activity
+      await logActivity(
+        'contact_form',
+        {
+          name: validatedData.name,
+          email: validatedData.email,
+          phone: validatedData.phone,
+          subject: validatedData.subject,
+          message: validatedData.message,
+        },
+        {
+          customer_email: validatedData.email,
+          customer_name: validatedData.name,
+        }
+      );
       
       toast({
         title: "Message Sent!",

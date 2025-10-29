@@ -38,6 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { logActivity } from "@/utils/activityLogger";
 
 interface Message {
   id: number;
@@ -486,6 +487,44 @@ export function ChatBot() {
 
     // Update context with new message
     await updateContextWithMessage(conversationId, userMessage, "user");
+
+    // Log activity - first message or subsequent message
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    
+    if (messageCount === 0) {
+      // First message - log conversation start
+      await logActivity(
+        'chat_conversation',
+        {
+          conversation_id: conversationId,
+          message: userMessage,
+          entities: updatedContextEntities,
+          session_id: !userId ? sessionId : undefined,
+        },
+        {
+          customer_id: userId,
+          customer_email: session?.user?.email,
+          customer_name: session?.user?.user_metadata?.full_name,
+        }
+      );
+    } else {
+      // Subsequent message
+      await logActivity(
+        'chat_conversation',
+        {
+          conversation_id: conversationId,
+          message: userMessage,
+          entities: updatedContextEntities,
+        },
+        {
+          customer_id: userId,
+          customer_email: session?.user?.email,
+        }
+      );
+    }
 
     // Generate smart suggestions based on updated context
     generateSmartSuggestions(userMessage, updatedContextEntities);

@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import { logActivity } from "@/utils/activityLogger";
 import { AlertCircle, LockIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -113,6 +114,26 @@ export const PersonalizedAssistanceForm = ({ onSuccess, onCancel }: Personalized
       }
       
       console.log("Assistance request submitted successfully");
+      
+      // Log activity
+      await logActivity(
+        'assistance_request',
+        {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          requirement: data.requirement,
+          property_type: data.propertyType,
+          budget: data.budget,
+          preferred_contact: data.preferredContact,
+          timeframe: data.timeframe,
+        },
+        {
+          customer_id: user.id,
+          customer_email: data.email,
+          customer_name: data.name,
+        }
+      );
       
       // Clear form
       reset();

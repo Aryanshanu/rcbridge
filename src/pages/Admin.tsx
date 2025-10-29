@@ -17,6 +17,7 @@ import { Loader2, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isAdminUser } from "@/utils/admin/userUtils";
 import { useToast } from "@/hooks/use-toast";
+import { AdminLiveFeed } from "@/components/admin/AdminLiveFeed";
 
 export default function Admin() {
   const [isLoading, setIsLoading] = useState(true);
@@ -111,6 +112,9 @@ export default function Admin() {
 
   return (
     <>
+      {/* Mount AdminLiveFeed for real-time notifications */}
+      <AdminLiveFeed />
+      
       <SEO 
         title="Master Admin Dashboard - RC Bridge"
         description="Master admin control panel for managing RC Bridge platform"

@@ -7,14 +7,40 @@ import { ThemeToggle } from "./ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { AdminLiveFeed } from "./admin/AdminLiveFeed";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      setIsAdmin(!!data && !error);
+    };
+
+    checkAdminStatus();
+  }, [user]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -76,13 +102,17 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className={cn(
-      "transition-all duration-300 sticky top-0 z-50 w-full",
-      isScrolled 
-        ? "bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-md" 
-        : "bg-white dark:bg-gray-900"
-    )}>
-      <div className="content-container flex justify-between h-16 md:h-20">
+    <>
+      {/* Mount AdminLiveFeed for admins only */}
+      {isAdmin && <AdminLiveFeed />}
+      
+      <nav className={cn(
+        "transition-all duration-300 sticky top-0 z-50 w-full",
+        isScrolled 
+          ? "bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-md" 
+          : "bg-white dark:bg-gray-900"
+      )}>
+        <div className="content-container flex justify-between h-16 md:h-20">
         <div className="flex items-center">
           <Link to="/" className="flex-shrink-0 flex items-center">
             <div className="flex items-center">
@@ -164,5 +194,6 @@ export const Navbar = () => {
         handleContactClick={handleContactClick} 
       />
     </nav>
+    </>
   );
 };
