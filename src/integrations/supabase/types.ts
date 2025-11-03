@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_login_history: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          login_method: string | null
+          user_agent: string | null
+          user_email: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          login_method?: string | null
+          user_agent?: string | null
+          user_email: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          login_method?: string | null
+          user_agent?: string | null
+          user_email?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       assistance_requests: {
         Row: {
           budget: string
@@ -486,6 +519,7 @@ export type Database = {
           description: string | null
           features: string[] | null
           id: string
+          inquiry_count: number | null
           land_size: number | null
           listing_type: Database["public"]["Enums"]["listing_type"] | null
           location: string
@@ -505,6 +539,7 @@ export type Database = {
           status: string | null
           title: string
           updated_at: string
+          view_count: number | null
         }
         Insert: {
           amenities?: Json | null
@@ -515,6 +550,7 @@ export type Database = {
           description?: string | null
           features?: string[] | null
           id?: string
+          inquiry_count?: number | null
           land_size?: number | null
           listing_type?: Database["public"]["Enums"]["listing_type"] | null
           location: string
@@ -534,6 +570,7 @@ export type Database = {
           status?: string | null
           title: string
           updated_at?: string
+          view_count?: number | null
         }
         Update: {
           amenities?: Json | null
@@ -544,6 +581,7 @@ export type Database = {
           description?: string | null
           features?: string[] | null
           id?: string
+          inquiry_count?: number | null
           land_size?: number | null
           listing_type?: Database["public"]["Enums"]["listing_type"] | null
           location?: string
@@ -563,6 +601,7 @@ export type Database = {
           status?: string | null
           title?: string
           updated_at?: string
+          view_count?: number | null
         }
         Relationships: [
           {
@@ -648,6 +687,57 @@ export type Database = {
           },
           {
             foreignKeyName: "property_images_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "public_properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_views: {
+        Row: {
+          id: string
+          property_id: string | null
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          viewed_at: string | null
+          viewer_email: string | null
+          viewer_id: string | null
+          viewer_ip: string | null
+        }
+        Insert: {
+          id?: string
+          property_id?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          viewed_at?: string | null
+          viewer_email?: string | null
+          viewer_id?: string | null
+          viewer_ip?: string | null
+        }
+        Update: {
+          id?: string
+          property_id?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          viewed_at?: string | null
+          viewer_email?: string | null
+          viewer_id?: string | null
+          viewer_ip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_views_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_views_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "public_properties"

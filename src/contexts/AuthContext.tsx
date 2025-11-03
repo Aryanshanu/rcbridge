@@ -5,6 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import { useToast } from "@/components/ui/use-toast";
 import { toast } from "sonner";
 import { z } from "zod";
+import { logActivity } from "@/utils/activityLogger";
 
 interface AuthContextType {
   user: User | null;
@@ -91,13 +92,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       
       if (error) {
         throw error;
+      }
+
+      // Log successful login
+      if (data.user) {
+        await logActivity('user_login', {
+          login_method: 'email',
+          timestamp: new Date().toISOString()
+        }, {
+          customer_id: data.user.id,
+          customer_email: data.user.email,
+          customer_name: data.user.user_metadata?.full_name
+        });
+
+        // Also log to admin_login_history table
+        await supabase.from('admin_login_history').insert({
+          user_id: data.user.id,
+          user_email: data.user.email || '',
+          action: 'login',
+          login_method: 'email'
+        });
       }
     } catch (error: any) {
       uiToast({
@@ -147,6 +168,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      // Log logout before clearing state
+      if (user) {
+        await logActivity('user_logout', {
+          timestamp: new Date().toISOString()
+        }, {
+          customer_id: user.id,
+          customer_email: user.email,
+          customer_name: user.user_metadata?.full_name
+        });
+
+        await supabase.from('admin_login_history').insert({
+          user_id: user.id,
+          user_email: user.email || '',
+          action: 'logout',
+          login_method: null
+        });
+      }
+
       // Clear user state first to prevent any race conditions
       setUser(null);
       

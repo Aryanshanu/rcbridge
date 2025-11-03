@@ -15,6 +15,9 @@ import { Label } from "@/components/ui/label";
 import { Search, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
+import { logActivity } from "@/utils/activityLogger";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AdvancedSearchProps {
   onFilterChange?: (filters: Record<string, any>) => void;
@@ -23,6 +26,7 @@ interface AdvancedSearchProps {
 export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const [priceRange, setPriceRange] = useState([1000000, 10000000]); // ₹10L to ₹1Cr
   const [areaRange, setAreaRange] = useState([500, 5000]); // 500 sq.ft to 5000 sq.ft
   const [propertyType, setPropertyType] = useState("all");
@@ -71,7 +75,7 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
     }
   };
   
-  const handleSearch = () => {
+  const handleSearch = async () => {
     // Build the filter object
     const filters = {
       propertyType,
@@ -84,6 +88,25 @@ export const AdvancedSearch = ({ onFilterChange }: AdvancedSearchProps) => {
       propertyAge,
       amenities: selectedAmenities
     };
+
+    // Log search query activity
+    await logActivity('search_query', {
+      filters,
+      timestamp: new Date().toISOString()
+    }, {
+      customer_id: user?.id,
+      customer_email: user?.email,
+      customer_name: user?.user_metadata?.full_name
+    });
+
+    // Also save to search_queries table
+    await supabase.from('search_queries').insert({
+      user_id: user?.id || null,
+      query: searchLocation || 'Advanced Search',
+      location: searchLocation,
+      property_type: propertyType !== 'all' ? propertyType : null,
+      price_range: { min: priceRange[0], max: priceRange[1] }
+    });
     
     // Update URL with search parameters
     const searchParams = new URLSearchParams();

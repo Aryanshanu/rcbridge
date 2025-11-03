@@ -133,6 +133,79 @@ export const AdminLiveFeed = () => {
       )
       .subscribe();
 
+    // Subscribe to investment calculations
+    const calculationsChannel = supabase
+      .channel('admin_live_calculations')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'investment_calculations' },
+        (payload) => {
+          console.log('New investment calculation:', payload);
+          const data = payload.new as any;
+          const meetsThreshold = data.calculation_result?.totalReturn >= 12;
+          if (meetsThreshold) {
+            toast.success('💰 New high-ROI calculation', {
+              description: `${data.calculation_result?.totalReturn.toFixed(2)}% return - Meets 12% threshold`,
+              action: {
+                label: 'View',
+                onClick: () => window.location.href = '/admin?tab=calculations'
+              }
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to search queries
+    const searchQueriesChannel = supabase
+      .channel('admin_live_searches')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'search_queries' },
+        (payload) => {
+          console.log('New search query:', payload);
+          // Silent update
+          setUnreadCount(prev => prev + 1);
+        }
+      )
+      .subscribe();
+
+    // Subscribe to property views
+    const viewsChannel = supabase
+      .channel('admin_live_views')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'property_views' },
+        (payload) => {
+          console.log('New property view:', payload);
+          // Silent update
+          setUnreadCount(prev => prev + 1);
+        }
+      )
+      .subscribe();
+
+    // Subscribe to login history
+    const loginHistoryChannel = supabase
+      .channel('admin_live_logins')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'admin_login_history' },
+        (payload) => {
+          console.log('New login event:', payload);
+          const data = payload.new as any;
+          if (data.action === 'login') {
+            toast.info('👤 User login', {
+              description: `${data.user_email} logged in`,
+              action: {
+                label: 'View',
+                onClick: () => window.location.href = '/admin?tab=logins'
+              }
+            });
+          }
+        }
+      )
+      .subscribe();
+
     // Cleanup subscriptions on unmount
     return () => {
       supabase.removeChannel(chatMessagesChannel);
@@ -141,6 +214,10 @@ export const AdminLiveFeed = () => {
       supabase.removeChannel(assistanceChannel);
       supabase.removeChannel(propertiesChannel);
       supabase.removeChannel(activityChannel);
+      supabase.removeChannel(calculationsChannel);
+      supabase.removeChannel(searchQueriesChannel);
+      supabase.removeChannel(viewsChannel);
+      supabase.removeChannel(loginHistoryChannel);
     };
   }, []);
 

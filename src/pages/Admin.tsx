@@ -11,6 +11,10 @@ import { AssistanceRequestsTab } from "@/components/admin/AssistanceRequestsTab"
 import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
 import { CustomerActivityTab } from "@/components/admin/CustomerActivityTab";
 import { AlertsTab } from "@/components/admin/AlertsTab";
+import { PropertyViewsTab } from "@/components/admin/PropertyViewsTab";
+import { SearchQueriesTab } from "@/components/admin/SearchQueriesTab";
+import { InvestmentCalculationsTab } from "@/components/admin/InvestmentCalculationsTab";
+import { LoginHistoryTab } from "@/components/admin/LoginHistoryTab";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Loader2, LogOut } from "lucide-react";
@@ -137,15 +141,19 @@ export default function Admin() {
           </div>
 
           <Tabs defaultValue="analytics" className="space-y-4">
-            <TabsList>
+            <TabsList className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12 gap-2">
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="activity">Customer Activity</TabsTrigger>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
               <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="import">Import Properties</TabsTrigger>
               <TabsTrigger value="properties">Properties</TabsTrigger>
+              <TabsTrigger value="views">Views</TabsTrigger>
+              <TabsTrigger value="searches">Searches</TabsTrigger>
+              <TabsTrigger value="calculations">ROI Calcs</TabsTrigger>
+              <TabsTrigger value="logins">Logins</TabsTrigger>
               <TabsTrigger value="alerts">Alerts</TabsTrigger>
               <TabsTrigger value="contact">Contacts</TabsTrigger>
               <TabsTrigger value="assistance">Assistance</TabsTrigger>
+              <TabsTrigger value="import">Import</TabsTrigger>
             </TabsList>
 
             <TabsContent value="analytics">
@@ -166,6 +174,22 @@ export default function Admin() {
 
             <TabsContent value="properties">
               <AdminProperties userRole="admin" />
+            </TabsContent>
+
+            <TabsContent value="views">
+              <PropertyViewsTab />
+            </TabsContent>
+
+            <TabsContent value="searches">
+              <SearchQueriesTab />
+            </TabsContent>
+
+            <TabsContent value="calculations">
+              <InvestmentCalculationsTab />
+            </TabsContent>
+
+            <TabsContent value="logins">
+              <LoginHistoryTab />
             </TabsContent>
 
             <TabsContent value="alerts">

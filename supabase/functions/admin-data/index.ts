@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.48.1';
+import { sanitizeError, logErrorSecurely } from '../_shared/errorSanitizer.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,7 +7,7 @@ const corsHeaders = {
 };
 
 interface AdminDataRequest {
-  dataType: 'analytics' | 'contacts' | 'assistance' | 'properties' | 'chats' | 'customer_activity';
+  dataType: 'analytics' | 'contacts' | 'assistance' | 'properties' | 'chats' | 'customer_activity' | 'property_views' | 'search_queries' | 'investment_calculations' | 'login_history';
 }
 
 Deno.serve(async (req) => {
@@ -160,6 +161,54 @@ Deno.serve(async (req) => {
         break;
       }
 
+      case 'property_views': {
+        const { data, error } = await supabase
+          .from('property_views')
+          .select('*, properties(title, location)')
+          .order('viewed_at', { ascending: false })
+          .limit(100);
+
+        if (error) throw error;
+        responseData = { views: data };
+        break;
+      }
+
+      case 'search_queries': {
+        const { data, error } = await supabase
+          .from('search_queries')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (error) throw error;
+        responseData = { queries: data };
+        break;
+      }
+
+      case 'investment_calculations': {
+        const { data, error } = await supabase
+          .from('investment_calculations')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (error) throw error;
+        responseData = { calculations: data };
+        break;
+      }
+
+      case 'login_history': {
+        const { data, error } = await supabase
+          .from('admin_login_history')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (error) throw error;
+        responseData = { history: data };
+        break;
+      }
+
       default:
         return new Response(
           JSON.stringify({ error: 'Invalid data type' }),
@@ -172,9 +221,9 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Admin data fetch error:', error);
+    logErrorSecurely('admin-data', error, { operation: 'fetch_data' });
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: sanitizeError(error) }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

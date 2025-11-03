@@ -5,6 +5,9 @@ import { LazyImage } from "@/components/ui/LazyImage";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getPropertyImage, createImagePrompt } from "@/utils/imageGeneration";
+import { logActivity } from "@/utils/activityLogger";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PropertyCardProps {
   title: string;
@@ -31,6 +34,8 @@ export const PropertyCard = ({
   const [propertyImage, setPropertyImage] = useState<string>(image);
   const [imageLoading, setImageLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [viewLogged, setViewLogged] = useState(false);
 
   const propertyType = bedrooms === 0 ? 'commercial' : 
                        bedrooms > 3 ? 'luxury' : 'residential';
@@ -105,7 +110,46 @@ export const PropertyCard = ({
     }
   };
 
-  const handleWhatsAppInquiry = () => {
+  const handleWhatsAppInquiry = async () => {
+    // Log property view/inquiry activity
+    if (!viewLogged && id) {
+      await logActivity('property_inquiry', {
+        property_id: id,
+        property_title: title,
+        property_location: location,
+        property_price: price,
+        inquiry_method: 'whatsapp',
+        timestamp: new Date().toISOString()
+      }, {
+        customer_id: user?.id,
+        customer_email: user?.email,
+        customer_name: user?.user_metadata?.full_name
+      });
+
+      // Log to property_views table
+      await supabase.from('property_views').insert({
+        property_id: id,
+        viewer_id: user?.id || null,
+        viewer_email: user?.email || null
+      });
+
+      // Increment view count - get current count first
+      const { data: property } = await supabase
+        .from('properties')
+        .select('view_count')
+        .eq('id', id)
+        .single();
+      
+      if (property) {
+        await supabase
+          .from('properties')
+          .update({ view_count: (property.view_count || 0) + 1 })
+          .eq('id', id);
+      }
+
+      setViewLogged(true);
+    }
+
     const message = encodeURIComponent(`Hi, I'm interested in the property: ${title} in ${location}. Could you provide more information?`);
     window.open(`https://wa.me/917893871223?text=${message}`, '_blank');
   };

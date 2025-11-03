@@ -18,6 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertCircle, LockIcon, UserIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { logActivity } from "@/utils/activityLogger";
 
 export const SellerPropertyForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,6 +86,21 @@ export const SellerPropertyForm = () => {
       if (error) throw error;
 
       setPropertyId(newProperty.id);
+
+      // Log property submission activity
+      await logActivity('property_submission', {
+        property_id: newProperty.id,
+        property_title: data.title,
+        property_type: data.propertyType,
+        listing_type: data.listingType,
+        price: data.price,
+        location: data.location,
+        timestamp: new Date().toISOString()
+      }, {
+        customer_id: user.id,
+        customer_email: user.email,
+        customer_name: user.user_metadata?.full_name
+      });
 
       toast({
         title: "Success!",

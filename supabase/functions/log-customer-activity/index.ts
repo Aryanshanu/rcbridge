@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.48.1';
+import { sanitizeError, logErrorSecurely } from '../_shared/errorSanitizer.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -45,9 +46,9 @@ Deno.serve(async (req) => {
       });
 
     if (error) {
-      console.error('Failed to log activity:', error);
+      logErrorSecurely('log-customer-activity', error, { operation: 'insert', activity_type: activityData.activity_type });
       return new Response(
-        JSON.stringify({ error: 'Failed to log activity', details: error.message }),
+        JSON.stringify({ error: sanitizeError(error) }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -59,9 +60,9 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Activity logging error:', error);
+    logErrorSecurely('log-customer-activity', error, { operation: 'general' });
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: sanitizeError(error) }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

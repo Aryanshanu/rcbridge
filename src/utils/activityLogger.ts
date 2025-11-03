@@ -6,7 +6,18 @@ type ActivityType =
   | 'property_inquiry' 
   | 'chat_conversation' 
   | 'profile_update' 
-  | 'search_query';
+  | 'search_query'
+  | 'property_submission'
+  | 'property_view'
+  | 'investment_calculation'
+  | 'alert_created'
+  | 'alert_triggered'
+  | 'user_login'
+  | 'user_logout'
+  | 'image_upload'
+  | 'search_saved'
+  | 'property_deleted'
+  | 'property_updated';
 
 interface ActivityDetails {
   [key: string]: any;

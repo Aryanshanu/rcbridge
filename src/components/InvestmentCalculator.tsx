@@ -9,6 +9,7 @@ import { InvestmentResults, CalculationResult } from "@/components/InvestmentRes
 import { useAuth } from "@/contexts/AuthContext";
 import { investmentCalculationSchema } from "@/utils/validation/schemas";
 import { z } from "zod";
+import { logActivity } from "@/utils/activityLogger";
 
 export function InvestmentCalculator() {
   const { toast } = useToast();
@@ -90,6 +91,19 @@ export function InvestmentCalculator() {
           investmentCalculationSchema.parse(calculationData);
           
           await supabase.from('investment_calculations').insert(calculationData);
+
+          // Log investment calculation activity
+          await logActivity('investment_calculation', {
+            property_price: data.propertyPrice,
+            rental_income: data.rentalIncome,
+            total_return: totalReturn,
+            meets_threshold: totalReturn >= 12,
+            timestamp: new Date().toISOString()
+          }, {
+            customer_id: user.id,
+            customer_email: user.email,
+            customer_name: user.user_metadata?.full_name
+          });
         } catch (saveError) {
           if (saveError instanceof z.ZodError) {
             console.error("Validation error:", saveError.errors);

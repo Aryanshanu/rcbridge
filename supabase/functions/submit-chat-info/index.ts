@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
+import { sanitizeError, logErrorSecurely } from '../_shared/errorSanitizer.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -62,9 +63,9 @@ serve(async (req) => {
       .single();
     
     if (checkError) {
-      console.error('Conversation check failed:', checkError);
+      logErrorSecurely('submit-chat-info', checkError, { operation: 'conversation_check' });
       return new Response(
-        JSON.stringify({ error: 'Conversation not found', details: checkError.message }),
+        JSON.stringify({ error: sanitizeError(checkError) }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -101,9 +102,9 @@ serve(async (req) => {
       .single();
 
     if (insertError) {
-      console.error('Error inserting chat info:', insertError);
+      logErrorSecurely('submit-chat-info', insertError, { operation: 'insert_chat_info' });
       return new Response(
-        JSON.stringify({ error: 'Failed to save information', details: insertError.message }),
+        JSON.stringify({ error: sanitizeError(insertError) }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

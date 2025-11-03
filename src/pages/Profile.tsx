@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { logActivity } from "@/utils/activityLogger";
 
 const Profile = () => {
   const { toast } = useToast();
@@ -27,18 +28,30 @@ const Profile = () => {
     setPersonalInfo(prev => ({ ...prev, [name]: value }));
   };
 
-  const handlePersonalInfoSubmit = (e: React.FormEvent) => {
+  const handlePersonalInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Log profile update activity
+      await logActivity('profile_update', {
+        updated_fields: ['fullName', 'phone', 'address'],
+        timestamp: new Date().toISOString()
+      }, {
+        customer_id: user?.id,
+        customer_email: user?.email,
+        customer_name: personalInfo.fullName
+      });
+
       toast({
         title: "Profile Updated",
         description: "Your personal information has been updated successfully.",
       });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const [passwordData, setPasswordData] = useState({
