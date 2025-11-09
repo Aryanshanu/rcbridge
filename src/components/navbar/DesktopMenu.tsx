@@ -59,29 +59,29 @@ export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: Deskto
 
   return (
     <div className="hidden md:flex items-center space-x-8">
-      <Link to="/" className="text-gray-700 hover:text-primary font-medium">
+      <Link to="/" className="text-gray-700 hover:text-primary font-medium transition-all duration-300 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-[-4px] after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left">
         Home
       </Link>
-      <Link to="/properties" className="text-gray-700 hover:text-primary font-medium">
+      <Link to="/properties" className="text-gray-700 hover:text-primary font-medium transition-all duration-300 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-[-4px] after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left">
         Properties
       </Link>
-      <Link to="/services" className="text-gray-700 hover:text-primary font-medium">
+      <Link to="/services" className="text-gray-700 hover:text-primary font-medium transition-all duration-300 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-[-4px] after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left">
         Services
       </Link>
-      <Link to="/calculator" className="text-gray-700 hover:text-primary font-medium">
+      <Link to="/calculator" className="text-gray-700 hover:text-primary font-medium transition-all duration-300 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-[-4px] after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left">
         Calculator
       </Link>
       <div className="relative group">
-        <div className="text-gray-700 hover:text-primary font-medium cursor-pointer">
+        <div className="text-gray-700 hover:text-primary font-medium cursor-pointer transition-all duration-300 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-[-4px] after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 group-hover:after:scale-x-100 group-hover:after:origin-bottom-left">
           Resources
-          <div className="absolute bg-white shadow-md py-2 rounded-md mt-2 z-50 min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
-            <Link to="/blog" className="block px-4 py-2 hover:bg-gray-50 text-gray-700">
+          <div className="absolute bg-white shadow-lg rounded-lg py-2 mt-4 z-50 min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 border border-gray-100">
+            <Link to="/blog" className="block px-4 py-2.5 hover:bg-primary/5 text-gray-700 hover:text-primary transition-colors duration-200">
               Blog
             </Link>
-            <Link to="/faq" className="block px-4 py-2 hover:bg-gray-50 text-gray-700">
+            <Link to="/faq" className="block px-4 py-2.5 hover:bg-primary/5 text-gray-700 hover:text-primary transition-colors duration-200">
               FAQ
             </Link>
-            <Link to="/contact" className="block px-4 py-2 hover:bg-gray-50 text-gray-700">
+            <Link to="/contact" className="block px-4 py-2.5 hover:bg-primary/5 text-gray-700 hover:text-primary transition-colors duration-200">
               Contact
             </Link>
           </div>
@@ -90,25 +90,25 @@ export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: Deskto
       
       {user ? (
         <div className="relative group">
-          <div className="flex items-center hover:text-primary font-medium cursor-pointer gap-2">
-            <Avatar className="h-8 w-8 bg-primary text-white">
+          <div className="flex items-center hover:text-primary font-medium cursor-pointer gap-2 transition-all duration-300">
+            <Avatar className="h-8 w-8 bg-primary text-white transition-transform duration-300 group-hover:scale-110 group-hover:shadow-md">
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <span className="text-gray-700">{displayName}</span>
+            <span className="text-gray-700 group-hover:text-primary transition-colors duration-300">{displayName}</span>
             
-            <div className="absolute bg-white shadow-md py-2 rounded-md mt-2 right-0 top-full z-50 min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
-              <Link to="/profile" className="block px-4 py-2 hover:bg-gray-50 text-gray-700">
+            <div className="absolute bg-white shadow-lg rounded-lg py-2 mt-2 right-0 top-full z-50 min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 border border-gray-100">
+              <Link to="/profile" className="block px-4 py-2.5 hover:bg-primary/5 text-gray-700 hover:text-primary transition-colors duration-200">
                 Profile
               </Link>
-              <Link to="/my-properties" className="block px-4 py-2 hover:bg-gray-50 text-gray-700">
+              <Link to="/my-properties" className="block px-4 py-2.5 hover:bg-primary/5 text-gray-700 hover:text-primary transition-colors duration-200">
                 My Properties
               </Link>
-              <Link to="/saved-searches" className="block px-4 py-2 hover:bg-gray-50 text-gray-700">
+              <Link to="/saved-searches" className="block px-4 py-2.5 hover:bg-primary/5 text-gray-700 hover:text-primary transition-colors duration-200">
                 Saved Searches
               </Link>
               
               {userRole && ['admin', 'developer', 'maintainer'].includes(userRole) && (
-                <Link to="/admin" className="flex items-center px-4 py-2 hover:bg-gray-50 text-gray-700">
+                <Link to="/admin" className="flex items-center px-4 py-2.5 hover:bg-primary/5 text-gray-700 hover:text-primary transition-colors duration-200">
                   <Shield className="h-4 w-4 mr-1.5" />
                   Admin Dashboard
                 </Link>
@@ -117,7 +117,7 @@ export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: Deskto
               <button
                 onClick={handleSignOut}
                 disabled={isSigningOut}
-                className="flex w-full items-center text-left px-4 py-2 hover:bg-gray-50 text-red-600"
+                className="flex w-full items-center text-left px-4 py-2.5 hover:bg-red-50 text-red-600 transition-colors duration-200 rounded-b-lg"
               >
                 <LogOut className="h-4 w-4 mr-1.5" />
                 {isSigningOut ? "Signing out..." : "Sign Out"}
@@ -128,7 +128,7 @@ export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: Deskto
       ) : (
         <div className="flex items-center space-x-2">
           <Link to="/login">
-            <Button variant="outline" className="flex items-center" size="sm">
+            <Button variant="outline" className="flex items-center transition-all duration-300 hover:scale-105 hover:shadow-md" size="sm">
               <LogIn className="mr-2 h-4 w-4" />
               Sign In
             </Button>
@@ -136,7 +136,7 @@ export const DesktopMenu = ({ scrollToPropertyForm, handleContactClick }: Deskto
         </div>
       )}
       
-      <Button size="sm" onClick={scrollToPropertyForm}>
+      <Button size="sm" onClick={scrollToPropertyForm} className="transition-all duration-300 hover:scale-105 hover:shadow-lg">
         List Property
       </Button>
     </div>

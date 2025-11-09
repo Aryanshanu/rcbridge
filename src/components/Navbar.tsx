@@ -106,20 +106,20 @@ export const Navbar = () => {
       {isAdmin && <AdminLiveFeed />}
       
       <nav className={cn(
-        "transition-all duration-300 sticky top-0 z-50 w-full",
+        "sticky top-0 z-50 w-full transition-all duration-500 ease-in-out",
         isScrolled 
-          ? "bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-md" 
-          : "bg-white dark:bg-gray-900"
+          ? "bg-white/98 backdrop-blur-md shadow-[0_4px_20px_-2px_rgba(30,58,138,0.1)] border-b border-primary/5" 
+          : "bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]"
       )}>
         <div className="content-container flex justify-between items-center h-16 md:h-20 gap-4">
         <div className="flex items-center flex-shrink-0">
-          <Link to="/" className="flex items-center">
+          <Link to="/" className="flex items-center group">
             <img
-              className="h-10 w-auto md:h-12"
+              className="h-10 w-auto md:h-12 transition-transform duration-300 group-hover:scale-105"
               src="/lovable-uploads/5fd561ff-5bbd-449c-94a3-d39d0a8b4f03.png"
               alt="RC Bridge"
             />
-            <span className="ml-2 text-primary dark:text-white font-heading text-lg md:text-xl lg:text-2xl font-bold leading-tight whitespace-nowrap">RC Bridge</span>
+            <span className="ml-2 text-primary font-heading text-lg md:text-xl lg:text-2xl font-bold leading-tight whitespace-nowrap transition-all duration-300 group-hover:text-primary/80">RC Bridge</span>
           </Link>
         </div>
 
@@ -135,21 +135,21 @@ export const Navbar = () => {
         <div className="md:hidden flex items-center space-x-2">
           <button
             onClick={toggleSearch}
-            className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+            className="p-2 rounded-md text-gray-400 hover:text-primary hover:bg-primary/5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary transform hover:scale-110"
             aria-label="Toggle search"
           >
             <Search className="h-5 w-5" />
           </button>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+            className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-primary hover:bg-primary/5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary transform hover:scale-110"
             aria-expanded={isOpen}
           >
             <span className="sr-only">{isOpen ? 'Close main menu' : 'Open main menu'}</span>
             {isOpen ? (
-              <X className="block h-6 w-6" aria-hidden="true" />
+              <X className="block h-6 w-6 transition-transform duration-300 rotate-0 hover:rotate-90" aria-hidden="true" />
             ) : (
-              <Menu className="block h-6 w-6" aria-hidden="true" />
+              <Menu className="block h-6 w-6 transition-transform duration-300" aria-hidden="true" />
             )}
           </button>
         </div>
@@ -157,14 +157,14 @@ export const Navbar = () => {
 
       {/* Search overlay */}
       {showSearch && (
-        <div className="absolute top-16 left-0 w-full bg-white dark:bg-gray-800 shadow-md p-4 md:px-6 animate-in fade-in slide-in-from-top duration-300 z-50">
+        <div className="absolute top-16 left-0 w-full bg-white shadow-lg p-4 md:px-6 z-50 border-b border-gray-100 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="relative max-w-3xl mx-auto">
             <form onSubmit={handleSearchSubmit}>
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-300" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 transition-colors duration-200" />
               <input
                 type="text"
                 placeholder="Search for properties, locations, or amenities..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300 hover:border-primary/50"
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -172,7 +172,7 @@ export const Navbar = () => {
               <button
                 type="button"
                 onClick={toggleSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-gray-100"
               >
                 <X className="h-5 w-5" />
               </button>
