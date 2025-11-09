@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { Menu, X, Search } from "lucide-react";
 import { DesktopMenu } from "./navbar/DesktopMenu";
 import { MobileMenu } from "./navbar/MobileMenu";
-import { ThemeToggle } from "./ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Link, useNavigate } from "react-router-dom";
@@ -130,12 +129,10 @@ export const Navbar = () => {
             scrollToPropertyForm={scrollToPropertyForm} 
             handleContactClick={handleContactClick} 
           />
-          <ThemeToggle />
         </div>
 
         {/* Mobile menu button */}
         <div className="md:hidden flex items-center space-x-2">
-          <ThemeToggle />
           <button
             onClick={toggleSearch}
             className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
