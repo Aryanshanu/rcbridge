@@ -112,22 +112,20 @@ export const Navbar = () => {
           ? "bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-md" 
           : "bg-white dark:bg-gray-900"
       )}>
-        <div className="content-container flex justify-between h-16 md:h-20">
-        <div className="flex items-center">
-          <Link to="/" className="flex-shrink-0 flex items-center">
-            <div className="flex items-center">
-              <img
-                className="h-12 w-auto md:h-14"
-                src="/lovable-uploads/5fd561ff-5bbd-449c-94a3-d39d0a8b4f03.png"
-                alt="RC Bridge"
-              />
-              <span className="ml-2 text-primary dark:text-white font-heading text-xl md:text-2xl font-bold leading-tight">RC Bridge</span>
-            </div>
+        <div className="content-container flex justify-between items-center h-16 md:h-20 gap-4">
+        <div className="flex items-center flex-shrink-0">
+          <Link to="/" className="flex items-center">
+            <img
+              className="h-10 w-auto md:h-12"
+              src="/lovable-uploads/5fd561ff-5bbd-449c-94a3-d39d0a8b4f03.png"
+              alt="RC Bridge"
+            />
+            <span className="ml-2 text-primary dark:text-white font-heading text-lg md:text-xl lg:text-2xl font-bold leading-tight whitespace-nowrap">RC Bridge</span>
           </Link>
         </div>
 
         {/* Desktop menu */}
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="hidden md:flex items-center space-x-4 lg:space-x-6">
           <DesktopMenu 
             scrollToPropertyForm={scrollToPropertyForm} 
             handleContactClick={handleContactClick} 
