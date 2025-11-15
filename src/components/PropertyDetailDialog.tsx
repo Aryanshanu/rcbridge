@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Bed, Bath, Maximize, Share2, Heart } from "lucide-react";
 import { formatPrice, formatArea, getPropertyTypeBadgeColor, capitalizeWords } from "@/utils/propertyUtils";
 import { LazyImage } from "@/components/ui/LazyImage";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/utils/activityLogger";
 
 interface PropertyDetailDialogProps {
   property: any;
@@ -17,6 +20,83 @@ interface PropertyDetailDialogProps {
 export const PropertyDetailDialog = ({ property, isOpen, onClose, images }: PropertyDetailDialogProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [viewLogged, setViewLogged] = useState(false);
+  const { user } = useAuth();
+
+  // Generate or retrieve session ID for anonymous users
+  const [sessionId] = useState<string>(() => {
+    const stored = localStorage.getItem("property_view_session_id");
+    if (stored) return stored;
+    const newSessionId = crypto.randomUUID();
+    localStorage.setItem("property_view_session_id", newSessionId);
+    return newSessionId;
+  });
+
+  // Track property view when dialog opens
+  useEffect(() => {
+    if (!isOpen || !property || viewLogged) return;
+
+    const logPropertyView = async () => {
+      try {
+        // Insert to property_views table
+        const { error: viewError } = await supabase.from('property_views').insert({
+          property_id: property.id,
+          viewer_id: user?.id || null,
+          viewer_email: user?.email || null,
+          session_id: !user ? sessionId : null,
+          viewer_ip: null,
+          user_agent: navigator.userAgent,
+          referrer: document.referrer || null
+        });
+
+        if (viewError) {
+          console.error('❌ Failed to log property view:', viewError);
+        } else {
+          console.log('✅ Property view logged to property_views table');
+        }
+
+        // Log to customer_activity_history via edge function
+        await logActivity('property_view', {
+          property_id: property.id,
+          property_title: property.title,
+          property_location: property.location,
+          property_price: property.price,
+          timestamp: new Date().toISOString()
+        }, {
+          customer_id: user?.id,
+          customer_email: user?.email,
+          customer_name: user?.user_metadata?.full_name
+        });
+
+        // Increment view count on properties table
+        const { data: currentProperty } = await supabase
+          .from('properties')
+          .select('view_count')
+          .eq('id', property.id)
+          .single();
+
+        if (currentProperty) {
+          await supabase
+            .from('properties')
+            .update({ view_count: (currentProperty.view_count || 0) + 1 })
+            .eq('id', property.id);
+        }
+
+        setViewLogged(true);
+      } catch (error) {
+        console.error('❌ Error logging property view:', error);
+      }
+    };
+
+    logPropertyView();
+  }, [isOpen, property, user, viewLogged, sessionId]);
+
+  // Reset viewLogged when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      setViewLogged(false);
+    }
+  }, [isOpen]);
 
   if (!property) return null;
 

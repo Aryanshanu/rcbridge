@@ -22,6 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { isAdminUser } from "@/utils/admin/userUtils";
 import { useToast } from "@/hooks/use-toast";
 import { AdminLiveFeed } from "@/components/admin/AdminLiveFeed";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Admin() {
   const [isLoading, setIsLoading] = useState(true);
@@ -92,6 +93,34 @@ export default function Admin() {
       cancelled = true;
     };
   }, [user, authLoading, navigate, toast]);
+
+  // Log admin access to admin_login_history table
+  useEffect(() => {
+    if (!isAdmin || !user) return;
+
+    const logAdminAccess = async () => {
+      try {
+        const { error } = await supabase.from('admin_login_history').insert({
+          user_id: user.id,
+          user_email: user.email,
+          action: 'login',
+          login_method: 'email',
+          ip_address: null,
+          user_agent: navigator.userAgent
+        });
+
+        if (error) {
+          console.error('❌ Failed to log admin access:', error);
+        } else {
+          console.log('✅ Admin access logged to admin_login_history');
+        }
+      } catch (error) {
+        console.error('❌ Error logging admin access:', error);
+      }
+    };
+
+    logAdminAccess();
+  }, [isAdmin, user]);
 
   const handleLogout = async () => {
     await signOut();
