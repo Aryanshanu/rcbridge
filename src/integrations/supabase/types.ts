@@ -516,9 +516,13 @@ export type Database = {
           bathrooms: number | null
           bedrooms: number | null
           created_at: string
+          created_by: string | null
           description: string | null
+          duplicate_confidence: number | null
+          duplicate_of: string | null
           features: string[] | null
           id: string
+          import_job_id: string | null
           inquiry_count: number | null
           land_size: number | null
           listing_type: Database["public"]["Enums"]["listing_type"] | null
@@ -526,6 +530,7 @@ export type Database = {
           owner_id: string | null
           price: number
           property_type: Database["public"]["Enums"]["property_type"] | null
+          raw_source_data: Json | null
           rental_duration: unknown
           rental_terms: string | null
           roi_potential: number | null
@@ -547,9 +552,13 @@ export type Database = {
           bathrooms?: number | null
           bedrooms?: number | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
+          duplicate_confidence?: number | null
+          duplicate_of?: string | null
           features?: string[] | null
           id?: string
+          import_job_id?: string | null
           inquiry_count?: number | null
           land_size?: number | null
           listing_type?: Database["public"]["Enums"]["listing_type"] | null
@@ -557,6 +566,7 @@ export type Database = {
           owner_id?: string | null
           price: number
           property_type?: Database["public"]["Enums"]["property_type"] | null
+          raw_source_data?: Json | null
           rental_duration?: unknown
           rental_terms?: string | null
           roi_potential?: number | null
@@ -578,9 +588,13 @@ export type Database = {
           bathrooms?: number | null
           bedrooms?: number | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
+          duplicate_confidence?: number | null
+          duplicate_of?: string | null
           features?: string[] | null
           id?: string
+          import_job_id?: string | null
           inquiry_count?: number | null
           land_size?: number | null
           listing_type?: Database["public"]["Enums"]["listing_type"] | null
@@ -588,6 +602,7 @@ export type Database = {
           owner_id?: string | null
           price?: number
           property_type?: Database["public"]["Enums"]["property_type"] | null
+          raw_source_data?: Json | null
           rental_duration?: unknown
           rental_terms?: string | null
           roi_potential?: number | null
@@ -604,6 +619,27 @@ export type Database = {
           view_count?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "properties_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "public_properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_import_job_id_fkey"
+            columns: ["import_job_id"]
+            isOneToOne: false
+            referencedRelation: "scraping_jobs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "properties_owner_id_fkey"
             columns: ["owner_id"]
@@ -749,9 +785,12 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string | null
+          duplicates_found: number | null
           error_message: string | null
           id: string
           import_data: Json | null
+          k2_calls: number | null
+          nlp_calls: number | null
           platform: string
           properties_added: number | null
           properties_found: number | null
@@ -765,9 +804,12 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           created_at?: string | null
+          duplicates_found?: number | null
           error_message?: string | null
           id?: string
           import_data?: Json | null
+          k2_calls?: number | null
+          nlp_calls?: number | null
           platform?: string
           properties_added?: number | null
           properties_found?: number | null
@@ -781,9 +823,12 @@ export type Database = {
         Update: {
           completed_at?: string | null
           created_at?: string | null
+          duplicates_found?: number | null
           error_message?: string | null
           id?: string
           import_data?: Json | null
+          k2_calls?: number | null
+          nlp_calls?: number | null
           platform?: string
           properties_added?: number | null
           properties_found?: number | null
