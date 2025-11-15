@@ -173,9 +173,7 @@ export async function checkDuplicates(
           matches.push({
             id: match.id,
             confidence,
-            reason: `Similar location (${locationSimilarity.toFixed(0)}%), price (${priceSimilarity.toFixed(0)}%)${\
-              areaSimilarity > 0 ? `, area (${areaSimilarity.toFixed(0)}%)` : ''
-            }`,
+            reason: `Similar location (${locationSimilarity.toFixed(0)}%), price (${priceSimilarity.toFixed(0)}%)${areaSimilarity > 0 ? `, area (${areaSimilarity.toFixed(0)}%)` : ''}`,
             matchedField: 'location_price',
             existingProperty: match,
           });
