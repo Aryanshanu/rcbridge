@@ -28,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserRole } from "@/types/user";
 import { checkTableWithFeedback } from "@/utils/dbTableCheck";
+import { PropertyFormDialog } from "./PropertyFormDialog";
 
 interface Property {
   id: string;
@@ -55,6 +56,7 @@ export const AdminProperties = ({ userRole }: AdminPropertiesProps) => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
   
   // Check if table exists
   useEffect(() => {
@@ -194,7 +196,7 @@ export const AdminProperties = ({ userRole }: AdminPropertiesProps) => {
         </div>
         
         <div className="flex gap-3 w-full sm:w-auto">
-          <Button onClick={() => null} className="flex items-center gap-2">
+          <Button onClick={() => setShowAddDialog(true)} className="flex items-center gap-2">
             <Plus size={16} />
             <span>Add Property</span>
           </Button>
@@ -363,6 +365,14 @@ export const AdminProperties = ({ userRole }: AdminPropertiesProps) => {
           </Table>
         </div>
       )}
+
+      <PropertyFormDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onSuccess={() => {
+          window.location.reload();
+        }}
+      />
     </div>
   );
 };

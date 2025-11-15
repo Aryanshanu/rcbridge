@@ -68,10 +68,15 @@ export function AssistanceRequestsTab() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Assistance Requests</h2>
-        <Badge variant="secondary">{requests.length} Total</Badge>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold">Assistance Requests</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Customer assistance inquiries
+          </p>
+        </div>
+        <Badge variant="secondary" className="text-base px-4 py-2">{requests.length} Total</Badge>
       </div>
 
       <ScrollArea className="h-[600px]">

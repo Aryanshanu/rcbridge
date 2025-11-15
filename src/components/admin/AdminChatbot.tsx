@@ -66,12 +66,14 @@ interface AdminChatbotProps {
 export const AdminChatbot = ({ userRole }: AdminChatbotProps) => {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [anonymousSessions, setAnonymousSessions] = useState<any[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState('conversations');
+  const [viewMode, setViewMode] = useState<'identified' | 'anonymous'>('identified');
   const [botSettings, setBotSettings] = useState({
     enabled: true,
     autoRespond: true,
@@ -84,6 +86,8 @@ export const AdminChatbot = ({ userRole }: AdminChatbotProps) => {
   const fetchConversations = async () => {
     try {
       setError(null);
+      
+      // Fetch identified user conversations
       const { data: convos, error: convosError } = await supabase
         .from('chat_conversations')
         .select(`
@@ -101,6 +105,7 @@ export const AdminChatbot = ({ userRole }: AdminChatbotProps) => {
             email
           )
         `)
+        .not('user_id', 'is', null)
         .order('updated_at', { ascending: false });
 
       if (convosError) throw convosError;
@@ -122,6 +127,45 @@ export const AdminChatbot = ({ userRole }: AdminChatbotProps) => {
       });
 
       setConversations(mapped);
+
+      // Fetch anonymous sessions from customer_activity_history
+      const { data: anonActivities, error: anonError } = await supabase
+        .from('customer_activity_history')
+        .select('*')
+        .eq('activity_type', 'chat_conversation')
+        .is('customer_id', null)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (anonError) throw anonError;
+
+      // Group anonymous activities by conversation_id or session
+      const sessionMap = new Map();
+      (anonActivities || []).forEach((activity: any) => {
+        const conversationId = activity.activity_details?.conversation_id || activity.id;
+        if (!sessionMap.has(conversationId)) {
+          sessionMap.set(conversationId, {
+            id: conversationId,
+            ip_address: activity.ip_address,
+            user_agent: activity.user_agent,
+            created_at: activity.created_at,
+            updated_at: activity.created_at,
+            message_count: 0,
+            entities: {},
+            messages: []
+          });
+        }
+        const session = sessionMap.get(conversationId);
+        session.message_count++;
+        session.updated_at = activity.created_at;
+        session.entities = { ...session.entities, ...(activity.activity_details?.entities || {}) };
+        session.messages.push({
+          content: activity.activity_details?.message || 'No content',
+          timestamp: activity.created_at
+        });
+      });
+
+      setAnonymousSessions(Array.from(sessionMap.values()));
     } catch (err: any) {
       console.error('Error fetching conversations:', err);
       setError(err.message);
@@ -399,16 +443,11 @@ export const AdminChatbot = ({ userRole }: AdminChatbotProps) => {
   
   return (
     <div className="p-6">
-      <Tabs defaultValue="conversations" value={tabValue} onValueChange={setTabValue}>
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="conversations">
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Conversations
-          </TabsTrigger>
-          <TabsTrigger value="settings">
-            <Settings className="w-4 h-4 mr-2" />
-            Chatbot Settings
-          </TabsTrigger>
+      <Tabs value={tabValue} onValueChange={setTabValue} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="conversations">Identified Users</TabsTrigger>
+          <TabsTrigger value="anonymous">Anonymous Sessions</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
         
         <TabsContent value="conversations" className="space-y-4">
