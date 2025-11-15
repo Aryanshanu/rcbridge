@@ -24,3 +24,9 @@ verify_jwt = false
 [functions.submit-chat-info]
 verify_jwt = false
 
+[functions.import-instagram-properties]
+verify_jwt = true
+
+[functions.finalize-import]
+verify_jwt = true
+
