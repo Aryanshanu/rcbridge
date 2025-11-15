@@ -3,7 +3,17 @@
  * Uses exact matching and fuzzy string matching to detect duplicate properties
  */
 
-import { distance } from 'https://deno.land/x/fuzzball@v1.2.1/mod.ts';
+import { distance } from 'https://deno.land/x/fastest_levenshtein/mod.ts';
+
+/**
+ * Convert Levenshtein distance to similarity percentage
+ */
+function calculateSimilarity(str1: string, str2: string): number {
+  const editDistance = distance(str1, str2);
+  const maxLength = Math.max(str1.length, str2.length);
+  if (maxLength === 0) return 100;
+  return (1 - editDistance / maxLength) * 100;
+}
 
 export interface DuplicateMatch {
   id: string;
@@ -76,8 +86,8 @@ export async function checkDuplicates(
 
     if (phoneMatches && phoneMatches.length > 0) {
       for (const match of phoneMatches) {
-        // Also check if location is similar
-        const locationSimilarity = distance(
+        // Also check if location is similar (0-100%)
+        const locationSimilarity = calculateSimilarity(
           property.location.toLowerCase(),
           match.location.toLowerCase()
         );
@@ -139,8 +149,8 @@ export async function checkDuplicates(
 
   if (priceMatches && priceMatches.length > 0) {
     for (const match of priceMatches) {
-      // Calculate location similarity using fuzzy matching
-      const locationSimilarity = distance(
+      // Calculate location similarity using fuzzy matching (0-100%)
+      const locationSimilarity = calculateSimilarity(
         property.location.toLowerCase(),
         match.location.toLowerCase()
       );
