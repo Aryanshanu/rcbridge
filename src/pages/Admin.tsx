@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AdminLiveFeed } from "@/components/admin/AdminLiveFeed";
 import { supabase } from "@/integrations/supabase/client";
 import { AnalyticsWidget } from "@/components/admin/AnalyticsWidget";
+import { ObservabilityDashboard } from "@/components/admin/ObservabilityDashboard";
 
 export default function Admin() {
   const [isLoading, setIsLoading] = useState(true);
@@ -170,8 +171,9 @@ export default function Admin() {
             </Button>
           </div>
 
-          <Tabs defaultValue="analytics" className="space-y-4">
+          <Tabs defaultValue="observability" className="space-y-4">
             <TabsList className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12 gap-2">
+              <TabsTrigger value="observability">Observability</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
               <TabsTrigger value="chat">Chat</TabsTrigger>
@@ -185,6 +187,10 @@ export default function Admin() {
               <TabsTrigger value="assistance">Assistance</TabsTrigger>
               <TabsTrigger value="import">Import</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="observability">
+              <ObservabilityDashboard />
+            </TabsContent>
 
             <TabsContent value="analytics">
               <div className="space-y-6">
