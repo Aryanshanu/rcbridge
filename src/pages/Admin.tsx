@@ -23,6 +23,7 @@ import { isAdminUser } from "@/utils/admin/userUtils";
 import { useToast } from "@/hooks/use-toast";
 import { AdminLiveFeed } from "@/components/admin/AdminLiveFeed";
 import { supabase } from "@/integrations/supabase/client";
+import { AnalyticsWidget } from "@/components/admin/AnalyticsWidget";
 
 export default function Admin() {
   const [isLoading, setIsLoading] = useState(true);
@@ -186,7 +187,10 @@ export default function Admin() {
             </TabsList>
 
             <TabsContent value="analytics">
-              <AnalyticsTab />
+              <div className="space-y-6">
+                <AnalyticsWidget />
+                <AnalyticsTab />
+              </div>
             </TabsContent>
 
             <TabsContent value="activity">
