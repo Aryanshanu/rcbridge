@@ -871,6 +871,93 @@ export type Database = {
         }
         Relationships: []
       }
+      system_logs: {
+        Row: {
+          action: string
+          auto_fixed: boolean | null
+          component: string
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          error_type: string | null
+          id: string
+          ip_address: string | null
+          llm_reasoning: Json | null
+          metadata: Json | null
+          mitigation_applied: Json | null
+          mitigation_confidence: number | null
+          parent_span_id: string | null
+          payload: Json | null
+          referrer: string | null
+          request_id: string | null
+          session_id: string | null
+          severity: string
+          span_id: string | null
+          stack_trace: string | null
+          trace_id: string
+          user_agent: string | null
+          user_email: string | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          action: string
+          auto_fixed?: boolean | null
+          component: string
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          error_type?: string | null
+          id?: string
+          ip_address?: string | null
+          llm_reasoning?: Json | null
+          metadata?: Json | null
+          mitigation_applied?: Json | null
+          mitigation_confidence?: number | null
+          parent_span_id?: string | null
+          payload?: Json | null
+          referrer?: string | null
+          request_id?: string | null
+          session_id?: string | null
+          severity: string
+          span_id?: string | null
+          stack_trace?: string | null
+          trace_id: string
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          action?: string
+          auto_fixed?: boolean | null
+          component?: string
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          error_type?: string | null
+          id?: string
+          ip_address?: string | null
+          llm_reasoning?: Json | null
+          metadata?: Json | null
+          mitigation_applied?: Json | null
+          mitigation_confidence?: number | null
+          parent_span_id?: string | null
+          payload?: Json | null
+          referrer?: string | null
+          request_id?: string | null
+          session_id?: string | null
+          severity?: string
+          span_id?: string | null
+          stack_trace?: string | null
+          trace_id?: string
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
       user_rewards: {
         Row: {
           created_at: string

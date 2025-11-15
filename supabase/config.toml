@@ -30,3 +30,6 @@ verify_jwt = true
 [functions.finalize-import]
 verify_jwt = true
 
+[functions.capture-event]
+verify_jwt = false
+
