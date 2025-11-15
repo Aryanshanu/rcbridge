@@ -55,8 +55,8 @@ export function ObservabilityDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">System Observability</h2>
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold tracking-tight mb-2">System Observability</h2>
         <p className="text-muted-foreground">Real-time monitoring with LLM-assisted self-healing</p>
       </div>
 

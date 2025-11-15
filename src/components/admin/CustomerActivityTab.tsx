@@ -3,24 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Activity, Mail, MessageSquare, Search, User } from "lucide-react";
-
-interface CustomerActivity {
-  id: string;
-  customer_id: string | null;
-  customer_email: string | null;
-  customer_name: string | null;
-  activity_type: string;
-  activity_details: Record<string, any>;
-  ip_address: string | null;
-  user_agent: string | null;
-  referrer: string | null;
-  created_at: string;
-}
+import { Loader2, Activity, Mail, MessageSquare, Search, User, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
+import { aggregateActivitySessions, formatDuration, formatTimeRange, type AggregatedSession, type CustomerActivity } from "@/utils/activityAggregator";
 
 export function CustomerActivityTab() {
   const [activities, setActivities] = useState<CustomerActivity[]>([]);
+  const [sessions, setSessions] = useState<AggregatedSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchCustomerActivity();
@@ -59,12 +51,29 @@ export function CustomerActivityTab() {
       });
 
       if (error) throw error;
-      setActivities(data?.data || []);
+      const fetchedActivities = data?.data || [];
+      setActivities(fetchedActivities);
+      
+      // Aggregate activities into sessions
+      const aggregated = aggregateActivitySessions(fetchedActivities, 10);
+      setSessions(aggregated);
     } catch (error) {
       console.error('Failed to fetch customer activity:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const toggleSession = (sessionId: string) => {
+    setExpandedSessions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sessionId)) {
+        newSet.delete(sessionId);
+      } else {
+        newSet.add(sessionId);
+      }
+      return newSet;
+    });
   };
 
   const getActivityIcon = (type: string) => {
@@ -97,61 +106,124 @@ export function CustomerActivityTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Customer Activity History</h2>
-        <Badge variant="outline" className="text-lg px-4 py-2">
-          Total: {activities.length}
-        </Badge>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold">Customer Activity History</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Sessions grouped by 10-minute intervals
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Badge variant="outline" className="text-base px-4 py-2">
+            {sessions.length} Sessions
+          </Badge>
+          <Badge variant="secondary" className="text-base px-4 py-2">
+            {activities.length} Total Activities
+          </Badge>
+        </div>
       </div>
 
       <ScrollArea className="h-[600px] pr-4">
         <div className="space-y-4">
-          {activities.map((activity) => (
-            <Card key={activity.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <div className={`p-2 rounded-full ${getActivityColor(activity.activity_type)} text-white`}>
-                      {getActivityIcon(activity.activity_type)}
+          {sessions.map((session) => (
+            <Collapsible key={session.id} open={expandedSessions.has(session.id)}>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <div className={`p-2 rounded-full ${getActivityColor(session.activity_type)} text-white`}>
+                          {getActivityIcon(session.activity_type)}
+                        </div>
+                        <div>
+                          <div>{session.customer_name || session.customer_email || 'Anonymous'}</div>
+                          <div className="text-sm font-normal text-muted-foreground">
+                            {formatTimeRange(session.session_start, session.session_end)}
+                          </div>
+                        </div>
+                      </CardTitle>
                     </div>
-                    {activity.customer_name || activity.customer_email || 'Anonymous'}
-                  </CardTitle>
-                  <Badge variant="secondary">
-                    {activity.activity_type.replace('_', ' ')}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <p className="text-muted-foreground">
-                  {new Date(activity.created_at).toLocaleString()}
-                </p>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">
+                        {session.message_count} {session.message_count === 1 ? 'message' : 'messages'}
+                      </Badge>
+                      <Badge variant="outline">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {formatDuration(session.duration_seconds)}
+                      </Badge>
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleSession(session.id)}
+                        >
+                          {expandedSessions.has(session.id) ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </CollapsibleTrigger>
+                    </div>
+                  </div>
+                </CardHeader>
                 
-                {activity.customer_email && (
-                  <p className="text-muted-foreground">
-                    <strong>Email:</strong> {activity.customer_email}
-                  </p>
-                )}
-                
-                {activity.ip_address && (
-                  <p className="text-muted-foreground">
-                    <strong>IP:</strong> {activity.ip_address}
-                  </p>
-                )}
-                
-                {activity.referrer && activity.referrer !== 'direct' && (
-                  <p className="text-muted-foreground text-xs">
-                    <strong>Referrer:</strong> {activity.referrer}
-                  </p>
-                )}
-                
-                <div className="mt-2 p-3 bg-muted rounded-md">
-                  <strong>Activity Details:</strong>
-                  <pre className="text-xs mt-1 overflow-auto max-h-32">
-                    {JSON.stringify(activity.activity_details, null, 2)}
-                  </pre>
-                </div>
-              </CardContent>
-            </Card>
+                <CardContent className="space-y-3 text-sm">
+                  {session.customer_email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span>{session.customer_email}</span>
+                    </div>
+                  )}
+                  
+                  {session.ip_address && session.ip_address !== 'Unknown' && (
+                    <div className="text-muted-foreground">
+                      <strong>IP:</strong> {session.ip_address}
+                    </div>
+                  )}
+                  
+                  {session.conversation_id && (
+                    <div className="text-muted-foreground text-xs">
+                      <strong>Conversation ID:</strong> {session.conversation_id}
+                    </div>
+                  )}
+                  
+                  {Object.keys(session.aggregated_entities).length > 0 && (
+                    <div className="mt-3 p-3 bg-muted rounded-md">
+                      <strong>Extracted Information:</strong>
+                      <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+                        {Object.entries(session.aggregated_entities).map(([key, value]) => (
+                          <div key={key}>
+                            <span className="font-medium capitalize">{key}:</span>{' '}
+                            {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <CollapsibleContent>
+                    <div className="mt-4 space-y-3 border-t pt-3">
+                      <div className="font-medium">Session Messages:</div>
+                      {session.messages.map((msg, idx) => (
+                        <div key={msg.id} className="p-3 bg-muted/50 rounded-md space-y-2">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Message {idx + 1}</span>
+                            <span>{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                          </div>
+                          <div className="text-sm">{msg.content}</div>
+                          {Object.keys(msg.entities).length > 0 && (
+                            <div className="text-xs">
+                              <strong>Entities:</strong> {JSON.stringify(msg.entities)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </CardContent>
+              </Card>
+            </Collapsible>
           ))}
         </div>
       </ScrollArea>
