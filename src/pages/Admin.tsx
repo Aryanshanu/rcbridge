@@ -25,6 +25,7 @@ import { AdminLiveFeed } from "@/components/admin/AdminLiveFeed";
 import { supabase } from "@/integrations/supabase/client";
 import { AnalyticsWidget } from "@/components/admin/AnalyticsWidget";
 import { ObservabilityDashboard } from "@/components/admin/ObservabilityDashboard";
+import { initTrace, event } from "@/utils/eventLogger";
 
 export default function Admin() {
   const [isLoading, setIsLoading] = useState(true);
@@ -95,6 +96,18 @@ export default function Admin() {
       cancelled = true;
     };
   }, [user, authLoading, navigate, toast]);
+
+  // Phase 2: Initialize trace and log admin access
+  useEffect(() => {
+    if (isAdmin && user) {
+      initTrace();
+      event.info('admin_dashboard_accessed', {
+        user_id: user.id,
+        user_email: user.email,
+        page: 'admin_dashboard'
+      });
+    }
+  }, [isAdmin, user]);
 
   // Log admin access to admin_login_history table
   useEffect(() => {

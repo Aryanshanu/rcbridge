@@ -1,4 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { Logger } from '../_shared/logger.ts';
+import { extractTraceContext } from '../_shared/tracer.ts';
+import { runK2Mitigation } from '../_shared/k2Mitigation.ts';
+
+const logger = new Logger('verify-admin');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +15,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const { traceId, spanId } = extractTraceContext(req);
+  const startTime = Date.now();
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -79,6 +87,31 @@ Deno.serve(async (req) => {
     );
 
     if (!hasAdminRole) {
+      await logger.warn('admin_access_denied', traceId, {
+        user_id: user.id,
+        user_email: user.email,
+        roles_found: effectiveRoles.map((r: any) => r.role)
+      });
+
+      // Run LLM analysis for access denial
+      const mitigation = await runK2Mitigation({
+        action: 'admin_access_denied',
+        errorMessage: 'User lacks admin role',
+        errorType: 'AuthorizationError',
+        payload: { user_id: user.id, user_email: user.email },
+        metadata: { roles_found: effectiveRoles, allowlist_checked: true }
+      }, supabaseUrl, supabaseKey);
+
+      await logger.log({
+        action: 'admin_access_analysis',
+        traceId,
+        spanId,
+        severity: 'WARN',
+        userId: user.id,
+        userEmail: user.email,
+        metadata: { llm_reasoning: mitigation }
+      });
+
       return new Response(
         JSON.stringify({ authorized: false, error: 'Insufficient permissions' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -90,6 +123,13 @@ Deno.serve(async (req) => {
                      (effectiveRoles as any).find((r: any) => r.role === 'developer')?.role ||
                      (effectiveRoles as any).find((r: any) => r.role === 'maintainer')?.role;
 
+    await logger.info('admin_access_granted', traceId, {
+      user_id: user.id,
+      user_email: user.email,
+      role: userRole,
+      duration_ms: Date.now() - startTime
+    });
+
     return new Response(
       JSON.stringify({ authorized: true, role: userRole }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -97,6 +137,9 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Verification error:', error);
+    await logger.critical('verify_admin_failed', traceId, error as Error, {
+      duration_ms: Date.now() - startTime
+    });
     return new Response(
       JSON.stringify({ authorized: false, error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

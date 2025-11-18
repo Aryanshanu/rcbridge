@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { UserRole } from "@/types/user";
 import { checkTableWithFeedback } from "@/utils/dbTableCheck";
 import { PropertyFormDialog } from "./PropertyFormDialog";
+import { event } from "@/utils/eventLogger";
 
 interface Property {
   id: string;
@@ -121,6 +122,8 @@ export const AdminProperties = ({ userRole }: AdminPropertiesProps) => {
       return;
     }
     
+    event.info('property_delete_attempt', { property_id: id });
+    
     if (confirm("Are you sure you want to delete this property? This action cannot be undone.")) {
       try {
         const { error } = await supabase
@@ -131,6 +134,16 @@ export const AdminProperties = ({ userRole }: AdminPropertiesProps) => {
         if (error) {
           throw error;
         }
+        
+        event.info('property_deleted', { property_id: id });
+        toast.success("Property deleted successfully");
+        setProperties(properties.filter(p => p.id !== id));
+      } catch (error: any) {
+        event.error('property_delete_failed', error, { property_id: id });
+        toast.error(`Failed to delete property: ${error.message}`);
+      }
+    }
+  };
         
         setProperties(properties.filter(property => property.id !== id));
         toast.success("Property deleted successfully");
