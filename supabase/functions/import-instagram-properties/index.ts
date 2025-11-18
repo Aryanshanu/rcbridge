@@ -4,6 +4,11 @@ import { extractPropertyWithK2 } from "../_shared/k2PropertyExtractor.ts";
 import { normalizeProperty } from "../_shared/dataNormalizer.ts";
 import { checkDuplicates } from "../_shared/duplicateChecker.ts";
 import { sanitizeError, logErrorSecurely } from "../_shared/errorSanitizer.ts";
+import { Logger } from "../_shared/logger.ts";
+import { extractTraceContext, withSpan } from "../_shared/tracer.ts";
+import { runK2Mitigation, applyMitigationIfSafe } from "../_shared/k2Mitigation.ts";
+
+const logger = new Logger('import-instagram-properties');
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,6 +26,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const { traceId, spanId } = extractTraceContext(req);
+  const startTime = Date.now();
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -44,6 +52,11 @@ serve(async (req) => {
 
     const { data: roleData } = await supabaseClient.from("user_roles").select("role").eq("user_id", user.id).single();
     if (!roleData || roleData.role !== "admin") {
+      await logger.warn('admin_access_denied', traceId, {
+        user_id: user.id,
+        user_email: user.email,
+        action: 'import_instagram_properties'
+      });
       return new Response(JSON.stringify({ error: "Admin access required" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -55,6 +68,11 @@ serve(async (req) => {
     }
 
     console.log(`[import-instagram] Starting import for ${posts.length} posts by user ${user.email}`);
+    await logger.info('import_started', traceId, { 
+      user_id: user.id, 
+      user_email: user.email,
+      post_count: posts.length 
+    });
 
     const { data: job, error: jobError } = await supabaseClient.from("scraping_jobs").insert({
       platform: "instagram", status: "processing", triggered_by: user.id,
@@ -81,8 +99,65 @@ serve(async (req) => {
 
         if (!extractionResult.extracted || extractionResult.errors.length > 0) {
           console.error(`[import-instagram] K2-Think extraction failed for post ${i + 1}:`, extractionResult.errors);
-          processedRecords.push({ index: i, raw_text: post.text, status: "error", errors: extractionResult.errors, warnings: extractionResult.warnings });
-          continue;
+          
+          // Phase 4: LLM Self-Healing - Attempt mitigation
+          await logger.error('extraction_failed', traceId, new Error(extractionResult.errors.join(', ')), {
+            post_index: i,
+            post_text_preview: post.text.substring(0, 100)
+          });
+
+          const mitigation = await runK2Mitigation({
+            action: 'instagram_import_extraction_failed',
+            errorMessage: extractionResult.errors.join(', '),
+            errorType: 'ExtractionError',
+            payload: { post_text: post.text, post_index: i },
+            metadata: { job_id: job.id }
+          }, supabaseUrl, serviceRoleKey);
+
+          await logger.log({
+            action: 'extraction_mitigation_attempted',
+            traceId,
+            spanId,
+            severity: 'WARN',
+            payload: { post_index: i },
+            metadata: { llm_reasoning: mitigation }
+          });
+
+          // Try to apply fix if confidence > 0.8
+          let mitigationApplied = false;
+          if (mitigation.confidence > 0.8 && mitigation.autoApplicable) {
+            const { applied } = await applyMitigationIfSafe(mitigation, async (fix) => {
+              try {
+                const retryResult = await extractPropertyWithK2(
+                  fix.correctedText || post.text, 
+                  supabaseUrl, 
+                  supabaseAnonKey
+                );
+                if (retryResult.extracted) {
+                  extractionResult.extracted = retryResult.extracted;
+                  extractionResult.errors = [];
+                  mitigationApplied = true;
+                  return true;
+                }
+              } catch (e) {
+                console.error('Mitigation retry failed:', e);
+              }
+              return false;
+            });
+
+            if (applied) {
+              await logger.info('extraction_auto_fixed', traceId, {
+                post_index: i,
+                auto_fixed: true,
+                mitigation_confidence: mitigation.confidence
+              });
+            }
+          }
+
+          if (!mitigationApplied) {
+            processedRecords.push({ index: i, raw_text: post.text, status: "error", errors: extractionResult.errors, warnings: extractionResult.warnings });
+            continue;
+          }
         }
 
         const { normalized, warnings: normWarnings, errors: normErrors } = normalizeProperty({
@@ -150,6 +225,17 @@ serve(async (req) => {
     }).eq("id", job.id);
 
     console.log(`[import-instagram] Processing complete: ${validCount} valid, ${warningCount} warnings, ${errorCount} errors, ${duplicateCount} duplicates`);
+    
+    await logger.info('import_completed', traceId, {
+      job_id: job.id,
+      total: posts.length,
+      valid: validCount,
+      warnings: warningCount,
+      errors: errorCount,
+      duplicates: duplicateCount,
+      k2_calls: k2CallCount,
+      duration_ms: Date.now() - startTime
+    });
 
     return new Response(JSON.stringify({
       success: true, job_id: job.id, records: processedRecords,
@@ -157,6 +243,9 @@ serve(async (req) => {
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
     console.error("[import-instagram] Fatal error:", error);
+    await logger.critical('import_failed', traceId, error as Error, {
+      duration_ms: Date.now() - startTime
+    });
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }

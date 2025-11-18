@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
+import { Logger } from "../_shared/logger.ts";
+import { extractTraceContext, withSpan } from "../_shared/tracer.ts";
+
+const logger = new Logger('finalize-import');
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +15,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const { traceId, spanId } = extractTraceContext(req);
+  const startTime = Date.now();
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -61,6 +68,12 @@ serve(async (req) => {
     }
 
     console.log(`[finalize-import] Processing ${approved_records.length} approved properties for job ${job_id}`);
+    await logger.info('finalize_import_started', traceId, {
+      job_id,
+      user_id: user.id,
+      user_email: user.email,
+      approved_count: approved_records.length
+    });
 
     let insertedCount = 0;
     let errorCount = 0;
@@ -118,6 +131,11 @@ serve(async (req) => {
 
         insertedCount++;
         console.log(`[finalize-import] Inserted property ${insertedProperty.id}`);
+        await logger.info('property_inserted', traceId, {
+          property_id: insertedProperty.id,
+          title: propertyData.title,
+          job_id
+        });
 
         // Insert property images if provided
         if (record.images && Array.isArray(record.images)) {
@@ -165,6 +183,12 @@ serve(async (req) => {
       });
 
     console.log(`[finalize-import] Import completed: ${insertedCount} inserted, ${errorCount} errors`);
+    await logger.info('finalize_import_completed', traceId, {
+      job_id,
+      inserted: insertedCount,
+      errors: errorCount,
+      duration_ms: Date.now() - startTime
+    });
 
     return new Response(
       JSON.stringify({

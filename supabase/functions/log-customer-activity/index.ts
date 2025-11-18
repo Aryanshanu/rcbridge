@@ -1,5 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.48.1';
 import { sanitizeError, logErrorSecurely } from '../_shared/errorSanitizer.ts';
+import { Logger } from '../_shared/logger.ts';
+import { extractTraceContext } from '../_shared/tracer.ts';
+
+const logger = new Logger('log-customer-activity');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +22,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const { traceId, spanId } = extractTraceContext(req);
+  const startTime = Date.now();
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -54,12 +61,18 @@ Deno.serve(async (req) => {
     }
 
     console.log(`Activity logged: ${activityData.activity_type} for ${activityData.customer_email || 'anonymous'}`);
+    await logger.info('customer_activity_logged', traceId, {
+      activity_type: activityData.activity_type,
+      customer_email: activityData.customer_email,
+      duration_ms: Date.now() - startTime
+    });
 
     return new Response(
       JSON.stringify({ success: true, message: 'Activity logged successfully' }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
+    await logger.error('customer_activity_log_failed', traceId, error as Error);
     logErrorSecurely('log-customer-activity', error, { operation: 'general' });
     return new Response(
       JSON.stringify({ error: sanitizeError(error) }),

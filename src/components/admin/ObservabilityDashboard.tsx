@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, AlertTriangle, CheckCircle, Zap, Shield, TrendingUp } from "lucide-react";
 import * as queries from "@/utils/monitoring/queries";
+import { supabase } from "@/integrations/supabase/client";
 
 export function ObservabilityDashboard() {
   const [metrics, setMetrics] = useState({
@@ -45,8 +46,25 @@ export function ObservabilityDashboard() {
     };
 
     fetchMetrics();
+    
+    // Phase 3: Real-time subscription to system_logs
+    const channel = supabase
+      .channel('system-logs-realtime')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'system_logs' },
+        () => {
+          // Refetch metrics when new log arrives
+          fetchMetrics();
+        }
+      )
+      .subscribe();
+
     const interval = setInterval(fetchMetrics, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
+    
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, []);
 
   if (loading) {

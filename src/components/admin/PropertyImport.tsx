@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,12 +6,41 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, Loader2 } from "lucide-react";
 import { ImportReview } from "./ImportReview";
+import { event } from "@/utils/eventLogger";
 
 export const PropertyImport = () => {
   const [rawData, setRawData] = useState("");
   const [importing, setImporting] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [reviewData, setReviewData] = useState<any>(null);
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+
+  // Phase 3: Real-time subscription to scraping_jobs updates
+  useEffect(() => {
+    if (!currentJobId) return;
+    
+    const channel = supabase
+      .channel(`scraping-job-${currentJobId}`)
+      .on('postgres_changes',
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'scraping_jobs',
+          filter: `id=eq.${currentJobId}`
+        },
+        (payload) => {
+          console.log('Job status updated:', payload.new);
+          if (payload.new.status === 'completed' || payload.new.status === 'completed_with_errors') {
+            toast.info('Import processing complete');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentJobId]);
 
   const parseRawData = (data: string) => {
     const posts = [];
@@ -48,15 +77,24 @@ export const PropertyImport = () => {
     }
 
     setImporting(true);
+    event.info('instagram_import_triggered', {
+      action: 'import_started',
+      data_length: rawData.length
+    });
 
+    let posts: any[] = [];
     try {
-      const posts = parseRawData(rawData);
+      posts = parseRawData(rawData);
       if (posts.length === 0) {
         toast.error("No valid posts found in the pasted data");
         setImporting(false);
+        event.warn('import_failed', { reason: 'no_posts_found' });
         return;
       }
 
+      event.info('instagram_import_processing', {
+        post_count: posts.length
+      });
       toast.info(`Found ${posts.length} posts, processing with K2-Think...`);
 
       const { data: { session } } = await supabase.auth.getSession();
@@ -75,9 +113,18 @@ export const PropertyImport = () => {
       console.log("Import response:", data);
       setReviewData(data);
       setShowReview(true);
+      setCurrentJobId(data.job_id);
+      event.info('instagram_import_success', {
+        job_id: data.job_id,
+        total: data.summary.total,
+        processed: data.summary.processed
+      });
       toast.success(`Processed ${data.summary.total} posts with K2-Think AI`);
     } catch (error) {
       console.error("Import error:", error);
+      event.error('instagram_import_failed', error as Error, {
+        post_count: posts.length
+      });
       toast.error("Failed to process Instagram data");
     } finally {
       setImporting(false);
