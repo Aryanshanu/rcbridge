@@ -16,6 +16,7 @@ import { AlertCircle, CheckCircle, AlertTriangle, Edit2, X } from "lucide-react"
 import { formatPrice } from "@/utils/propertyUtils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { event } from "@/utils/eventLogger";
 
 interface ProcessedRecord {
   index: number;
@@ -137,6 +138,11 @@ export function ImportReview({
     }
 
     setIsSubmitting(true);
+    event.info('import_finalize_started', {
+      job_id: jobId,
+      approved_count: approvedList.length,
+      rejected_count: rejectedRecords.size
+    });
 
     try {
       const { data, error } = await supabase.functions.invoke("finalize-import", {
@@ -148,6 +154,11 @@ export function ImportReview({
 
       if (error) throw error;
 
+      event.info('import_finalize_success', {
+        job_id: jobId,
+        inserted: data.inserted,
+        errors: data.errors
+      });
       toast.success(`Successfully imported ${data.inserted} properties`);
       
       if (data.errors > 0) {
@@ -158,6 +169,10 @@ export function ImportReview({
       onClose();
     } catch (error) {
       console.error("Import finalization error:", error);
+      event.error('import_finalize_failed', error as Error, {
+        job_id: jobId,
+        approved_count: approvedList.length
+      });
       toast.error("Failed to finalize import");
     } finally {
       setIsSubmitting(false);

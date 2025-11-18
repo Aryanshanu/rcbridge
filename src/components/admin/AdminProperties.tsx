@@ -144,15 +144,6 @@ export const AdminProperties = ({ userRole }: AdminPropertiesProps) => {
       }
     }
   };
-        
-        setProperties(properties.filter(property => property.id !== id));
-        toast.success("Property deleted successfully");
-      } catch (error: any) {
-        console.error("Error deleting property:", error);
-        toast.error(`Failed to delete property: ${error.message}`);
-      }
-    }
-  };
   
   const formatPrice = (price: number): string => {
     return new Intl.NumberFormat("en-IN", {
