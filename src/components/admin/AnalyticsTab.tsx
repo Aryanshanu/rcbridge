@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Users, MessageSquare, Home, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { event } from "@/utils/eventLogger";
 
 interface Analytics {
   totalUsers: number;
@@ -25,6 +26,7 @@ export function AnalyticsTab() {
         { event: 'INSERT', schema: 'public', table: 'chat_conversations' },
         () => {
           console.log('📊 New conversation detected, refreshing analytics...');
+          event.info('new_conversation_analytics', { source: 'realtime' });
           fetchAnalytics();
         }
       )
@@ -36,6 +38,7 @@ export function AnalyticsTab() {
         { event: 'INSERT', schema: 'public', table: 'chat_messages' },
         () => {
           console.log('📊 New message detected, refreshing analytics...');
+          event.info('new_message_analytics', { source: 'realtime' });
           fetchAnalytics();
         }
       )

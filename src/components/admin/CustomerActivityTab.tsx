@@ -7,6 +7,7 @@ import { Loader2, Activity, Mail, MessageSquare, Search, User, Clock, ChevronDow
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { aggregateActivitySessions, formatDuration, formatTimeRange, type AggregatedSession, type CustomerActivity } from "@/utils/activityAggregator";
+import { event } from "@/utils/eventLogger";
 
 export function CustomerActivityTab() {
   const [activities, setActivities] = useState<CustomerActivity[]>([]);
@@ -17,13 +18,17 @@ export function CustomerActivityTab() {
   useEffect(() => {
     fetchCustomerActivity();
 
-    // Subscribe to real-time customer activity inserts
+    // Phase 3: Subscribe to real-time customer activity inserts
     const channel = supabase
       .channel('customer-activity-realtime')
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'customer_activity_history' },
         (payload) => {
           console.log('👤 New customer activity recorded:', payload.new);
+          event.info('new_customer_activity_detected', {
+            activity_type: (payload.new as any).activity_type,
+            customer_email: (payload.new as any).customer_email
+          });
           setActivities(prev => [payload.new as CustomerActivity, ...prev]);
         }
       )
@@ -59,6 +64,7 @@ export function CustomerActivityTab() {
       setSessions(aggregated);
     } catch (error) {
       console.error('Failed to fetch customer activity:', error);
+      event.error('fetch_customer_activity_failed', error as Error);
     } finally {
       setIsLoading(false);
     }
